@@ -1,0 +1,2 @@
+# No third-party packages required for the application foundation.
+# Uses only the Python standard library: sqlite3, tkinter, csv, datetime, unittest.
