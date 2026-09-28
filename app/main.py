@@ -25,7 +25,7 @@ def run():
         return
 
     try:
-        from app.ui.main_window import MainWindow
+        from app.screens.main_window import MainWindow
         app = MainWindow()
         app.mainloop()
     except Exception as exc:
