@@ -55,5 +55,20 @@ def initialize_database(db_path: str = None) -> None:
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS complaints (
+            complaint_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            category TEXT NOT NULL,
+            description TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Open',
+            assigned_to TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            resolved_at TEXT,
+            resolution_notes TEXT,
+            FOREIGN KEY (student_id) REFERENCES students(student_id)
+        )
+    """)
+
     conn.commit()
     conn.close()
