@@ -7,8 +7,8 @@ current GitHub repo (or upload the latest ZIP export) so the AI can see
 the actual current code, since this file describes the plan and status,
 not every line of code.
 
-Last updated: end of **Batch 3** (Complaint Management + UI overhaul +
-restructure).
+Last updated: end of **Batch 4** (complete UI redesign — top navbar +
+Dashboard screen, replacing Batch 3's sidebar look).
 
 ---
 
@@ -62,7 +62,8 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 ├── app/
 │   ├── main.py                  — bootstrap: initialize_database() then launch MainWindow
 │   ├── config.py                — all paths (DB, CSVs) in one place
-│   ├── theme.py                 — NEW in Batch 3: colors, fonts, ttk styles, build_card()
+│   ├── theme.py                 — colors, fonts, ttk styles, build_card(), build_stat_card()
+│   │                               REWRITTEN in Batch 4 (teal/slate palette, accent-stripe cards)
 │   │
 │   ├── database/
 │   │   └── db.py                — SQLite schema: students, rooms, allocations, complaints
@@ -74,7 +75,8 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 │   │   └── complaint_service.py
 │   │
 │   ├── screens/                 — RENAMED from app/ui/ in Batch 3; one file per screen
-│   │   ├── main_window.py        — sidebar shell, wires navigation only
+│   │   ├── main_window.py        — REWRITTEN in Batch 4: top navbar (was left sidebar), wires navigation only
+│   │   ├── dashboard_screen.py    — NEW in Batch 4: landing screen, live stat tiles + recent audit activity
 │   │   ├── student_screen.py
 │   │   ├── room_screen.py
 │   │   ├── allocation_screen.py
@@ -142,16 +144,40 @@ old code, it's stale.
 **Batch 3 — Complaint Management + UI overhaul + restructure:**
 - Complaint status pipeline: Open → Assigned → Resolved (or Open →
   Resolved directly); backward/duplicate transitions rejected
-- `app/theme.py` + full visual redesign: dark sidebar nav, card layout,
-  striped tables, colored status badges (replaces plain
-  `ttk.Notebook` white-box tabs)
+- `app/theme.py` + first visual redesign: dark sidebar nav, indigo
+  palette, card layout, striped tables, colored status badges (replaces
+  plain `ttk.Notebook` white-box tabs)
 - `app/ui/` → `app/screens/`, split into one file per screen
 - 14 new tests (45 total)
-- **Visually verified**, not just unit-tested: screenshots were taken of
-  the actual running app (via a virtual display) clicking through every
-  screen and completing every workflow, before the ZIP was shipped.
 
-**Commit count so far:** ~20 meaningful commits across all batches
+**Batch 4 — Complete UI redesign (no backend changes):**
+- Reason: the Batch 3 look had been copied by other students, so this
+  batch is a ground-up visual change, not a recolor.
+- Layout changed from left sidebar → **top navbar** with pill nav
+  buttons.
+- Palette changed from indigo → **teal/slate**.
+- Cards changed from full grey border boxes → white cards with a thin
+  border + **colored top accent stripe**.
+- **New Dashboard screen** (`app/screens/dashboard_screen.py`) — now the
+  landing screen. Shows 4 live stat tiles (Total Students, Rooms
+  Occupied %, Active Allocations, Open Complaints) computed from the
+  real service layer, plus a "Recent Activity" panel reading the tail of
+  `TQM/data/audit_logs.csv` directly — a visible link between the
+  software and the TQM evidence it generates.
+- `student_screen.py` / `room_screen.py` / `allocation_screen.py` /
+  `complaint_screen.py` were **not edited** — they already read all
+  styling from `app/theme.py`, so the new look applied with zero changes
+  to those files.
+- No test changes — same 45 tests, all still passing (only presentation
+  changed).
+
+**Both UI batches were visually verified, not just unit-tested:**
+screenshots were taken of the actual running app (via a virtual display)
+clicking through every screen and completing every workflow, before
+each ZIP was shipped. This caught a real bug in the Batch 3 test
+harness (missing DB initialization) before it reached the user.
+
+**Commit count so far:** ~24 meaningful commits across all batches
 (course expects 30+; this is on track).
 
 ## 5. What's NOT Built Yet (in planned order)
@@ -200,6 +226,12 @@ old code, it's stale.
   display + screenshot check caught real bugs in Batch 3 that
   compile-checking alone missed) rather than shipping unverified GUI
   code.
+- **The visual design has already been copied by classmates once**
+  (the Batch 3 sidebar/indigo look). If asked to redesign again, make a
+  structural change (layout paradigm, not just a color swap) — e.g.
+  Batch 4 moved from a left sidebar to a top navbar and added a new
+  Dashboard screen. Simply changing `COLORS` values is not enough if
+  asked to "change it completely" again.
 - **Folder convention:** one folder per file *type* — `services/` holds
   all service files, `screens/` holds all screen/UI files, `utils/`
   holds cross-cutting helpers, `database/` holds the schema/connection
@@ -207,7 +239,7 @@ old code, it's stale.
 
 ## 7. How to Continue From Here
 
-Tell the new AI: *"Continue from Batch 3 — next is the Bug Tracker
+Tell the new AI: *"Continue from Batch 4 — next is the Bug Tracker
 (Q09 feature #4). Here's the current repo/ZIP."* and attach the latest
 export of the repository. The AI should:
 1. Read this handoff file fully before writing any code.
