@@ -1,26 +1,32 @@
 """
-Application shell: a colored sidebar for navigation plus a content area
-that stacks all four screens and raises the selected one. This replaces
-the plain ttk.Notebook tabs used before Batch 3 with a more distinctive,
-app-like layout.
+Application shell — Batch 4 redesign.
 
-Each screen (StudentScreen, RoomScreen, AllocationScreen, ComplaintScreen)
-is fully self-contained in app/screens/ — this file only wires navigation.
+Batch 3 used a dark LEFT SIDEBAR for navigation. This version uses a
+dark TOP NAVBAR with pill-style nav buttons instead, and adds a
+Dashboard as the landing screen. This is a deliberate layout change
+(not just a recolor) since the previous look had been copied by other
+students and needed to look distinctly different for the demo.
+
+Each screen (DashboardScreen, StudentScreen, RoomScreen,
+AllocationScreen, ComplaintScreen) is fully self-contained in
+app/screens/ — this file only wires navigation.
 """
 import tkinter as tk
 
 from app.config import APP_NAME
 from app.theme import COLORS, apply_theme
+from app.screens.dashboard_screen import DashboardScreen
 from app.screens.student_screen import StudentScreen
 from app.screens.room_screen import RoomScreen
 from app.screens.allocation_screen import AllocationScreen
 from app.screens.complaint_screen import ComplaintScreen
 
 _NAV_ITEMS = [
-    ("Students", "🎓  Students"),
-    ("Rooms", "🏠  Rooms"),
-    ("Allocation", "🔑  Room Allocation"),
-    ("Complaints", "📋  Complaints"),
+    ("Dashboard", "Dashboard"),
+    ("Students", "Students"),
+    ("Rooms", "Rooms"),
+    ("Allocation", "Room Allocation"),
+    ("Complaints", "Complaints"),
 ]
 
 
@@ -28,55 +34,57 @@ class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("1000x620")
-        self.minsize(880, 560)
+        self.geometry("1080x640")
+        self.minsize(920, 580)
 
         self.fonts = apply_theme(self)
         self._nav_buttons = {}
         self.screens = {}
 
-        container = tk.Frame(self, bg=COLORS["background"])
-        container.pack(fill="both", expand=True)
+        self._build_navbar()
 
-        self._build_sidebar(container)
-
-        self.content = tk.Frame(container, bg=COLORS["background"])
-        self.content.pack(side="left", fill="both", expand=True)
+        self.content = tk.Frame(self, bg=COLORS["background"])
+        self.content.pack(side="top", fill="both", expand=True)
 
         self._create_screens()
-        self.show_screen("Students")
+        self.show_screen("Dashboard")
 
-    def _build_sidebar(self, container):
-        sidebar = tk.Frame(container, bg=COLORS["sidebar_bg"], width=220)
-        sidebar.pack(side="left", fill="y")
-        sidebar.pack_propagate(False)
+    def _build_navbar(self):
+        navbar = tk.Frame(self, bg=COLORS["navbar_bg"], height=56)
+        navbar.pack(side="top", fill="x")
+        navbar.pack_propagate(False)
 
-        title_area = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
-        title_area.pack(fill="x", pady=(20, 24), padx=18)
-        tk.Label(title_area, text="🏨 Hostel MS", bg=COLORS["sidebar_bg"],
-                  fg=COLORS["sidebar_text_active"], font=self.fonts["app_title"]).pack(anchor="w")
-        tk.Label(title_area, text="Quality-first hostel administration", bg=COLORS["sidebar_bg"],
-                  fg=COLORS["sidebar_text"], font=self.fonts["subheader"],
-                  wraplength=180, justify="left").pack(anchor="w", pady=(4, 0))
+        brand = tk.Frame(navbar, bg=COLORS["navbar_bg"])
+        brand.pack(side="left", padx=20)
+        tk.Label(brand, text="🏨 Hostel MS", bg=COLORS["navbar_bg"],
+                  fg=COLORS["navbar_text_active"], font=self.fonts["brand"]).pack()
+
+        tk.Frame(navbar, bg="#1E293B", width=1).pack(side="left", fill="y", pady=12)
+
+        nav_area = tk.Frame(navbar, bg=COLORS["navbar_bg"])
+        nav_area.pack(side="left", padx=8)
 
         for key, label in _NAV_ITEMS:
+            pill = tk.Frame(nav_area, bg=COLORS["navbar_bg"])
+            pill.pack(side="left", padx=4, pady=10)
             btn = tk.Button(
-                sidebar, text=label, anchor="w", bd=0, padx=18, pady=12,
-                bg=COLORS["sidebar_bg"], fg=COLORS["sidebar_text"],
-                activebackground=COLORS["sidebar_hover"],
-                activeforeground=COLORS["sidebar_text_active"],
+                pill, text=label, bd=0, padx=16, pady=8,
+                bg=COLORS["navbar_bg"], fg=COLORS["navbar_text"],
+                activebackground=COLORS["navbar_pill_active"],
+                activeforeground=COLORS["navbar_text_active"],
                 font=self.fonts["nav"], relief="flat", cursor="hand2",
                 command=lambda k=key: self.show_screen(k),
             )
-            btn.pack(fill="x")
+            btn.pack()
             self._nav_buttons[key] = btn
 
-        footer = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
-        footer.pack(side="bottom", fill="x", pady=16, padx=18)
-        tk.Label(footer, text="TQM Q09 — Reduce Bugs", bg=COLORS["sidebar_bg"],
-                  fg=COLORS["sidebar_text"], font=self.fonts["subheader"]).pack(anchor="w")
+        role_area = tk.Frame(navbar, bg=COLORS["navbar_bg"])
+        role_area.pack(side="right", padx=20)
+        tk.Label(role_area, text="Administrator", bg=COLORS["navbar_bg"],
+                  fg=COLORS["navbar_text"], font=self.fonts["subheader"]).pack()
 
     def _create_screens(self):
+        self.screens["Dashboard"] = DashboardScreen(self.content, self.fonts)
         self.screens["Students"] = StudentScreen(self.content, self.fonts)
         self.screens["Rooms"] = RoomScreen(self.content, self.fonts)
         self.screens["Allocation"] = AllocationScreen(self.content, self.fonts)
@@ -90,7 +98,6 @@ class MainWindow(tk.Tk):
         for nav_key, btn in self._nav_buttons.items():
             active = nav_key == key
             btn.configure(
-                bg=COLORS["sidebar_hover"] if active else COLORS["sidebar_bg"],
-                fg=COLORS["sidebar_text_active"] if active else COLORS["sidebar_text"],
-                font=self.fonts["nav_active"] if active else self.fonts["nav"],
+                bg=COLORS["navbar_pill_active"] if active else COLORS["navbar_bg"],
+                fg=COLORS["navbar_text_active"] if active else COLORS["navbar_text"],
             )
