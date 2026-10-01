@@ -11,15 +11,16 @@ from tkinter import ttk, messagebox, simpledialog
 from app.services import student_service, complaint_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, build_card, style_treeview_stripes, stripe_tag
+from app.theme import COLORS, build_card, build_breadcrumb, style_treeview_stripes, stripe_tag
 
 _CATEGORIES = ["Maintenance", "Cleanliness", "Noise", "Security", "Food", "Other"]
 
 
 class ComplaintScreen(tk.Frame):
-    def __init__(self, parent, fonts):
+    def __init__(self, parent, fonts, go_home=None):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
+        self.go_home = go_home
         self._student_options = {}
         self._complaint_rows = {}   # tree item id -> complaint dict
         self._build_header()
@@ -30,6 +31,8 @@ class ComplaintScreen(tk.Frame):
     def _build_header(self):
         header = tk.Frame(self, bg=COLORS["header_bg"])
         header.pack(fill="x")
+        if self.go_home:
+            build_breadcrumb(header, "Complaints", self.go_home, self.fonts)
         inner = tk.Frame(header, bg=COLORS["header_bg"])
         inner.pack(fill="x", padx=24, pady=16)
         tk.Label(inner, text="Complaint Management", bg=COLORS["header_bg"],
@@ -60,7 +63,11 @@ class ComplaintScreen(tk.Frame):
         ttk.Label(content, text="Description", style="FormLabel.TLabel").grid(
             row=2, column=0, sticky="nw", pady=6, padx=(0, 12))
         self.description_text = tk.Text(content, height=3, wrap="word",
-                                          font=self.fonts["body"], relief="solid", bd=1)
+                                          font=self.fonts["body"], relief="solid", bd=1,
+                                          bg=COLORS["surface_alt"], fg=COLORS["text_light"],
+                                          insertbackground=COLORS["text_light"],
+                                          highlightbackground=COLORS["border"],
+                                          highlightcolor=COLORS["primary"])
         self.description_text.grid(row=2, column=1, sticky="ew", pady=6)
 
         button_row = tk.Frame(content, bg=COLORS["card_bg"])
@@ -76,7 +83,7 @@ class ComplaintScreen(tk.Frame):
         content = build_card(wrapper, "All Complaints", self.fonts)
 
         columns = ("id", "student", "category", "status", "assigned_to", "created_at")
-        self.tree = ttk.Treeview(content, columns=columns, show="headings", height=8)
+        self.tree = ttk.Treeview(content, columns=columns, show="headings", height=6)
         for col, label, width in zip(
             columns, ("ID", "Student", "Category", "Status", "Assigned To", "Created At"),
             (45, 160, 110, 90, 140, 150),

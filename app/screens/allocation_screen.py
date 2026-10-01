@@ -10,13 +10,14 @@ from tkinter import ttk, messagebox
 from app.services import student_service, room_service, allocation_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, build_card, style_treeview_stripes, stripe_tag
+from app.theme import COLORS, build_card, build_breadcrumb, style_treeview_stripes, stripe_tag
 
 
 class AllocationScreen(tk.Frame):
-    def __init__(self, parent, fonts):
+    def __init__(self, parent, fonts, go_home=None):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
+        self.go_home = go_home
         self._student_options = {}
         self._room_options = {}
         self._build_header()
@@ -27,6 +28,8 @@ class AllocationScreen(tk.Frame):
     def _build_header(self):
         header = tk.Frame(self, bg=COLORS["header_bg"])
         header.pack(fill="x")
+        if self.go_home:
+            build_breadcrumb(header, "Room Allocation", self.go_home, self.fonts)
         inner = tk.Frame(header, bg=COLORS["header_bg"])
         inner.pack(fill="x", padx=24, pady=16)
         tk.Label(inner, text="Room Allocation", bg=COLORS["header_bg"],
@@ -67,16 +70,21 @@ class AllocationScreen(tk.Frame):
         content = build_card(wrapper, "Active Allocations", self.fonts)
 
         columns = ("id", "student", "room", "type", "allocated_at")
-        self.tree = ttk.Treeview(content, columns=columns, show="headings", height=7)
+        self.tree = ttk.Treeview(content, columns=columns, show="headings", height=6)
         for col, label, width in zip(columns, ("ID", "Student", "Room", "Type", "Allocated At"),
                                        (50, 180, 100, 100, 160)):
             self.tree.heading(col, text=label)
             self.tree.column(col, width=width, anchor="w")
-        self.tree.pack(fill="both", expand=True)
         style_treeview_stripes(self.tree)
 
+        # Pack the button to the bottom FIRST, then let the tree fill the
+        # remaining space above it. Packing the tree first with
+        # expand=True can claim all available space in a fixed-size
+        # parent (these screens are placed with relwidth/relheight=1),
+        # leaving nothing for a widget packed after it.
         ttk.Button(content, text="Release Selected", style="Danger.TButton",
-                    command=self.on_release).pack(anchor="e", pady=(10, 0))
+                    command=self.on_release).pack(side="bottom", anchor="e", pady=(10, 0))
+        self.tree.pack(fill="both", expand=True)
 
     def refresh_dropdowns(self):
         self._student_options = {

@@ -8,13 +8,14 @@ from tkinter import ttk, messagebox
 from app.services import room_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, build_card, style_treeview_stripes, stripe_tag
+from app.theme import COLORS, build_card, build_breadcrumb, style_treeview_stripes, stripe_tag
 
 
 class RoomScreen(tk.Frame):
-    def __init__(self, parent, fonts):
+    def __init__(self, parent, fonts, go_home=None):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
+        self.go_home = go_home
         self._build_header()
         self._build_form()
         self._build_table()
@@ -23,6 +24,8 @@ class RoomScreen(tk.Frame):
     def _build_header(self):
         header = tk.Frame(self, bg=COLORS["header_bg"])
         header.pack(fill="x")
+        if self.go_home:
+            build_breadcrumb(header, "Rooms", self.go_home, self.fonts)
         inner = tk.Frame(header, bg=COLORS["header_bg"])
         inner.pack(fill="x", padx=24, pady=16)
         tk.Label(inner, text="Room Management", bg=COLORS["header_bg"],
