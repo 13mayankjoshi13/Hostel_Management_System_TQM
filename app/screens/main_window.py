@@ -1,103 +1,85 @@
 """
-Application shell — Batch 4 redesign.
+Application shell — Batch 5 redesign.
 
-Batch 3 used a dark LEFT SIDEBAR for navigation. This version uses a
-dark TOP NAVBAR with pill-style nav buttons instead, and adds a
-Dashboard as the landing screen. This is a deliberate layout change
-(not just a recolor) since the previous look had been copied by other
-students and needed to look distinctly different for the demo.
+Navigation history:
+  - Batch 3: dark LEFT SIDEBAR, 5 always-visible nav items, light theme.
+  - Batch 4: dark TOP NAVBAR, 5 always-visible nav pills, light theme.
+  - Batch 5 (this one): DARK theme throughout, a SPLASH SCREEN on
+    launch, then a slim top bar with just the brand + a single Home
+    button, and hub-and-spoke navigation — the Dashboard has big
+    clickable module tiles, and every other screen has a "🏠 Dashboard"
+    breadcrumb to come back. There is no persistent multi-item nav list
+    anywhere anymore.
 
 Each screen (DashboardScreen, StudentScreen, RoomScreen,
 AllocationScreen, ComplaintScreen) is fully self-contained in
-app/screens/ — this file only wires navigation.
+app/screens/ — this file wires navigation and the splash sequence.
 """
 import tkinter as tk
 
 from app.config import APP_NAME
 from app.theme import COLORS, apply_theme
+from app.screens.splash_screen import SplashScreen
 from app.screens.dashboard_screen import DashboardScreen
 from app.screens.student_screen import StudentScreen
 from app.screens.room_screen import RoomScreen
 from app.screens.allocation_screen import AllocationScreen
 from app.screens.complaint_screen import ComplaintScreen
 
-_NAV_ITEMS = [
-    ("Dashboard", "Dashboard"),
-    ("Students", "Students"),
-    ("Rooms", "Rooms"),
-    ("Allocation", "Room Allocation"),
-    ("Complaints", "Complaints"),
-]
-
 
 class MainWindow(tk.Tk):
-    def __init__(self):
+    def __init__(self, show_splash: bool = True):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("1080x640")
-        self.minsize(920, 580)
+        self.geometry("1080x720")
+        self.minsize(960, 640)
 
         self.fonts = apply_theme(self)
-        self._nav_buttons = {}
         self.screens = {}
 
-        self._build_navbar()
-
+        self._build_topbar()
         self.content = tk.Frame(self, bg=COLORS["background"])
         self.content.pack(side="top", fill="both", expand=True)
 
         self._create_screens()
+
+        if show_splash:
+            self.withdraw()
+            SplashScreen(self, self.fonts, on_finish=self._enter_app)
+        else:
+            self._enter_app()
+
+    def _enter_app(self):
+        self.deiconify()
         self.show_screen("Dashboard")
 
-    def _build_navbar(self):
-        navbar = tk.Frame(self, bg=COLORS["navbar_bg"], height=56)
-        navbar.pack(side="top", fill="x")
-        navbar.pack_propagate(False)
+    def _build_topbar(self):
+        topbar = tk.Frame(self, bg=COLORS["topbar_bg"], height=48)
+        topbar.pack(side="top", fill="x")
+        topbar.pack_propagate(False)
 
-        brand = tk.Frame(navbar, bg=COLORS["navbar_bg"])
-        brand.pack(side="left", padx=20)
-        tk.Label(brand, text="🏨 Hostel MS", bg=COLORS["navbar_bg"],
-                  fg=COLORS["navbar_text_active"], font=self.fonts["brand"]).pack()
+        tk.Label(topbar, text="🏨 Hostel MS", bg=COLORS["topbar_bg"],
+                  fg=COLORS["text_light"], font=self.fonts["brand"]).pack(side="left", padx=18)
 
-        tk.Frame(navbar, bg="#1E293B", width=1).pack(side="left", fill="y", pady=12)
-
-        nav_area = tk.Frame(navbar, bg=COLORS["navbar_bg"])
-        nav_area.pack(side="left", padx=8)
-
-        for key, label in _NAV_ITEMS:
-            pill = tk.Frame(nav_area, bg=COLORS["navbar_bg"])
-            pill.pack(side="left", padx=4, pady=10)
-            btn = tk.Button(
-                pill, text=label, bd=0, padx=16, pady=8,
-                bg=COLORS["navbar_bg"], fg=COLORS["navbar_text"],
-                activebackground=COLORS["navbar_pill_active"],
-                activeforeground=COLORS["navbar_text_active"],
-                font=self.fonts["nav"], relief="flat", cursor="hand2",
-                command=lambda k=key: self.show_screen(k),
-            )
-            btn.pack()
-            self._nav_buttons[key] = btn
-
-        role_area = tk.Frame(navbar, bg=COLORS["navbar_bg"])
-        role_area.pack(side="right", padx=20)
-        tk.Label(role_area, text="Administrator", bg=COLORS["navbar_bg"],
-                  fg=COLORS["navbar_text"], font=self.fonts["subheader"]).pack()
+        self.home_button = tk.Button(
+            topbar, text="🏠 Dashboard", bd=0, padx=14, pady=6,
+            bg=COLORS["topbar_bg"], fg=COLORS["primary"],
+            activebackground=COLORS["surface"], activeforeground=COLORS["primary"],
+            font=self.fonts["body_bold"], relief="flat", cursor="hand2",
+            command=lambda: self.show_screen("Dashboard"),
+        )
+        self.home_button.pack(side="right", padx=18)
 
     def _create_screens(self):
-        self.screens["Dashboard"] = DashboardScreen(self.content, self.fonts)
-        self.screens["Students"] = StudentScreen(self.content, self.fonts)
-        self.screens["Rooms"] = RoomScreen(self.content, self.fonts)
-        self.screens["Allocation"] = AllocationScreen(self.content, self.fonts)
-        self.screens["Complaints"] = ComplaintScreen(self.content, self.fonts)
+        go_home = lambda: self.show_screen("Dashboard")
+        self.screens["Dashboard"] = DashboardScreen(self.content, self.fonts, navigate=self.show_screen)
+        self.screens["Students"] = StudentScreen(self.content, self.fonts, go_home=go_home)
+        self.screens["Rooms"] = RoomScreen(self.content, self.fonts, go_home=go_home)
+        self.screens["Allocation"] = AllocationScreen(self.content, self.fonts, go_home=go_home)
+        self.screens["Complaints"] = ComplaintScreen(self.content, self.fonts, go_home=go_home)
         for screen in self.screens.values():
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
 
     def show_screen(self, key: str):
         self.screens[key].tkraise()
         self.screens[key].refresh()
-        for nav_key, btn in self._nav_buttons.items():
-            active = nav_key == key
-            btn.configure(
-                bg=COLORS["navbar_pill_active"] if active else COLORS["navbar_bg"],
-                fg=COLORS["navbar_text_active"] if active else COLORS["navbar_text"],
-            )
