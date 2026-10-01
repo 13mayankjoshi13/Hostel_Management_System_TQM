@@ -1,14 +1,19 @@
 """
-Dashboard screen — new in Batch 4.
+Dashboard screen — the hub of the new Batch 5 navigation model.
 
-The landing screen when the app opens. Shows live counts pulled straight
-from the service layer (never fabricated/hard-coded), plus a "Recent
-Activity" panel reading the tail of TQM/data/audit_logs.csv — a direct,
-visible link between the software and the TQM evidence it's supposed to
-be generating, which is worth showing off in the demo.
+There is no persistent nav bar/sidebar anymore. Instead:
+  - This screen shows live stat tiles + a grid of big "module tiles"
+    (Students / Rooms / Room Allocation / Complaints). Clicking a tile
+    navigates into that module.
+  - Every other screen has a small "🏠 Dashboard" breadcrumb at the top
+    (see app.theme.build_breadcrumb) to come back here.
 
-If audit_logs.csv doesn't exist yet (fresh install, nothing done in the
-app yet), the panel shows an empty-state message instead of erroring.
+That's the entire navigation system: Dashboard -> module (via tile) and
+module -> Dashboard (via breadcrumb). Any screen is reachable from any
+other screen by going through the hub.
+
+Also keeps the live stats + "Recent Activity" (from TQM/data/audit_logs.csv)
+panel introduced in Batch 4, unchanged in behavior.
 """
 import csv
 import os
@@ -17,15 +22,27 @@ from tkinter import ttk
 
 from app.services import student_service, room_service, allocation_service, complaint_service
 from app.config import AUDIT_LOG_CSV
-from app.theme import COLORS, build_card, build_stat_card, style_treeview_stripes, stripe_tag
+from app.theme import (
+    COLORS, build_card, build_stat_card, build_module_tile,
+    style_treeview_stripes, stripe_tag,
+)
+
+_MODULES = [
+    ("Students", "🎓", "Students", "Add and review hosteller records.", "primary"),
+    ("Rooms", "🏠", "Rooms", "Manage rooms, types, and capacity.", "accent_violet"),
+    ("Allocation", "🔑", "Room Allocation", "Assign and release room allocations.", "success"),
+    ("Complaints", "📋", "Complaints", "Log, assign, and resolve complaints.", "accent_amber"),
+]
 
 
 class DashboardScreen(tk.Frame):
-    def __init__(self, parent, fonts):
+    def __init__(self, parent, fonts, navigate):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
+        self.navigate = navigate
         self._build_header()
         self._build_stats_row()
+        self._build_module_tiles()
         self._build_activity_table()
         self.refresh()
 
@@ -33,10 +50,10 @@ class DashboardScreen(tk.Frame):
         header = tk.Frame(self, bg=COLORS["header_bg"])
         header.pack(fill="x")
         inner = tk.Frame(header, bg=COLORS["header_bg"])
-        inner.pack(fill="x", padx=24, pady=16)
+        inner.pack(fill="x", padx=24, pady=(20, 16))
         tk.Label(inner, text="Dashboard", bg=COLORS["header_bg"],
-                  fg=COLORS["text_dark"], font=self.fonts["header"]).pack(anchor="w")
-        tk.Label(inner, text="Live snapshot of hostel operations.",
+                  fg=COLORS["text_light"], font=self.fonts["header"]).pack(anchor="w")
+        tk.Label(inner, text="Live snapshot of hostel operations. Choose a module below.",
                   bg=COLORS["header_bg"], fg=COLORS["text_muted"],
                   font=self.fonts["subheader"]).pack(anchor="w")
         tk.Frame(self, bg=COLORS["border"], height=1).pack(fill="x")
@@ -46,16 +63,28 @@ class DashboardScreen(tk.Frame):
         self.stats_wrapper.pack(fill="x", padx=24, pady=(16, 0))
         for i in range(4):
             self.stats_wrapper.columnconfigure(i, weight=1, uniform="stats")
-        self.stat_cards = {}
+
+    def _build_module_tiles(self):
+        wrapper = tk.Frame(self, bg=COLORS["background"])
+        wrapper.pack(fill="x", padx=24, pady=(16, 0))
+        for i in range(4):
+            wrapper.columnconfigure(i, weight=1, uniform="tiles")
+
+        for i, (key, icon, title, subtitle, accent_key) in enumerate(_MODULES):
+            tile = build_module_tile(
+                wrapper, icon, title, subtitle, COLORS[accent_key],
+                command=lambda k=key: self.navigate(k), fonts=self.fonts,
+            )
+            tile.grid(row=0, column=i, sticky="nsew", padx=(0 if i == 0 else 10, 0))
 
     def _build_activity_table(self):
         wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="both", expand=True, padx=24, pady=(16, 24))
+        wrapper.pack(fill="both", expand=True, padx=24, pady=(20, 24))
         content = build_card(wrapper, "Recent Activity (from TQM/data/audit_logs.csv)",
                               self.fonts, accent=COLORS["accent_blue"])
 
         columns = ("timestamp", "module", "action", "description")
-        self.tree = ttk.Treeview(content, columns=columns, show="headings", height=8)
+        self.tree = ttk.Treeview(content, columns=columns, show="headings", height=7)
         for col, label, width in zip(columns, ("Timestamp", "Module", "Action", "Description"),
                                        (150, 110, 90, 380)):
             self.tree.heading(col, text=label)
@@ -66,7 +95,7 @@ class DashboardScreen(tk.Frame):
         self.empty_label = tk.Label(
             content, text="No activity recorded yet — add a student, room, or "
                           "allocation to see real audit evidence appear here.",
-            bg=COLORS["card_bg"], fg=COLORS["text_muted"], font=self.fonts["body"],
+            bg=COLORS["surface"], fg=COLORS["text_muted"], font=self.fonts["body"],
         )
 
     def _refresh_stats(self):
