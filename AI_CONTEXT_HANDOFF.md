@@ -7,9 +7,9 @@ current GitHub repo (or upload the latest ZIP export) so the AI can see
 the actual current code, since this file describes the plan and status,
 not every line of code.
 
-Last updated: end of **Batch 5** (full layout + color redesign — splash
-screen + hub-and-spoke navigation, dark theme, replacing Batch 4's top
-navbar look).
+Last updated: end of **Batch 6** (professional UI redesign — neutral
+palette, persistent plain-text sidebar, unboxed forms, replacing
+Batch 5's dark hub-and-spoke look).
 
 ---
 
@@ -63,9 +63,12 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 ├── app/
 │   ├── main.py                  — bootstrap: initialize_database() then launch MainWindow
 │   ├── config.py                — all paths (DB, CSVs) in one place
-│   ├── theme.py                 — colors, fonts, ttk styles, build_card(), build_stat_card(),
-│   │                               build_module_tile(), build_breadcrumb()
-│   │                               REWRITTEN again in Batch 5 (dark navy/cyan palette)
+│   ├── theme.py                 — colors, fonts, ttk styles. Current helpers (Batch 6):
+│   │                               section_header(), form_row(), build_panel(), build_stat_row(),
+│   │                               style_treeview_status_tags(), status_tag(), bind_hover()
+│   │                               REWRITTEN in Batch 6 (neutral/white palette, one blue accent —
+│   │                               the Batch 5 dark-mode helpers build_card/build_module_tile/
+│   │                               build_breadcrumb/build_stat_card no longer exist)
 │   │
 │   ├── database/
 │   │   └── db.py                — SQLite schema: students, rooms, allocations, complaints
@@ -77,16 +80,20 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 │   │   └── complaint_service.py
 │   │
 │   ├── screens/                 — RENAMED from app/ui/ in Batch 3; one file per screen
-│   │   ├── main_window.py        — REWRITTEN in Batch 5: splash sequence + slim topbar + hub-and-spoke nav
-│   │   │                            (was: top navbar in Batch 4; was: left sidebar in Batch 3)
-│   │   ├── splash_screen.py       — NEW in Batch 5: borderless splash shown ~1.6s on launch
-│   │   ├── dashboard_screen.py    — NEW in Batch 4, extended in Batch 5: landing hub — live stat tiles +
-│   │   │                            recent audit activity + 4 big clickable module tiles (navigation hub)
-│   │   ├── student_screen.py      — has a go_home param + breadcrumb since Batch 5
-│   │   ├── room_screen.py         — has a go_home param + breadcrumb since Batch 5
-│   │   ├── allocation_screen.py   — has a go_home param + breadcrumb since Batch 5
-│   │   └── complaint_screen.py    — has a go_home param + breadcrumb since Batch 5;
-│   │                                 description Text box dark-themed since Batch 5 (was a bug)
+│   │   ├── main_window.py        — REWRITTEN in Batch 6: persistent plain-text sidebar (no icons,
+│   │   │                            no breadcrumbs needed). History: Batch 5 was a splash + slim
+│   │   │                            topbar + hub-and-spoke nav; Batch 4 was a top navbar; Batch 3
+│   │   │                            was a colored sidebar.
+│   │   ├── splash_screen.py       — restyled in Batch 6 (minimal, no icon, ~1.1s); first added Batch 5
+│   │   ├── dashboard_screen.py    — REWRITTEN in Batch 6: plain KPI strip (label/value + thin dividers)
+│   │   │                            + recent-activity table panel. The Batch 5 module-tile grid is GONE
+│   │   │                            — the sidebar handles navigation now, so Dashboard is overview-only.
+│   │   ├── student_screen.py      — unboxed form + table panel since Batch 6; no go_home/breadcrumb
+│   │   │                            (removed — sidebar is always visible, breadcrumb was redundant)
+│   │   ├── room_screen.py         — same pattern as student_screen.py
+│   │   ├── allocation_screen.py   — same pattern
+│   │   └── complaint_screen.py    — same pattern; description Text box explicitly themed (color
+│   │                                 bug first fixed in Batch 5, still correct here)
 │   │
 │   └── utils/
 │       ├── validation.py        — Strict Validation (Q09 feature #2)
@@ -197,18 +204,47 @@ old code, it's stale.
   dark UI.
 - No test changes — same 45 tests, all still passing.
 
-**All three UI batches were visually verified, not just unit-tested:**
-screenshots were taken of the actual running app (via a virtual display)
-clicking through every screen and completing every workflow, before
-each ZIP was shipped. This caught: a missing-DB-initialization bug in
-the Batch 3 test harness, clipped splash-screen text in Batch 5 (fixed
-by widening the window), and a scare in Batch 5 where a button appeared
-to be missing after a window-resize change — that one turned out to be
-a stale screenshot from a virtual-display restart, not a real bug, but
-was re-verified rather than assumed before shipping.
+**Batch 6 — Professional UI redesign (no backend changes):**
+- Reason: the person wanted it to look "designed by a real
+  professional," explicitly NOT like an AI-generated dashboard — no
+  neon, no glow, no gradients, no card-for-everything, no oversized
+  type, restrained single-accent palette.
+- Switched back from Batch 5's hub-and-spoke model to a **persistent
+  plain-text sidebar** (judged more practical for daily use — no more
+  two-click round trips through a Dashboard hub to switch modules).
+- Forms are now **unboxed** (plain label/field rows, no border/card) —
+  only data tables sit inside a thin-bordered panel, since tables
+  genuinely benefit from visual containment. This was an explicit
+  instruction: "avoid making every section a floating card."
+- One accent color only (`#3457D5`, a muted blue), used just for
+  primary buttons, the active sidebar indicator, and links.
+- Page titles are 14pt (was 17–18pt in Batches 4–5) — hierarchy comes
+  from weight/spacing, not large type.
+- No test changes — same 45 tests, all still passing.
 
-**Commit count so far:** ~30 meaningful commits across all batches —
-at/above the 30+ the course expects, with Bug Tracker, Quality
+**Rendering-quirk note (ruled out, not a real bug):** while visually
+verifying Batch 6, table text looked blue-tinted in screenshots taken
+through the virtual display used for testing. Pixel-level sampling
+confirmed the actual rendered color was correctly near-black
+(`#18181B`) — the tint was LCD-style font-antialiasing fringing from
+that specific virtual display, not a real issue. A defensive fix
+(`style_treeview_status_tags` always applies an explicit `"default"`
+tag to every row) was added anyway, since relying on ttk's base
+`Treeview` style foreground alone is known to be unreliable across
+different Tk builds/platforms.
+
+**All UI batches (3–6) were visually verified, not just unit-tested:**
+screenshots were taken of the actual running app (via a virtual
+display) clicking through every screen and completing every workflow,
+before each ZIP was shipped. This caught: a missing-DB-initialization
+bug in the Batch 3 test harness, clipped splash-screen text in Batch 5
+(fixed by widening the window), a scare in Batch 5 where a button
+appeared to be missing after a window-resize change (turned out to be a
+stale screenshot from a virtual-display restart, re-verified rather
+than assumed away), and the Batch 6 font-fringing investigation above.
+
+**Commit count so far:** ~36 meaningful commits across all batches —
+comfortably past the 30+ the course expects, with Bug Tracker, Quality
 Monitoring, and SQC automation still ahead for extra depth.
 
 ## 5. What's NOT Built Yet (in planned order)
@@ -257,16 +293,18 @@ Monitoring, and SQC automation still ahead for extra depth.
   display + screenshot check caught real bugs in Batch 3 that
   compile-checking alone missed) rather than shipping unverified GUI
   code.
-- **The visual design has already been copied/felt-too-similar twice**
-  (Batch 3's sidebar/indigo look, then Batch 4's navbar/teal look was
-  judged too close to Batch 3 — "just vertical to horizontal"). Batch 5
-  changed the *navigation model itself* (hub-and-spoke with a splash
-  screen, no persistent nav list at all) plus a dark palette. If asked
-  to redesign again: sidebar, navbar, and hub-and-spoke are the three
-  natural nav patterns for an app this size — already used one each.
-  Consider a wizard/stepper flow or a command-palette style next if a
-  fourth genuinely distinct option is needed. Always change the layout
-  paradigm, never just the `COLORS` dict, when asked for "complete" change.
+- **The visual design has been redesigned four times now** (Batch 3
+  sidebar/indigo → Batch 4 navbar/teal, judged too similar → Batch 5
+  hub-and-spoke/dark, judged still too "AI-dashboard" → Batch 6
+  sidebar/neutral-with-one-accent, explicitly asked to look
+  "human-designed... not flashy, futuristic, or obviously
+  AI-generated"). Batch 6 is the current design language and is a good
+  default to extend rather than replace, unless asked again. If asked
+  to redesign again: the un-boxed-form + bordered-table-panel +
+  single-accent pattern from Batch 6 is deliberately restrained — lean
+  further into typography/spacing changes before reaching for a new
+  layout paradigm, since sidebar/navbar/hub-and-spoke are now all
+  "used up" as distinct navigation models for an app this size.
 - **Fixed window sizing is fragile.** Screens use `pack`/`grid` inside a
   fixed-size `place(relwidth=1, relheight=1)` container with no
   scrollbar. Adding any extra header row (like Batch 5's breadcrumb)
@@ -284,7 +322,7 @@ Monitoring, and SQC automation still ahead for extra depth.
 
 ## 7. How to Continue From Here
 
-Tell the new AI: *"Continue from Batch 5 — next is the Bug Tracker
+Tell the new AI: *"Continue from Batch 6 — next is the Bug Tracker
 (Q09 feature #4). Here's the current repo/ZIP."* and attach the latest
 export of the repository. The AI should:
 1. Read this handoff file fully before writing any code.
