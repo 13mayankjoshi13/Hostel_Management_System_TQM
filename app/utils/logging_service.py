@@ -18,7 +18,7 @@ import os
 import threading
 from datetime import datetime
 
-from app.config import ERROR_LOG_CSV, AUDIT_LOG_CSV, CURRENT_USER, CURRENT_ROLE
+from app.config import ERROR_LOG_CSV, AUDIT_LOG_CSV, DEFECT_LOG_CSV, CURRENT_USER, CURRENT_ROLE
 
 _lock = threading.Lock()
 
@@ -26,6 +26,8 @@ _ERROR_HEADER = ["timestamp", "error_id", "module", "error_type", "severity",
                   "user_id", "action", "status", "message_reference"]
 _AUDIT_HEADER = ["timestamp", "user_id", "role", "module", "action",
                   "record_id", "result", "description"]
+_DEFECT_HEADER = ["defect_id", "date", "module", "category", "title", "description",
+                   "severity", "priority", "status", "root_cause", "corrective_action", "test_case"]
 
 
 def _next_id(csv_path: str, id_column: str, prefix: str) -> str:
@@ -99,6 +101,40 @@ def log_audit(module: str, action: str, record_id: str, result: str,
             "description": description,
         }
         _append_row(AUDIT_LOG_CSV, _AUDIT_HEADER, row)
+        return "logged"
+    except Exception:
+        return "unlogged"
+
+
+def log_defect(defect_id: str, date: str, module: str, category: str, title: str,
+               description: str, severity: str, priority: str, status: str,
+               root_cause: str = "", corrective_action: str = "", test_case: str = "") -> str:
+    """
+    Record a bug in TQM/data/defect_log.csv (Q09 feature #4: Bug Tracker).
+
+    This is append-only, same as error/audit logs: every call writes a
+    NEW row reflecting the bug's state at that moment, so the CSV holds
+    a full history (creation, then each status change) rather than
+    being overwritten in place. That history is exactly what later
+    Pareto/Fishbone/PDCA analysis needs. Never raises — logging must not
+    crash the application it is protecting.
+    """
+    try:
+        row = {
+            "defect_id": defect_id,
+            "date": date,
+            "module": module,
+            "category": category,
+            "title": title,
+            "description": description,
+            "severity": severity,
+            "priority": priority,
+            "status": status,
+            "root_cause": root_cause,
+            "corrective_action": corrective_action,
+            "test_case": test_case,
+        }
+        _append_row(DEFECT_LOG_CSV, _DEFECT_HEADER, row)
         return "logged"
     except Exception:
         return "unlogged"
