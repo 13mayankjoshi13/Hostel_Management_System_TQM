@@ -8,7 +8,7 @@ import os
 import tkinter as tk
 from tkinter import ttk
 
-from app.services import student_service, room_service, allocation_service, complaint_service
+from app.services import student_service, room_service, allocation_service, complaint_service, bug_service
 from app.config import AUDIT_LOG_CSV
 from app.theme import COLORS, section_header, build_panel, build_stat_row, build_table, style_treeview_status_tags
 
@@ -54,12 +54,15 @@ class DashboardScreen(tk.Frame):
             round(len(active_allocations) / total_capacity * 100) if total_capacity > 0 else 0
         )
         open_complaints = sum(1 for c in complaints if c["status"] == "Open")
+        bugs = bug_service.get_all_bugs()
+        open_bugs = sum(1 for b in bugs if b["status"] in ("Open", "In Progress"))
 
         build_stat_row(self.stats_slot, [
             ("Total Students", str(len(students))),
             ("Rooms Occupied", f"{occupancy_pct}%"),
             ("Active Allocations", str(len(active_allocations))),
             ("Open Complaints", str(open_complaints)),
+            ("Open Bugs", str(open_bugs)),
         ], self.fonts)
 
     def _refresh_activity(self):
