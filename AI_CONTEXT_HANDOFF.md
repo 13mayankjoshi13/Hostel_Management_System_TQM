@@ -7,9 +7,8 @@ current GitHub repo (or upload the latest ZIP export) so the AI can see
 the actual current code, since this file describes the plan and status,
 not every line of code.
 
-Last updated: end of **Batch 6** (professional UI redesign — neutral
-palette, persistent plain-text sidebar, unboxed forms, replacing
-Batch 5's dark hub-and-spoke look).
+Last updated: end of **Batch 7** (Bug Tracker — Q09 feature #4, the
+last unbuilt one. All five Q09 features now exist).
 
 ---
 
@@ -77,7 +76,8 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 │   │   ├── student_service.py
 │   │   ├── room_service.py
 │   │   ├── allocation_service.py
-│   │   └── complaint_service.py
+│   │   ├── complaint_service.py
+│   │   └── bug_service.py        — NEW in Batch 7 (Q09 feature #4: Bug Tracker)
 │   │
 │   ├── screens/                 — RENAMED from app/ui/ in Batch 3; one file per screen
 │   │   ├── main_window.py        — REWRITTEN in Batch 6: persistent plain-text sidebar (no icons,
@@ -92,8 +92,9 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 │   │   │                            (removed — sidebar is always visible, breadcrumb was redundant)
 │   │   ├── room_screen.py         — same pattern as student_screen.py
 │   │   ├── allocation_screen.py   — same pattern
-│   │   └── complaint_screen.py    — same pattern; description Text box explicitly themed (color
+│   │   ├── complaint_screen.py    — same pattern; description Text box explicitly themed (color
 │   │                                 bug first fixed in Batch 5, still correct here)
+│   │   └── bug_screen.py          — NEW in Batch 7: log/Start Progress/Mark Fixed/Close Bug UI
 │   │
 │   └── utils/
 │       ├── validation.py        — Strict Validation (Q09 feature #2)
@@ -122,7 +123,7 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
     └── data/
         ├── audit_logs.csv        — REAL rows written by the app on every create/assign/resolve/allocate/release
         ├── error_logs.csv        — REAL rows written on any caught exception/DB error
-        ├── defect_log.csv        — still empty; populated once Bug Tracker (next batch) exists
+        ├── defect_log.csv        — REAL rows since Batch 7 (Bug Tracker); append-only, one row per status change
         ├── checksheet.csv, process_metrics.csv, quality_metrics.csv — not yet automated
 ```
 
@@ -243,24 +244,49 @@ appeared to be missing after a window-resize change (turned out to be a
 stale screenshot from a virtual-display restart, re-verified rather
 than assumed away), and the Batch 6 font-fringing investigation above.
 
-**Commit count so far:** ~36 meaningful commits across all batches —
-comfortably past the 30+ the course expects, with Bug Tracker, Quality
-Monitoring, and SQC automation still ahead for extra depth.
+**Batch 7 — Bug Tracker (Q09 feature #4, the last unbuilt Q09 feature):**
+- Status pipeline, forward-only: Open → In Progress → Fixed → Closed
+  (`app/services/bug_service.py`: `log_bug()`, `start_progress()`,
+  `mark_fixed()`, `close_bug()`). Same prevention-at-source pattern as
+  allocations/complaints: can't skip steps, can't go backward.
+- **"Fixed" requires a documented root cause, corrective action, and
+  test case reference** before it's accepted — validated, not optional.
+  This ties the Bug Tracker directly to the FMEA/root-cause side of the
+  TQM plan rather than being a bare status toggle.
+- `log_defect()` added to `logging_service.py` — writes a **new row**
+  to `TQM/data/defect_log.csv` on every create AND every status change
+  (append-only, same pattern as error/audit logs), so the CSV holds the
+  bug's full history, which is what Pareto/Fishbone analysis will need.
+- New `bugs` table in `db.py`. New `bug_screen.py` (log a bug; table
+  action buttons: Start Progress / Mark Fixed / Close Bug — the latter
+  two use `simpledialog` prompts for the required fields).
+- Dashboard gained a 5th stat tile, "Open Bugs" (counts Open + In
+  Progress) — a direct, visible readout of the assigned quality goal
+  (Q09: Reduce Bugs).
+- 17 new tests (62 total). Visually verified end-to-end: logged two
+  bugs, ran one through the full pipeline, confirmed status colors
+  update correctly and the Dashboard's Recent Activity panel shows the
+  real audit trail of every lifecycle event.
+
+**All five Q09 features are now built**: Exception Handling (Batch 1),
+Strict Validation (Batch 1), Module Tests (all batches, 62 total),
+Error Logs (Batch 1), Bug Tracker (Batch 7).
+
+**Commit count so far:** ~44 meaningful commits across all batches —
+well past the 30+ the course expects, with Quality Monitoring and SQC
+automation still ahead for extra depth.
 
 ## 5. What's NOT Built Yet (in planned order)
 
-1. **Bug Tracker** (Q09 feature #4) — fields: Bug ID, Date, Module,
-   Category, Title, Description, Severity, Priority, Status, Root Cause,
-   Corrective Action, Test Case. Writes to `TQM/data/defect_log.csv`.
-2. **Quality Monitoring** dashboard pulling real numbers from the CSVs
+1. **Quality Monitoring** dashboard pulling real numbers from the CSVs
    that already exist and are being populated.
-3. **SQC automation**: Pareto chart and Fishbone diagram generated from
-   `defect_log.csv`; PDCA cycle documentation tied to real recurring
-   issues found during testing.
-4. **Authentication / roles** — currently every audit/error log entry
+2. **SQC automation**: Pareto chart and Fishbone diagram generated from
+   `defect_log.csv` (which now has real data as of Batch 7); PDCA cycle
+   documentation tied to real recurring issues found during testing.
+3. **Authentication / roles** — currently every audit/error log entry
    is hard-coded to `system_admin` / `Administrator` in `app/config.py`
    (`CURRENT_USER`, `CURRENT_ROLE`). No login screen exists.
-5. **Final documentation pass** — updating `docs/testing.md`,
+4. **Final documentation pass** — updating `docs/testing.md`,
    `TQM/requirements_traceability.md`, etc. with real, non-placeholder
    evidence once the above is done.
 
@@ -322,8 +348,9 @@ Monitoring, and SQC automation still ahead for extra depth.
 
 ## 7. How to Continue From Here
 
-Tell the new AI: *"Continue from Batch 6 — next is the Bug Tracker
-(Q09 feature #4). Here's the current repo/ZIP."* and attach the latest
+Tell the new AI: *"Continue from Batch 7 — all five Q09 features are
+built; next is Quality Monitoring / SQC automation (Pareto, Fishbone,
+PDCA) or a final documentation pass. Here's the current repo/ZIP."* and attach the latest
 export of the repository. The AI should:
 1. Read this handoff file fully before writing any code.
 2. Confirm the current file structure matches section 3 above (ask to
