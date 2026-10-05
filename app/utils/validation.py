@@ -117,6 +117,102 @@ def validate_resolution_notes(notes: str) -> str:
     return notes
 
 
+def validate_bug_module(module: str) -> str:
+    allowed = {"Student", "Room", "Allocation", "Complaint", "Database", "UI", "Other"}
+    if module is None or not str(module).strip():
+        raise ValidationError("Module cannot be empty.")
+    raw = str(module).strip()
+    module = "UI" if raw.upper() == "UI" else raw.capitalize()
+    if module not in allowed:
+        raise ValidationError(f"Module must be one of: {', '.join(sorted(allowed))}.")
+    return module
+
+
+def validate_bug_category(category: str) -> str:
+    allowed = {"Functional", "UI/UX", "Validation", "Performance", "Data Integrity", "Security", "Other"}
+    if category is None or not str(category).strip():
+        raise ValidationError("Bug category cannot be empty.")
+    category = str(category).strip()
+    if category not in allowed:
+        raise ValidationError(f"Bug category must be one of: {', '.join(sorted(allowed))}.")
+    return category
+
+
+def validate_bug_title(title: str) -> str:
+    if title is None or not str(title).strip():
+        raise ValidationError("Bug title cannot be empty.")
+    title = str(title).strip()
+    if len(title) < 5:
+        raise ValidationError("Bug title must be at least 5 characters long.")
+    if len(title) > 120:
+        raise ValidationError("Bug title cannot exceed 120 characters.")
+    return title
+
+
+def validate_bug_description(description: str) -> str:
+    if description is None or not str(description).strip():
+        raise ValidationError("Bug description cannot be empty.")
+    description = str(description).strip()
+    if len(description) < 5:
+        raise ValidationError("Bug description must be at least 5 characters long.")
+    if len(description) > 500:
+        raise ValidationError("Bug description cannot exceed 500 characters.")
+    return description
+
+
+def validate_severity(severity: str) -> str:
+    allowed = {"Low", "Medium", "High", "Critical"}
+    if severity is None or not str(severity).strip():
+        raise ValidationError("Severity cannot be empty.")
+    severity = str(severity).strip().capitalize()
+    if severity not in allowed:
+        raise ValidationError(f"Severity must be one of: {', '.join(sorted(allowed))}.")
+    return severity
+
+
+def validate_priority(priority: str) -> str:
+    allowed = {"Low", "Medium", "High"}
+    if priority is None or not str(priority).strip():
+        raise ValidationError("Priority cannot be empty.")
+    priority = str(priority).strip().capitalize()
+    if priority not in allowed:
+        raise ValidationError(f"Priority must be one of: {', '.join(sorted(allowed))}.")
+    return priority
+
+
+def validate_root_cause(text: str) -> str:
+    if text is None or not str(text).strip():
+        raise ValidationError("Root cause cannot be empty.")
+    text = str(text).strip()
+    if len(text) < 5:
+        raise ValidationError("Root cause must be at least 5 characters long.")
+    if len(text) > 300:
+        raise ValidationError("Root cause cannot exceed 300 characters.")
+    return text
+
+
+def validate_corrective_action(text: str) -> str:
+    if text is None or not str(text).strip():
+        raise ValidationError("Corrective action cannot be empty.")
+    text = str(text).strip()
+    if len(text) < 5:
+        raise ValidationError("Corrective action must be at least 5 characters long.")
+    if len(text) > 300:
+        raise ValidationError("Corrective action cannot exceed 300 characters.")
+    return text
+
+
+def validate_test_case(text: str) -> str:
+    if text is None or not str(text).strip():
+        raise ValidationError("Test case reference cannot be empty.")
+    text = str(text).strip()
+    if len(text) < 3:
+        raise ValidationError("Test case reference must be at least 3 characters long.")
+    if len(text) > 300:
+        raise ValidationError("Test case reference cannot exceed 300 characters.")
+    return text
+
+
 def validate_room_type(room_type: str) -> str:
     allowed = {"Single", "Double", "Triple", "Dormitory"}
     if room_type is None or not str(room_type).strip():
