@@ -17,6 +17,7 @@ from app.screens.student_screen import StudentScreen
 from app.screens.room_screen import RoomScreen
 from app.screens.allocation_screen import AllocationScreen
 from app.screens.complaint_screen import ComplaintScreen
+from app.screens.bug_screen import BugScreen
 
 _NAV_ITEMS = [
     ("Dashboard", "Dashboard"),
@@ -24,6 +25,7 @@ _NAV_ITEMS = [
     ("Rooms", "Rooms"),
     ("Allocation", "Room Allocation"),
     ("Complaints", "Complaints"),
+    ("Bugs", "Bug Tracker"),
 ]
 
 
@@ -99,6 +101,7 @@ class MainWindow(tk.Tk):
         self.screens["Rooms"] = RoomScreen(self.content, self.fonts)
         self.screens["Allocation"] = AllocationScreen(self.content, self.fonts)
         self.screens["Complaints"] = ComplaintScreen(self.content, self.fonts)
+        self.screens["Bugs"] = BugScreen(self.content, self.fonts)
         for screen in self.screens.values():
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
 
