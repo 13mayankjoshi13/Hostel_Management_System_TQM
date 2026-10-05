@@ -70,5 +70,23 @@ def initialize_database(db_path: str = None) -> None:
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS bugs (
+            bug_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            module TEXT NOT NULL,
+            category TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            priority TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Open',
+            root_cause TEXT,
+            corrective_action TEXT,
+            test_case TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
     conn.commit()
     conn.close()
