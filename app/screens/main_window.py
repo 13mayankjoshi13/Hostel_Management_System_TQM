@@ -18,6 +18,7 @@ from app.screens.room_screen import RoomScreen
 from app.screens.allocation_screen import AllocationScreen
 from app.screens.complaint_screen import ComplaintScreen
 from app.screens.bug_screen import BugScreen
+from app.screens.quality_screen import QualityScreen
 
 _NAV_ITEMS = [
     ("Dashboard", "Dashboard"),
@@ -26,6 +27,7 @@ _NAV_ITEMS = [
     ("Allocation", "Room Allocation"),
     ("Complaints", "Complaints"),
     ("Bugs", "Bug Tracker"),
+    ("Quality", "Quality Monitoring"),
 ]
 
 
@@ -33,8 +35,8 @@ class MainWindow(tk.Tk):
     def __init__(self, show_splash: bool = True):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("1100x700")
-        self.minsize(960, 620)
+        self.geometry("1150x820")
+        self.minsize(980, 680)
 
         self.fonts = apply_theme(self)
         self.screens = {}
@@ -102,6 +104,7 @@ class MainWindow(tk.Tk):
         self.screens["Allocation"] = AllocationScreen(self.content, self.fonts)
         self.screens["Complaints"] = ComplaintScreen(self.content, self.fonts)
         self.screens["Bugs"] = BugScreen(self.content, self.fonts)
+        self.screens["Quality"] = QualityScreen(self.content, self.fonts)
         for screen in self.screens.values():
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
 
