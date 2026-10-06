@@ -7,8 +7,9 @@ current GitHub repo (or upload the latest ZIP export) so the AI can see
 the actual current code, since this file describes the plan and status,
 not every line of code.
 
-Last updated: end of **Batch 7** (Bug Tracker — Q09 feature #4, the
-last unbuilt one. All five Q09 features now exist).
+Last updated: end of **Batch 8** (Quality Monitoring + SQC automation —
+Pareto chart and Fishbone diagram, generated live from real Bug Tracker
+data).
 
 ---
 
@@ -77,7 +78,9 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 │   │   ├── room_service.py
 │   │   ├── allocation_service.py
 │   │   ├── complaint_service.py
-│   │   └── bug_service.py        — NEW in Batch 7 (Q09 feature #4: Bug Tracker)
+│   │   ├── bug_service.py        — Q09 feature #4: Bug Tracker (Batch 7)
+│   │   └── quality_service.py    — NEW in Batch 8: read-only Pareto/Fishbone data prep,
+│   │                                 never writes anything, reads real bug records only
 │   │
 │   ├── screens/                 — RENAMED from app/ui/ in Batch 3; one file per screen
 │   │   ├── main_window.py        — REWRITTEN in Batch 6: persistent plain-text sidebar (no icons,
@@ -94,7 +97,9 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 │   │   ├── allocation_screen.py   — same pattern
 │   │   ├── complaint_screen.py    — same pattern; description Text box explicitly themed (color
 │   │                                 bug first fixed in Batch 5, still correct here)
-│   │   └── bug_screen.py          — NEW in Batch 7: log/Start Progress/Mark Fixed/Close Bug UI
+│   │   ├── bug_screen.py          — Batch 7: log/Start Progress/Mark Fixed/Close Bug UI
+│   │   └── quality_screen.py      — NEW in Batch 8: KPI strip + Canvas-drawn Pareto chart +
+│   │                                 Canvas-drawn Fishbone diagram (no charting library used)
 │   │
 │   └── utils/
 │       ├── validation.py        — Strict Validation (Q09 feature #2)
@@ -269,26 +274,54 @@ than assumed away), and the Batch 6 font-fringing investigation above.
   real audit trail of every lifecycle event.
 
 **All five Q09 features are now built**: Exception Handling (Batch 1),
-Strict Validation (Batch 1), Module Tests (all batches, 62 total),
+Strict Validation (Batch 1), Module Tests (all batches, 69 total),
 Error Logs (Batch 1), Bug Tracker (Batch 7).
 
-**Commit count so far:** ~44 meaningful commits across all batches —
-well past the 30+ the course expects, with Quality Monitoring and SQC
-automation still ahead for extra depth.
+**Batch 8 — Quality Monitoring + SQC automation:**
+- `app/services/quality_service.py` — pure read-only analysis, never
+  writes anything: `get_quality_summary()`, `get_pareto_data()`
+  (category counts, sorted descending, with cumulative %),
+  `get_fishbone_data()` (bug titles bucketed onto the six standard
+  fishbone branches via an explicit, documented `CATEGORY_TO_FISHBONE`
+  mapping — see the module for the exact mapping and reasoning, since
+  a bug's logged Category doesn't map 1:1 onto the six branches).
+- `app/screens/quality_screen.py` — KPI strip + a Pareto chart + a
+  Fishbone diagram, both drawn directly on a plain `tk.Canvas` (no
+  charting library added — `requirements.txt` still needs nothing
+  beyond the standard library). With zero bugs logged, both charts show
+  an honest empty-state message rather than fabricated example data.
+- 7 new tests (69 total), including the empty-data path.
+- **Two real bugs caught and fixed while visually verifying this
+  batch**, worth knowing about for any future screen with multiple
+  stacked sections or custom Canvas drawing:
+  1. The window was too short once a KPI strip + two chart panels were
+     stacked — same class of fixed-window-height clipping bug noted
+     from Batch 5 below. Fixed by enlarging the window.
+  2. A fallback-size bug in the Canvas drawing code itself: it used
+     `max(canvas.winfo_height(), 280)` to guard against reading the
+     size before layout — but the real canvas height (233px) was
+     *smaller* than that 280px fallback, so the code confidently drew
+     the bottom three Fishbone branch labels past the canvas's actual
+     visible area, silently clipping them. Fixed by reading the real
+     geometry and rescheduling the draw via `after()` if it isn't ready
+     yet, instead of guessing a fallback number that might be wrong in
+     either direction.
+
+**Commit count so far:** ~49 meaningful commits across all batches.
 
 ## 5. What's NOT Built Yet (in planned order)
 
-1. **Quality Monitoring** dashboard pulling real numbers from the CSVs
-   that already exist and are being populated.
-2. **SQC automation**: Pareto chart and Fishbone diagram generated from
-   `defect_log.csv` (which now has real data as of Batch 7); PDCA cycle
-   documentation tied to real recurring issues found during testing.
-3. **Authentication / roles** — currently every audit/error log entry
-   is hard-coded to `system_admin` / `Administrator` in `app/config.py`
-   (`CURRENT_USER`, `CURRENT_ROLE`). No login screen exists.
-4. **Final documentation pass** — updating `docs/testing.md`,
+1. **PDCA documentation** — tie a real recurring issue (once one
+   exists) to a written Plan-Do-Check-Act cycle in `TQM/PDCA.md`. This
+   is authored analysis, not something to auto-generate from code, so
+   it wasn't part of Batch 8's code-generated SQC tools.
+2. **Authentication / roles** — currently every audit/error/defect log
+   entry is hard-coded to `system_admin` / `Administrator` in
+   `app/config.py` (`CURRENT_USER`, `CURRENT_ROLE`). No login screen
+   exists.
+3. **Final documentation pass** — updating `docs/testing.md`,
    `TQM/requirements_traceability.md`, etc. with real, non-placeholder
-   evidence once the above is done.
+   evidence now that the app has real test and defect data behind it.
 
 ## 6. Working Conventions (apply to every future batch)
 
@@ -331,16 +364,26 @@ automation still ahead for extra depth.
   further into typography/spacing changes before reaching for a new
   layout paradigm, since sidebar/navbar/hub-and-spoke are now all
   "used up" as distinct navigation models for an app this size.
-- **Fixed window sizing is fragile.** Screens use `pack`/`grid` inside a
-  fixed-size `place(relwidth=1, relheight=1)` container with no
-  scrollbar. Adding any extra header row (like Batch 5's breadcrumb)
-  can push content below the visible window and clip it silently (no
-  error, just an invisible widget) — this happened to the "Release
-  Selected" button in Batch 5 and was fixed by enlarging the default
-  window size and trimming a couple of table heights. If a future batch
-  adds more vertical content to any screen, either re-verify visually
-  (virtual display + screenshot) or consider adding a scrollable canvas
-  wrapper instead of continuing to grow the fixed window size.
+- **Fixed window sizing is fragile — this has now bitten two batches.**
+  Screens use `pack`/`grid` inside a fixed-size
+  `place(relwidth=1, relheight=1)` container with no scrollbar. Adding
+  any extra vertical content (Batch 5's breadcrumb row; Batch 8's second
+  stacked chart panel) can push content below the visible window and
+  clip it silently (no error, just an invisible or truncated widget).
+  Current window size is 1150×820 / minsize 980×680 as of Batch 8. If a
+  future batch adds more vertical content to any screen, either
+  re-verify visually (virtual display + screenshot — don't skip this)
+  or consider adding a scrollable canvas wrapper instead of continuing
+  to grow the fixed window size indefinitely.
+- **When reading `tk.Canvas` geometry for custom drawing** (as in
+  `quality_screen.py`), never guess a fallback minimum size if
+  `winfo_width()`/`winfo_height()` return something unexpected —
+  Batch 8 had a bug where a "safe-looking" fallback (280px) was actually
+  *larger* than the real rendered canvas height (233px), causing content
+  to be confidently drawn past the canvas's real visible bounds and
+  silently clipped. Instead: if the read-back size is `<= 1` (not yet
+  laid out), reschedule the draw with `self.after(50, ...)` and return —
+  never substitute a guessed constant.
 - **Folder convention:** one folder per file *type* — `services/` holds
   all service files, `screens/` holds all screen/UI files, `utils/`
   holds cross-cutting helpers, `database/` holds the schema/connection
@@ -348,9 +391,10 @@ automation still ahead for extra depth.
 
 ## 7. How to Continue From Here
 
-Tell the new AI: *"Continue from Batch 7 — all five Q09 features are
-built; next is Quality Monitoring / SQC automation (Pareto, Fishbone,
-PDCA) or a final documentation pass. Here's the current repo/ZIP."* and attach the latest
+Tell the new AI: *"Continue from Batch 8 — Quality Monitoring and SQC
+automation (Pareto + Fishbone) are built; next is PDCA documentation,
+authentication/roles, or a final documentation pass. Here's the current
+repo/ZIP."* and attach the latest
 export of the repository. The AI should:
 1. Read this handoff file fully before writing any code.
 2. Confirm the current file structure matches section 3 above (ask to
