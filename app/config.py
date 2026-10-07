@@ -21,5 +21,9 @@ AUDIT_LOG_CSV = os.path.join(TQM_DATA_DIR, "audit_logs.csv")
 DEFECT_LOG_CSV = os.path.join(TQM_DATA_DIR, "defect_log.csv")
 
 APP_NAME = "Hostel Management System"
-CURRENT_USER = "system_admin"   # placeholder until authentication module exists
-CURRENT_ROLE = "Administrator"  # placeholder until authentication module exists
+# Fallback values only — used by app.utils.session when nobody is
+# logged in (e.g. a service called directly from a script or test).
+# The actual logged-in user/role during normal app use comes from
+# app.utils.session, set at login by app.services.auth_service.
+CURRENT_USER = "system_admin"
+CURRENT_ROLE = "Administrator"
