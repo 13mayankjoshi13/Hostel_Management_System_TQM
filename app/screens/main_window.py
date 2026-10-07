@@ -1,17 +1,23 @@
 """
-Application shell — Batch 6.
+Application shell.
 
-Back to a persistent sidebar (the most practical pattern for a tool used
-many times a day), but styled plainly: white/near-white background,
-thin right border, text-only items, a 3px accent bar + medium-weight
-text for the active item, subtle gray hover. No icons, no color fills,
-no pill shapes — restrained on purpose.
+Persistent sidebar (the most practical pattern for a tool used many
+times a day), styled plainly: white/near-white background, thin right
+border, text-only items, a 3px accent bar + medium-weight text for the
+active item, subtle gray hover. No icons, no color fills, no pill
+shapes — restrained on purpose.
+
+Batch 9 adds a login gate: splash -> login -> dashboard. The sidebar
+footer shows who's logged in and a Log Out link that returns to the
+login screen (clearing the session) rather than closing the app.
 """
 import tkinter as tk
 
 from app.config import APP_NAME
 from app.theme import COLORS, apply_theme, bind_hover
+from app.services import auth_service
 from app.screens.splash_screen import SplashScreen
+from app.screens.login_screen import LoginScreen
 from app.screens.dashboard_screen import DashboardScreen
 from app.screens.student_screen import StudentScreen
 from app.screens.room_screen import RoomScreen
@@ -54,13 +60,22 @@ class MainWindow(tk.Tk):
 
         if show_splash:
             self.withdraw()
-            SplashScreen(self, self.fonts, on_finish=self._enter_app)
+            SplashScreen(self, self.fonts, on_finish=self._show_login)
         else:
-            self._enter_app()
+            self._show_login()
 
-    def _enter_app(self):
+    def _show_login(self):
+        LoginScreen(self, self.fonts, on_success=self._enter_app)
+
+    def _enter_app(self, user: dict):
+        self._update_account_info(user)
         self.deiconify()
         self.show_screen("Dashboard")
+
+    def _handle_logout(self):
+        auth_service.logout()
+        self.withdraw()
+        self._show_login()
 
     def _build_sidebar(self, parent):
         sidebar = tk.Frame(parent, bg=COLORS["sidebar_bg"], width=210)
@@ -93,9 +108,25 @@ class MainWindow(tk.Tk):
 
         tk.Frame(sidebar, bg=COLORS["sidebar_bg"]).pack(fill="both", expand=True)
         tk.Frame(sidebar, bg=COLORS["border"], height=1).pack(fill="x")
+
+        account_area = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
+        account_area.pack(fill="x", padx=20, pady=(12, 6))
+        self.account_label = tk.Label(account_area, text="", bg=COLORS["sidebar_bg"],
+                                        fg=COLORS["text_primary"], font=self.fonts["label"],
+                                        wraplength=170, justify="left")
+        self.account_label.pack(anchor="w")
+        logout_link = tk.Label(account_area, text="Log out", bg=COLORS["sidebar_bg"],
+                                 fg=COLORS["accent"], font=self.fonts["label"], cursor="hand2")
+        logout_link.pack(anchor="w", pady=(2, 0))
+        logout_link.bind("<Button-1>", lambda e: self._handle_logout())
+
+        tk.Frame(sidebar, bg=COLORS["border"], height=1).pack(fill="x")
         tk.Label(sidebar, text="TQM Q09 — Reduce Bugs", bg=COLORS["sidebar_bg"],
                   fg=COLORS["text_tertiary"], font=self.fonts["subheader"], wraplength=170,
                   justify="left").pack(anchor="w", padx=20, pady=14)
+
+    def _update_account_info(self, user: dict):
+        self.account_label.configure(text=f"{user['username']} · {user['role']}")
 
     def _create_screens(self):
         self.screens["Dashboard"] = DashboardScreen(self.content, self.fonts)
