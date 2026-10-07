@@ -18,7 +18,8 @@ import os
 import threading
 from datetime import datetime
 
-from app.config import ERROR_LOG_CSV, AUDIT_LOG_CSV, DEFECT_LOG_CSV, CURRENT_USER, CURRENT_ROLE
+from app.config import ERROR_LOG_CSV, AUDIT_LOG_CSV, DEFECT_LOG_CSV
+from app.utils import session
 
 _lock = threading.Lock()
 
@@ -71,7 +72,7 @@ def log_error(module: str, error_type: str, severity: str, action: str,
             "module": module,
             "error_type": error_type,
             "severity": severity,
-            "user_id": CURRENT_USER,
+            "user_id": session.get_user(),
             "action": action,
             "status": status,
             "message_reference": message_reference,
@@ -92,8 +93,8 @@ def log_audit(module: str, action: str, record_id: str, result: str,
     try:
         row = {
             "timestamp": datetime.now().isoformat(timespec="seconds"),
-            "user_id": CURRENT_USER,
-            "role": CURRENT_ROLE,
+            "user_id": session.get_user(),
+            "role": session.get_role(),
             "module": module,
             "action": action,
             "record_id": record_id,
