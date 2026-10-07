@@ -47,6 +47,9 @@ STATUS_FG = {
     "Resolved": "#15803D",
     "Active": "#15803D",
     "Released": "#71717A",
+    "In Progress": "#1D4ED8",
+    "Fixed": "#15803D",
+    "Closed": "#71717A",
 }
 
 
