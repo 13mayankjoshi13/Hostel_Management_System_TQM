@@ -117,6 +117,39 @@ def validate_resolution_notes(notes: str) -> str:
     return notes
 
 
+def validate_username(username: str) -> str:
+    if username is None or not str(username).strip():
+        raise ValidationError("Username cannot be empty.")
+    username = str(username).strip()
+    if len(username) < 3 or len(username) > 30:
+        raise ValidationError("Username must be between 3 and 30 characters.")
+    if not all(ch.isalnum() or ch == "_" for ch in username):
+        raise ValidationError("Username may only contain letters, numbers, and underscores.")
+    return username
+
+
+def validate_password(password: str) -> str:
+    if password is None or not str(password):
+        raise ValidationError("Password cannot be empty.")
+    if len(password) < 6:
+        raise ValidationError("Password must be at least 6 characters long.")
+    if not any(ch.isdigit() for ch in password):
+        raise ValidationError("Password must contain at least one digit.")
+    if not any(ch.isalpha() for ch in password):
+        raise ValidationError("Password must contain at least one letter.")
+    return password
+
+
+def validate_role(role: str) -> str:
+    allowed = {"Administrator", "Warden", "Staff"}
+    if role is None or not str(role).strip():
+        raise ValidationError("Role cannot be empty.")
+    role = str(role).strip().capitalize()
+    if role not in allowed:
+        raise ValidationError(f"Role must be one of: {', '.join(sorted(allowed))}.")
+    return role
+
+
 def validate_bug_module(module: str) -> str:
     allowed = {"Student", "Room", "Allocation", "Complaint", "Database", "UI", "Other"}
     if module is None or not str(module).strip():
