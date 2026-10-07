@@ -25,6 +25,13 @@ def run():
         return
 
     try:
+        from app.services.auth_service import ensure_default_admin
+        ensure_default_admin()
+    except Exception as exc:
+        log_error("Auth", type(exc).__name__, "Critical",
+                   "ensure_default_admin", status="Open", message_reference=str(exc))
+
+    try:
         from app.screens.main_window import MainWindow
         app = MainWindow()
         app.mainloop()
