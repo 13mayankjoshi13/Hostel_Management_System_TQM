@@ -71,6 +71,16 @@ def initialize_database(db_path: str = None) -> None:
     """)
 
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS bugs (
             bug_id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT NOT NULL,
