@@ -7,9 +7,9 @@ current GitHub repo (or upload the latest ZIP export) so the AI can see
 the actual current code, since this file describes the plan and status,
 not every line of code.
 
-Last updated: end of **Batch 8** (Quality Monitoring + SQC automation —
-Pareto chart and Fishbone diagram, generated live from real Bug Tracker
-data).
+Last updated: end of **Batch 9** (Authentication & Roles — a required
+login gate, real per-user attribution in every log, replacing the
+hard-coded `system_admin`).
 
 ---
 
@@ -79,8 +79,10 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 │   │   ├── allocation_service.py
 │   │   ├── complaint_service.py
 │   │   ├── bug_service.py        — Q09 feature #4: Bug Tracker (Batch 7)
-│   │   └── quality_service.py    — NEW in Batch 8: read-only Pareto/Fishbone data prep,
-│   │                                 never writes anything, reads real bug records only
+│   │   ├── quality_service.py    — Batch 8: read-only Pareto/Fishbone data prep,
+│   │   │                             never writes anything, reads real bug records only
+│   │   └── auth_service.py       — NEW in Batch 9: create_user(), authenticate(), logout(),
+│   │                                 ensure_default_admin() (PBKDF2 password hashing)
 │   │
 │   ├── screens/                 — RENAMED from app/ui/ in Batch 3; one file per screen
 │   │   ├── main_window.py        — REWRITTEN in Batch 6: persistent plain-text sidebar (no icons,
@@ -98,19 +100,26 @@ Hostel_Management_System-main/          (GitHub repo root — NO "Project
 │   │   ├── complaint_screen.py    — same pattern; description Text box explicitly themed (color
 │   │                                 bug first fixed in Batch 5, still correct here)
 │   │   ├── bug_screen.py          — Batch 7: log/Start Progress/Mark Fixed/Close Bug UI
-│   │   └── quality_screen.py      — NEW in Batch 8: KPI strip + Canvas-drawn Pareto chart +
-│   │                                 Canvas-drawn Fishbone diagram (no charting library used)
+│   │   ├── quality_screen.py      — Batch 8: KPI strip + Canvas-drawn Pareto chart +
+│   │   │                             Canvas-drawn Fishbone diagram (no charting library used)
+│   │   └── login_screen.py        — NEW in Batch 9: modal login (Toplevel), shown after splash,
+│   │                                 before the main window's content; closing it is disabled
 │   │
 │   └── utils/
 │       ├── validation.py        — Strict Validation (Q09 feature #2)
-│       ├── logging_service.py   — writes TQM/data/error_logs.csv + audit_logs.csv
-│       └── exception_handler.py — Exception Handling (Q09 feature #1)
+│       ├── logging_service.py   — writes TQM/data/error_logs.csv + audit_logs.csv + defect_log.csv;
+│       │                           reads WHO via app.utils.session since Batch 9 (not a static constant)
+│       ├── exception_handler.py — Exception Handling (Q09 feature #1)
+│       └── session.py           — NEW in Batch 9: runtime "who's logged in right now"
 │
 ├── tests/                        — Module Tests (Q09 feature #3)
 │   ├── test_validation.py        (22 tests)
 │   ├── test_allocation.py        (9 tests)
-│   └── test_complaint.py         (14 tests)
-│   → 45 tests total, all passing as of Batch 3
+│   ├── test_complaint.py         (14 tests)
+│   ├── test_bug.py               (17 tests, Batch 7)
+│   ├── test_quality.py           (7 tests, Batch 8)
+│   └── test_auth.py              (16 tests, Batch 9)
+│   → 85 tests total, all passing as of Batch 9
 │
 ├── docs/                         — normal project documentation (untouched since foundation)
 │   ├── project_overview.md, vision.md, mission.md, quality_objectives.md,
@@ -307,21 +316,57 @@ Error Logs (Batch 1), Bug Tracker (Batch 7).
      yet, instead of guessing a fallback number that might be wrong in
      either direction.
 
-**Commit count so far:** ~49 meaningful commits across all batches.
+**Batch 9 — Authentication & Roles:**
+- Flow: Splash → **Login (modal, required)** → Dashboard. The main
+  window stays `withdraw()`n until `authenticate()` succeeds; closing
+  the login window via the OS close button is disabled on purpose
+  (`protocol("WM_DELETE_WINDOW", lambda: None)`) since the app isn't
+  usable without a session.
+- Roles are exactly the stakeholders the project's own customer
+  definition names: **Administrator, Warden, Staff** (`validate_role`).
+- Passwords: PBKDF2-HMAC-SHA256, 100,000 iterations, random 16-byte
+  salt per user, stored as `"<salt_hex>:<hash_hex>"`. Standard-library
+  only (`hashlib`) — no new dependency added.
+- Login failure shows one generic message regardless of whether the
+  username or password was wrong (standard practice, not a bug if it
+  looks "unhelpful" — don't change this without a reason).
+- `app/utils/session.py` is plain module-level state (not a class/
+  singleton) — deliberate, since the app is single-user-per-process (one
+  Tkinter window). `logging_service.py` now calls `session.get_user()`
+  / `session.get_role()` at log time instead of importing a static
+  constant, so every audit/error/defect log entry shows the real
+  logged-in user from this batch onward.
+- **First-run bootstrap**: `ensure_default_admin()` (called from
+  `app/main.py` right after `initialize_database()`) creates one
+  default account — `admin` / `admin123` — only if the `users` table is
+  empty. Shown as a hint on the login screen itself.
+- No user-management screen yet — `create_user()` exists in
+  `auth_service.py` but there's no UI for an admin to add Warden/Staff
+  accounts or change the default password. Noted as the top item in
+  "What's NOT Built" below.
+- 16 new tests (85 total).
+- **Bug caught and fixed while visually verifying this batch**: same
+  class of issue as the Batch 6 splash-screen sizing bug — the login
+  window's first size (380×300) clipped both the title and the bottom
+  of the form. Fixed by enlarging to 440×380. Re-verified with a full
+  login → wrong password → correct password → navigate → logout cycle,
+  screenshotted at every step.
+
+**Commit count so far:** ~57 meaningful commits across all batches.
 
 ## 5. What's NOT Built Yet (in planned order)
 
-1. **PDCA documentation** — tie a real recurring issue (once one
+1. **User-management screen** — a UI for `create_user()` so an admin
+   can add Warden/Staff accounts and change the default admin password
+   without dropping into a Python shell. The service layer already
+   supports this; only the screen is missing.
+2. **PDCA documentation** — tie a real recurring issue (once one
    exists) to a written Plan-Do-Check-Act cycle in `TQM/PDCA.md`. This
-   is authored analysis, not something to auto-generate from code, so
-   it wasn't part of Batch 8's code-generated SQC tools.
-2. **Authentication / roles** — currently every audit/error/defect log
-   entry is hard-coded to `system_admin` / `Administrator` in
-   `app/config.py` (`CURRENT_USER`, `CURRENT_ROLE`). No login screen
-   exists.
+   is authored analysis, not something to auto-generate from code.
 3. **Final documentation pass** — updating `docs/testing.md`,
    `TQM/requirements_traceability.md`, etc. with real, non-placeholder
-   evidence now that the app has real test and defect data behind it.
+   evidence now that the app has real test, defect, and auth data
+   behind it.
 
 ## 6. Working Conventions (apply to every future batch)
 
@@ -370,7 +415,13 @@ Error Logs (Batch 1), Bug Tracker (Batch 7).
   any extra vertical content (Batch 5's breadcrumb row; Batch 8's second
   stacked chart panel) can push content below the visible window and
   clip it silently (no error, just an invisible or truncated widget).
-  Current window size is 1150×820 / minsize 980×680 as of Batch 8. If a
+  Same bug hit the Batch 9 login window too (a separate fixed-size
+  `Toplevel`, 380×300, too small for its own content) — fixed by
+  enlarging to 440×380. This has now happened three times (Batch 5,
+  Batch 8, Batch 9): **always check a new fixed-size window/Toplevel
+  against its actual content via the virtual-display screenshot
+  process**, don't assume a size "looks about right."
+  Main window size is 1150×820 / minsize 980×680 as of Batch 8. If a
   future batch adds more vertical content to any screen, either
   re-verify visually (virtual display + screenshot — don't skip this)
   or consider adding a scrollable canvas wrapper instead of continuing
@@ -391,10 +442,9 @@ Error Logs (Batch 1), Bug Tracker (Batch 7).
 
 ## 7. How to Continue From Here
 
-Tell the new AI: *"Continue from Batch 8 — Quality Monitoring and SQC
-automation (Pareto + Fishbone) are built; next is PDCA documentation,
-authentication/roles, or a final documentation pass. Here's the current
-repo/ZIP."* and attach the latest
+Tell the new AI: *"Continue from Batch 9 — login/auth is built; next is
+a user-management screen, PDCA documentation, or a final documentation
+pass. Here's the current repo/ZIP."* and attach the latest
 export of the repository. The AI should:
 1. Read this handoff file fully before writing any code.
 2. Confirm the current file structure matches section 3 above (ask to
