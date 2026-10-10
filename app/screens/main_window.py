@@ -25,6 +25,8 @@ from app.screens.allocation_screen import AllocationScreen
 from app.screens.complaint_screen import ComplaintScreen
 from app.screens.bug_screen import BugScreen
 from app.screens.quality_screen import QualityScreen
+from app.screens.user_screen import UserScreen
+from app.utils import session
 
 _NAV_ITEMS = [
     ("Dashboard", "Dashboard"),
@@ -34,7 +36,10 @@ _NAV_ITEMS = [
     ("Complaints", "Complaints"),
     ("Bugs", "Bug Tracker"),
     ("Quality", "Quality Monitoring"),
+    ("Users", "User Management"),
 ]
+
+_ADMIN_ONLY = {"Users"}
 
 
 class MainWindow(tk.Tk):
@@ -47,6 +52,7 @@ class MainWindow(tk.Tk):
         self.fonts = apply_theme(self)
         self.screens = {}
         self._nav_rows = {}
+        self._nav_frames = {}
 
         body = tk.Frame(self, bg=COLORS["background"])
         body.pack(fill="both", expand=True)
@@ -69,6 +75,11 @@ class MainWindow(tk.Tk):
 
     def _enter_app(self, user: dict):
         self._update_account_info(user)
+        for key in _ADMIN_ONLY:
+            if user["role"] == "Administrator":
+                self._nav_frames[key].pack(fill="x")
+            else:
+                self._nav_frames[key].pack_forget()
         self.deiconify()
         self.show_screen("Dashboard")
 
@@ -105,6 +116,7 @@ class MainWindow(tk.Tk):
             btn.bind("<Button-1>", lambda e, k=key: self.show_screen(k))
             bind_hover(btn, COLORS["sidebar_bg"], "#EFEFF1")
             self._nav_rows[key] = (bar, btn)
+            self._nav_frames[key] = row
 
         tk.Frame(sidebar, bg=COLORS["sidebar_bg"]).pack(fill="both", expand=True)
         tk.Frame(sidebar, bg=COLORS["border"], height=1).pack(fill="x")
@@ -136,10 +148,13 @@ class MainWindow(tk.Tk):
         self.screens["Complaints"] = ComplaintScreen(self.content, self.fonts)
         self.screens["Bugs"] = BugScreen(self.content, self.fonts)
         self.screens["Quality"] = QualityScreen(self.content, self.fonts)
+        self.screens["Users"] = UserScreen(self.content, self.fonts)
         for screen in self.screens.values():
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
 
     def show_screen(self, key: str):
+        if key in _ADMIN_ONLY and session.get_role() != "Administrator":
+            return
         self.screens[key].tkraise()
         self.screens[key].refresh()
         for nav_key, (bar, btn) in self._nav_rows.items():
