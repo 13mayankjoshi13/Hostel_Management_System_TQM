@@ -138,3 +138,69 @@ def ensure_default_admin() -> None:
                    status="Open", message_reference=str(exc))
     finally:
         conn.close()
+
+
+def list_users() -> list:
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT user_id, username, role, created_at FROM users ORDER BY user_id")
+        return [dict(r) for r in cur.fetchall()]
+    except sqlite3.Error as exc:
+        log_error("User", "DatabaseError", "High", "list_users",
+                   status="Open", message_reference=str(exc))
+        return []
+    finally:
+        conn.close()
+
+
+def change_password(user_id: int, new_password: str) -> None:
+    clean_password = validate_password(new_password)
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users WHERE user_id = ?", (user_id,))
+        row = cur.fetchone()
+        if row is None:
+            raise ValidationError("That user account does not exist.")
+        cur.execute("UPDATE users SET password_hash = ? WHERE user_id = ?",
+                    (_hash_password(clean_password), user_id))
+        conn.commit()
+        log_audit("User", "ChangePassword", str(user_id), "Success",
+                   f"Password changed for '{row['username']}'.")
+    except ValidationError:
+        raise
+    except sqlite3.Error as exc:
+        log_error("User", "DatabaseError", "High", "change_password",
+                   status="Open", message_reference=str(exc))
+        raise ValidationError("Could not change the password due to a database error.")
+    finally:
+        conn.close()
+
+
+def delete_user(user_id: int) -> None:
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT username, role FROM users WHERE user_id = ?", (user_id,))
+        row = cur.fetchone()
+        if row is None:
+            raise ValidationError("That user account does not exist.")
+        if row["username"] == session.get_user() and session.is_logged_in():
+            raise ValidationError("You cannot delete the account you are logged in with.")
+        if row["role"] == "Administrator":
+            cur.execute("SELECT COUNT(*) AS n FROM users WHERE role = 'Administrator'")
+            if cur.fetchone()["n"] <= 1:
+                raise ValidationError("Cannot delete the last remaining Administrator.")
+        cur.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+        conn.commit()
+        log_audit("User", "Delete", str(user_id), "Success",
+                   f"Deleted account '{row['username']}'.")
+    except ValidationError:
+        raise
+    except sqlite3.Error as exc:
+        log_error("User", "DatabaseError", "High", "delete_user",
+                   status="Open", message_reference=str(exc))
+        raise ValidationError("Could not delete the account due to a database error.")
+    finally:
+        conn.close()
