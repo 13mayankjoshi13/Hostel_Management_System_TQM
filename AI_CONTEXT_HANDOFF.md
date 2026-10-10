@@ -442,9 +442,9 @@ Error Logs (Batch 1), Bug Tracker (Batch 7).
 
 ## 7. How to Continue From Here
 
-Tell the new AI: *"Continue from Batch 9 — login/auth is built; next is
-a user-management screen, PDCA documentation, or a final documentation
-pass. Here's the current repo/ZIP."* and attach the latest
+Tell the new AI: *"Continue from Batch 10 — login/auth and the
+admin-only User Management screen are built (93 tests); next is PDCA
+documentation (TQM/PDCA.md) or a final documentation pass. Here's the current repo/ZIP."* and attach the latest
 export of the repository. The AI should:
 1. Read this handoff file fully before writing any code.
 2. Confirm the current file structure matches section 3 above (ask to
@@ -452,3 +452,9 @@ export of the repository. The AI should:
 3. Follow the working conventions in section 6 for the new batch.
 4. Update this `AI_CONTEXT_HANDOFF.md` at the end of the new batch with
    what changed, and include it in the new ZIP.
+
+## 8. Batch 10 — User Management
+- `auth_service`: `list_users`, `change_password`, `delete_user` (guards: not own account, not last Administrator).
+- `screens/user_screen.py` + admin-only sidebar item "User Management" (hidden for Warden/Staff; `show_screen` also blocks them).
+- 8 new tests in `tests/test_auth.py` (93 total passing).
+- UI for this batch was NOT screenshot-verified (no tkinter in that build environment) — verify visually first next time.
