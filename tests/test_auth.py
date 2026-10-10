@@ -143,6 +143,53 @@ class TestAuthentication(unittest.TestCase):
         with self.assertRaises(ValidationError):
             auth_service.authenticate("admin", "admin123")
 
+    # ---- user management ----
+
+    def test_list_users_excludes_password_hash(self):
+        auth_service.create_user("warden1", "Secret123", "Warden")
+        users = auth_service.list_users()
+        self.assertEqual(len(users), 1)
+        self.assertNotIn("password_hash", users[0])
+
+    def test_change_password_allows_new_login_and_blocks_old(self):
+        uid = auth_service.create_user("warden1", "Secret123", "Warden")
+        auth_service.change_password(uid, "Newpass456")
+        auth_service.authenticate("warden1", "Newpass456")
+        with self.assertRaises(ValidationError):
+            auth_service.authenticate("warden1", "Secret123")
+
+    def test_change_password_rejects_weak_password(self):
+        uid = auth_service.create_user("warden1", "Secret123", "Warden")
+        with self.assertRaises(ValidationError):
+            auth_service.change_password(uid, "abc")
+
+    def test_change_password_unknown_user(self):
+        with self.assertRaises(ValidationError):
+            auth_service.change_password(999, "Secret123")
+
+    def test_delete_user_removes_account(self):
+        auth_service.create_user("admin1", "Secret123", "Administrator")
+        uid = auth_service.create_user("staff1", "Secret123", "Staff")
+        auth_service.delete_user(uid)
+        self.assertEqual([u["username"] for u in auth_service.list_users()], ["admin1"])
+
+    def test_delete_own_account_blocked(self):
+        uid = auth_service.create_user("admin1", "Secret123", "Administrator")
+        auth_service.create_user("admin2", "Secret123", "Administrator")
+        auth_service.authenticate("admin1", "Secret123")
+        with self.assertRaises(ValidationError):
+            auth_service.delete_user(uid)
+
+    def test_delete_last_administrator_blocked(self):
+        uid = auth_service.create_user("admin1", "Secret123", "Administrator")
+        with self.assertRaises(ValidationError):
+            auth_service.delete_user(uid)
+        self.assertEqual(len(auth_service.list_users()), 1)
+
+    def test_delete_unknown_user(self):
+        with self.assertRaises(ValidationError):
+            auth_service.delete_user(999)
+
 
 if __name__ == "__main__":
     unittest.main()
