@@ -18,7 +18,7 @@ The matrix will be expanded as additional functional requirements and test cases
 | CR-01 | `tests/test_validation.py` |
 | CR-04 | `tests/test_allocation.py` |
 | CR-07 | `tests/test_bug.py` |
-| CR-08 | Full suite: 114 tests passing (Batch 15) |
+| CR-08 | Full suite: 132 tests passing (Batch 16) |
 | CR-06 | `tests/test_logging.py` (error-log fields, sequential IDs, never raises) |
 | CR-09 | `tests/test_logging.py` (audit-log fields, append-only, never raises) |
 
@@ -31,3 +31,11 @@ The matrix will be expanded as additional functional requirements and test cases
 | CR-13 | Leave Tracking (leave requires an active room) | `tests/test_leave.py` |
 
 Quality Objective IDs for CR-11 to CR-13 are not yet defined.
+
+## Student Portal (Batch 16)
+
+| Customer Req. | Software Feature | Test Evidence |
+|---|---|---|
+| CR-14 | Student role, My Room / My Complaints / My Leave, ownership checks in `student_portal_service` | `tests/test_student_portal.py` |
+
+Quality Objective ID for CR-14 is not yet defined.
