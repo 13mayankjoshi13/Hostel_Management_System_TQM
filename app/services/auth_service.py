@@ -37,11 +37,15 @@ def _verify_password(password: str, stored: str) -> bool:
     return candidate.hex() == digest_hex
 
 
-def create_user(username: str, password: str, role: str) -> int:
-    """Validate and insert a new user account. Returns the new user_id."""
+def create_user(username: str, password: str, role: str, student_id: int = None) -> int:
+    """Validate and insert a new user account. Student accounts must link to a student record."""
     clean_username = validate_username(username)
     clean_password = validate_password(password)
     clean_role = validate_role(role)
+    if clean_role != "Student" and student_id is not None:
+        raise ValidationError("Only Student accounts can be linked to a student record.")
+    if clean_role == "Student" and student_id is None:
+        raise ValidationError("A Student account must be linked to a student record.")
 
     conn = get_connection()
     try:
@@ -49,10 +53,17 @@ def create_user(username: str, password: str, role: str) -> int:
         cur.execute("SELECT user_id FROM users WHERE username = ?", (clean_username,))
         if cur.fetchone() is not None:
             raise ValidationError(f"Username '{clean_username}' is already taken.")
+        if clean_role == "Student":
+            cur.execute("SELECT student_id FROM students WHERE student_id = ?", (student_id,))
+            if cur.fetchone() is None:
+                raise ValidationError("The selected student does not exist.")
+            cur.execute("SELECT user_id FROM users WHERE student_id = ?", (student_id,))
+            if cur.fetchone() is not None:
+                raise ValidationError("This student already has an account.")
 
         cur.execute(
-            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-            (clean_username, _hash_password(clean_password), clean_role),
+            "INSERT INTO users (username, password_hash, role, student_id) VALUES (?, ?, ?, ?)",
+            (clean_username, _hash_password(clean_password), clean_role, student_id),
         )
         conn.commit()
         user_id = cur.lastrowid
@@ -90,10 +101,11 @@ def authenticate(username: str, password: str) -> dict:
         if user is None or not _verify_password(password, user["password_hash"]):
             raise ValidationError("Invalid username or password.")
 
-        session.set_session(user["username"], user["role"])
+        session.set_session(user["username"], user["role"], user["student_id"])
         log_audit("Auth", "Login", str(user["user_id"]), "Success",
                    f"'{user['username']}' logged in.")
-        return {"user_id": user["user_id"], "username": user["username"], "role": user["role"]}
+        return {"user_id": user["user_id"], "username": user["username"],
+                "role": user["role"], "student_id": user["student_id"]}
 
     except ValidationError:
         raise
@@ -144,7 +156,11 @@ def list_users() -> list:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT user_id, username, role, created_at FROM users ORDER BY user_id")
+        cur.execute("""
+            SELECT u.user_id, u.username, u.role, u.created_at, u.student_id, s.name AS student_name
+            FROM users u LEFT JOIN students s ON s.student_id = u.student_id
+            ORDER BY u.user_id
+        """)
         return [dict(r) for r in cur.fetchall()]
     except sqlite3.Error as exc:
         log_error("User", "DatabaseError", "High", "list_users",
