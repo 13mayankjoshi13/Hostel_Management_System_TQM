@@ -9,6 +9,7 @@ the cleaned value on success, so callers can do:
 
 instead of checking booleans everywhere.
 """
+from datetime import datetime
 
 
 class ValidationError(Exception):
@@ -75,7 +76,7 @@ def validate_capacity(capacity) -> int:
 
 
 def validate_complaint_category(category: str) -> str:
-    allowed = {"Maintenance", "Cleanliness", "Noise", "Security", "Food", "Other"}
+    allowed = {"Maintenance", "Washroom", "Cleanliness", "Noise", "Security", "Food", "Other"}
     if category is None or not str(category).strip():
         raise ValidationError("Complaint category cannot be empty.")
     category = str(category).strip().capitalize()
@@ -93,6 +94,28 @@ def validate_complaint_description(description: str) -> str:
     if len(description) > 500:
         raise ValidationError("Complaint description cannot exceed 500 characters.")
     return description
+
+
+def validate_leave_dates(from_date: str, to_date: str) -> tuple:
+    try:
+        start = datetime.strptime(str(from_date).strip(), "%Y-%m-%d").date()
+        end = datetime.strptime(str(to_date).strip(), "%Y-%m-%d").date()
+    except ValueError:
+        raise ValidationError("Dates must be in YYYY-MM-DD format.")
+    if end < start:
+        raise ValidationError("The leave end date cannot be before the start date.")
+    return start.isoformat(), end.isoformat()
+
+
+def validate_leave_reason(reason: str) -> str:
+    if reason is None or not str(reason).strip():
+        raise ValidationError("Leave reason cannot be empty.")
+    reason = str(reason).strip()
+    if len(reason) < 3:
+        raise ValidationError("Leave reason must be at least 3 characters long.")
+    if len(reason) > 200:
+        raise ValidationError("Leave reason cannot exceed 200 characters.")
+    return reason
 
 
 def validate_assigned_to(name: str) -> str:
