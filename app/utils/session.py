@@ -16,18 +16,25 @@ from app.config import CURRENT_USER as _FALLBACK_USER, CURRENT_ROLE as _FALLBACK
 
 _username = None
 _role = None
+_student_id = None
 
 
-def set_session(username: str, role: str) -> None:
-    global _username, _role
+def set_session(username: str, role: str, student_id: int = None) -> None:
+    global _username, _role, _student_id
     _username = username
     _role = role
+    _student_id = student_id
 
 
 def clear_session() -> None:
-    global _username, _role
+    global _username, _role, _student_id
     _username = None
     _role = None
+    _student_id = None
+
+
+def get_student_id():
+    return _student_id
 
 
 def is_logged_in() -> bool:
