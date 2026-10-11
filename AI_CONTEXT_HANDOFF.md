@@ -470,3 +470,9 @@ export of the repository. The AI should:
 ## 11. Batch 14 — Exception handler tests
 - `tests/test_exception_handler.py` (2 tests; tkinter stubbed so it runs headless). Suite: 102 tests.
 - Remaining: visual check of User Management; real defect counts.
+
+## 12. Batch 15 — Hosteller feedback features
+- Source: hosteller interview 28/09/2026 (food/maintenance/washroom complaints, allotment list, leave tracking). Recorded in `TQM/customer_requirements.md` as CR-11 to CR-13.
+- New: `leaves` table, `services/leave_service.py`, `screens/leave_screen.py` (sidebar "Leave Tracking"), `allocation_service.export_allocation_list` + "Export List (CSV)" button, "Washroom" complaint category.
+- 12 new tests in `tests/test_leave.py`; suite is 114. UI not screenshot-verified (no tkinter in build environment).
+- Quality Objective IDs for CR-11 to CR-13 not yet defined.
