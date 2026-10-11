@@ -442,7 +442,7 @@ Error Logs (Batch 1), Bug Tracker (Batch 7).
 
 ## 7. How to Continue From Here
 
-Tell the new AI: *"Continue from Batch 11 — auth, User Management and PDCA/testing docs are done (93 tests); next is the missing error-log/audit-log tests and a final documentation pass. Here's the current repo/ZIP."* and attach the latest
+Tell the new AI: *"Continue from Batch 11 — auth, User Management and PDCA/testing docs are done (100 tests, incl. error/audit log tests from Batch 12); next is a final documentation pass and a visual check of the User Management screen. Here's the current repo/ZIP."* and attach the latest
 export of the repository. The AI should:
 1. Read this handoff file fully before writing any code.
 2. Confirm the current file structure matches section 3 above (ask to
@@ -459,5 +459,6 @@ export of the repository. The AI should:
 
 ## 9. Batch 11 — PDCA and documentation
 - Appended (never overwrote) to , , .
-- Gaps still open: tests for error-log and audit-log fields (CR-06, CR-09); real defect counts; visual check of the User Management screen.
-- Next: add those tests, then final portfolio/README pass.
+- Batch 12 added `tests/test_logging.py` (7 tests) closing the CR-06/CR-09 gaps; suite is 100 tests.
+- Gaps still open: real defect counts; visual check of the User Management screen; `exception_handler` untested.
+- Next: final portfolio/README pass.
