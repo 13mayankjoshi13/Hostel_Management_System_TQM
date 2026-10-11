@@ -23,6 +23,7 @@ from app.screens.student_screen import StudentScreen
 from app.screens.room_screen import RoomScreen
 from app.screens.allocation_screen import AllocationScreen
 from app.screens.complaint_screen import ComplaintScreen
+from app.screens.leave_screen import LeaveScreen
 from app.screens.bug_screen import BugScreen
 from app.screens.quality_screen import QualityScreen
 from app.screens.user_screen import UserScreen
@@ -34,6 +35,7 @@ _NAV_ITEMS = [
     ("Rooms", "Rooms"),
     ("Allocation", "Room Allocation"),
     ("Complaints", "Complaints"),
+    ("Leaves", "Leave Tracking"),
     ("Bugs", "Bug Tracker"),
     ("Quality", "Quality Monitoring"),
     ("Users", "User Management"),
@@ -146,6 +148,7 @@ class MainWindow(tk.Tk):
         self.screens["Rooms"] = RoomScreen(self.content, self.fonts)
         self.screens["Allocation"] = AllocationScreen(self.content, self.fonts)
         self.screens["Complaints"] = ComplaintScreen(self.content, self.fonts)
+        self.screens["Leaves"] = LeaveScreen(self.content, self.fonts)
         self.screens["Bugs"] = BugScreen(self.content, self.fonts)
         self.screens["Quality"] = QualityScreen(self.content, self.fonts)
         self.screens["Users"] = UserScreen(self.content, self.fonts)
