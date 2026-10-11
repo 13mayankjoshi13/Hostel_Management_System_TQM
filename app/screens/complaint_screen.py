@@ -10,7 +10,7 @@ from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, status_tag
 
-_CATEGORIES = ["Maintenance", "Cleanliness", "Noise", "Security", "Food", "Other"]
+_CATEGORIES = ["Maintenance", "Washroom", "Cleanliness", "Noise", "Security", "Food", "Other"]
 
 
 class ComplaintScreen(tk.Frame):
