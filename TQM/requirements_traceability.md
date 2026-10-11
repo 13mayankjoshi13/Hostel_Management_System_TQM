@@ -18,6 +18,6 @@ The matrix will be expanded as additional functional requirements and test cases
 | CR-01 | `tests/test_validation.py` |
 | CR-04 | `tests/test_allocation.py` |
 | CR-07 | `tests/test_bug.py` |
-| CR-08 | Full suite: 100 tests passing (Batch 12) |
+| CR-08 | Full suite: 102 tests passing (Batch 14) |
 | CR-06 | `tests/test_logging.py` (error-log fields, sequential IDs, never raises) |
 | CR-09 | `tests/test_logging.py` (audit-log fields, append-only, never raises) |
