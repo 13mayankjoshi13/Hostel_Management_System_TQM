@@ -458,7 +458,15 @@ export of the repository. The AI should:
 - UI for this batch was NOT screenshot-verified (no tkinter in that build environment) — verify visually first next time.
 
 ## 9. Batch 11 — PDCA and documentation
-- Appended (never overwrote) to , , .
+- Appended (never overwrote) to `TQM/PDCA.md`, `docs/testing.md`, `TQM/requirements_traceability.md`.
 - Batch 12 added `tests/test_logging.py` (7 tests) closing the CR-06/CR-09 gaps; suite is 100 tests.
-- Gaps still open: real defect counts; visual check of the User Management screen; `exception_handler` untested.
+- Gaps still open: real defect counts; visual check of the User Management screen; `exception_handler` now covered (Batch 14).
 - Next: final portfolio/README pass.
+
+## 10. Batch 13 — README and architecture update
+- Appended (never overwrote) "Implementation Status" and "Run" to `README.md`, and "Code Layout" to `docs/architecture.md`.
+- Remaining: visual check of User Management, real defect counts, `exception_handler` now covered (Batch 14).
+
+## 11. Batch 14 — Exception handler tests
+- `tests/test_exception_handler.py` (2 tests; tkinter stubbed so it runs headless). Suite: 102 tests.
+- Remaining: visual check of User Management; real defect counts.
