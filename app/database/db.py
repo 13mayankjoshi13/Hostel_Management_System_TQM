@@ -98,5 +98,21 @@ def initialize_database(db_path: str = None) -> None:
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS leaves (
+            leave_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            room_id INTEGER NOT NULL,
+            from_date TEXT NOT NULL,
+            to_date TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'On Leave',
+            returned_at TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (student_id) REFERENCES students(student_id),
+            FOREIGN KEY (room_id) REFERENCES rooms(room_id)
+        )
+    """)
+
     conn.commit()
     conn.close()
