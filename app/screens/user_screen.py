@@ -2,12 +2,12 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 
-from app.services import auth_service
+from app.services import auth_service, student_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import COLORS, section_header, form_row, build_panel
 
-_ROLES = ["Administrator", "Warden", "Staff"]
+_ROLES = ["Administrator", "Warden", "Staff", "Student"]
 
 
 class UserScreen(tk.Frame):
@@ -15,6 +15,7 @@ class UserScreen(tk.Frame):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
         self._rows = {}
+        self._student_options = {}
         section_header(self, "User Management",
                         "Create accounts, reset passwords and remove access.", fonts)
         self._build_form()
@@ -37,18 +38,22 @@ class UserScreen(tk.Frame):
         form_row(wrapper, self.fonts, 2, "Role", ttk.Combobox(
             wrapper, textvariable=self.role_var, values=_ROLES, state="readonly"))
 
+        self.student_var = tk.StringVar()
+        self.student_combo = ttk.Combobox(wrapper, textvariable=self.student_var, state="readonly")
+        form_row(wrapper, self.fonts, 3, "Student (Student role)", self.student_combo)
+
         ttk.Button(wrapper, text="Create Account", style="Primary.TButton",
-                    command=self.on_create).grid(row=3, column=1, sticky="w", pady=(10, 0))
+                    command=self.on_create).grid(row=4, column=1, sticky="w", pady=(10, 0))
 
     def _build_table(self):
         wrapper = tk.Frame(self, bg=COLORS["background"])
         wrapper.pack(fill="both", expand=True, padx=28, pady=(0, 24))
         content = build_panel(wrapper, "Accounts", self.fonts)
 
-        columns = ("id", "username", "role", "created")
+        columns = ("id", "username", "role", "student", "created")
         self.tree = ttk.Treeview(content, columns=columns, show="headings", height=8)
-        for col, label, width in zip(columns, ("ID", "Username", "Role", "Created"),
-                                      (50, 200, 140, 180)):
+        for col, label, width in zip(columns, ("ID", "Username", "Role", "Linked student", "Created"),
+                                      (50, 160, 110, 160, 160)):
             self.tree.heading(col, text=label)
             self.tree.column(col, width=width, anchor="w")
         self.tree.pack(fill="both", expand=True)
@@ -62,9 +67,12 @@ class UserScreen(tk.Frame):
 
     def on_create(self):
         try:
-            auth_service.create_user(self.username_var.get(), self.password_var.get(), self.role_var.get())
+            student_id = self._student_options.get(self.student_var.get())
+            auth_service.create_user(self.username_var.get(), self.password_var.get(),
+                                      self.role_var.get(), student_id if self.role_var.get() == "Student" else None)
             self.username_var.set("")
             self.password_var.set("")
+            self.student_var.set("")
             self.refresh()
             messagebox.showinfo("Success", "Account created.")
         except ValidationError as e:
@@ -114,7 +122,15 @@ class UserScreen(tk.Frame):
         for row in self.tree.get_children():
             self.tree.delete(row)
         self._rows = {}
-        for user in auth_service.list_users():
+        users = auth_service.list_users()
+        linked = {u["student_id"] for u in users if u["student_id"] is not None}
+        self._student_options = {
+            f"{s['name']} ({s['registration_number']})": s["student_id"]
+            for s in student_service.get_all_students() if s["student_id"] not in linked
+        }
+        self.student_combo["values"] = list(self._student_options.keys())
+        for user in users:
             item = self.tree.insert("", "end", values=(
-                user["user_id"], user["username"], user["role"], user["created_at"]))
+                user["user_id"], user["username"], user["role"],
+                user["student_name"] or "—", user["created_at"]))
             self._rows[item] = user
