@@ -27,6 +27,9 @@ from app.screens.leave_screen import LeaveScreen
 from app.screens.bug_screen import BugScreen
 from app.screens.quality_screen import QualityScreen
 from app.screens.user_screen import UserScreen
+from app.screens.my_room_screen import MyRoomScreen
+from app.screens.my_complaints_screen import MyComplaintsScreen
+from app.screens.my_leave_screen import MyLeaveScreen
 from app.utils import session
 
 _NAV_ITEMS = [
@@ -39,9 +42,23 @@ _NAV_ITEMS = [
     ("Bugs", "Bug Tracker"),
     ("Quality", "Quality Monitoring"),
     ("Users", "User Management"),
+    ("MyRoom", "My Room"),
+    ("MyComplaints", "My Complaints"),
+    ("MyLeave", "My Leave"),
 ]
 
 _ADMIN_ONLY = {"Users"}
+_STUDENT_ONLY = {"MyRoom", "MyComplaints", "MyLeave"}
+
+
+def _allowed_screens(role: str) -> list:
+    keys = [key for key, _ in _NAV_ITEMS]
+    if role == "Student":
+        return [k for k in keys if k in _STUDENT_ONLY]
+    allowed = [k for k in keys if k not in _STUDENT_ONLY]
+    if role != "Administrator":
+        allowed = [k for k in allowed if k not in _ADMIN_ONLY]
+    return allowed
 
 
 class MainWindow(tk.Tk):
@@ -77,13 +94,14 @@ class MainWindow(tk.Tk):
 
     def _enter_app(self, user: dict):
         self._update_account_info(user)
-        for key in _ADMIN_ONLY:
-            if user["role"] == "Administrator":
+        allowed = _allowed_screens(user["role"])
+        for frame in self._nav_frames.values():
+            frame.pack_forget()
+        for key, _ in _NAV_ITEMS:
+            if key in allowed:
                 self._nav_frames[key].pack(fill="x")
-            else:
-                self._nav_frames[key].pack_forget()
         self.deiconify()
-        self.show_screen("Dashboard")
+        self.show_screen(allowed[0])
 
     def _handle_logout(self):
         auth_service.logout()
@@ -152,11 +170,14 @@ class MainWindow(tk.Tk):
         self.screens["Bugs"] = BugScreen(self.content, self.fonts)
         self.screens["Quality"] = QualityScreen(self.content, self.fonts)
         self.screens["Users"] = UserScreen(self.content, self.fonts)
+        self.screens["MyRoom"] = MyRoomScreen(self.content, self.fonts)
+        self.screens["MyComplaints"] = MyComplaintsScreen(self.content, self.fonts)
+        self.screens["MyLeave"] = MyLeaveScreen(self.content, self.fonts)
         for screen in self.screens.values():
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
 
     def show_screen(self, key: str):
-        if key in _ADMIN_ONLY and session.get_role() != "Administrator":
+        if key not in _allowed_screens(session.get_role()):
             return
         self.screens[key].tkraise()
         self.screens[key].refresh()
