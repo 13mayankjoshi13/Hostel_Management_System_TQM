@@ -18,6 +18,16 @@ The matrix will be expanded as additional functional requirements and test cases
 | CR-01 | `tests/test_validation.py` |
 | CR-04 | `tests/test_allocation.py` |
 | CR-07 | `tests/test_bug.py` |
-| CR-08 | Full suite: 102 tests passing (Batch 14) |
+| CR-08 | Full suite: 114 tests passing (Batch 15) |
 | CR-06 | `tests/test_logging.py` (error-log fields, sequential IDs, never raises) |
 | CR-09 | `tests/test_logging.py` (audit-log fields, append-only, never raises) |
+
+## Hosteller Requirements (Batch 15)
+
+| Customer Req. | Software Feature | Test Evidence |
+|---|---|---|
+| CR-11 | Complaint categories incl. Food, Maintenance, Washroom | `tests/test_complaint.py`, `tests/test_leave.py::test_washroom_complaint_category_accepted` |
+| CR-12 | Allotment list export (CSV) | `tests/test_leave.py` (export tests) |
+| CR-13 | Leave Tracking (leave requires an active room) | `tests/test_leave.py` |
+
+Quality Objective IDs for CR-11 to CR-13 are not yet defined.
