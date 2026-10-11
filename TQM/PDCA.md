@@ -52,4 +52,4 @@ Only cycles that actually occurred during development are listed. Quantitative b
 ## Open Items
 
 - Collect real defect counts (found / fixed / repeated) from the Bug Tracker before claiming improvement.
-- Add explicit tests for error-log and audit-log record fields (currently not covered).
+- Error-log and audit-log field tests added in Batch 12 (`tests/test_logging.py`).
