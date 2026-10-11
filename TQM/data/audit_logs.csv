@@ -1,2 +1,8 @@
 timestamp,user_id,role,module,action,record_id,result,description
 2026-09-28T22:22:24,system_admin,Administrator,Student,Create,1,Success,Registered student 'Mayank' (A72413).
+2026-10-10T20:21:49,system_admin,Administrator,User,Create,bootstrap,Success,"Default administrator account created on first run (username: admin, password: admin123 — change this)."
+2026-10-10T20:22:40,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-11T15:18:12,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-11T15:21:38,admin,Administrator,Complaint,Create,1,Success,Logged 'Washroom' complaint for student 1.
+2026-10-11T15:22:04,admin,Administrator,Complaint,Assign,1,Success,Assigned to 'assign'.
+2026-10-11T15:24:19,admin,Administrator,Complaint,Resolve,1,Success,Resolved at 2026-10-11T15:24:19.
