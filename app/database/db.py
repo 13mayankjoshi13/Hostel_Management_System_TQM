@@ -114,5 +114,10 @@ def initialize_database(db_path: str = None) -> None:
         )
     """)
 
+    # Migration: link a student-role account to its student record.
+    existing = {row["name"] for row in cur.execute("PRAGMA table_info(users)")}
+    if "student_id" not in existing:
+        cur.execute("ALTER TABLE users ADD COLUMN student_id INTEGER REFERENCES students(student_id)")
+
     conn.commit()
     conn.close()
