@@ -10,3 +10,14 @@
 | CR-09 | QO-09 | Audit Logs | Traceability | Audit verification |
 
 The matrix will be expanded as additional functional requirements and test cases are implemented.
+
+## Test Evidence Update (Batch 11)
+
+| Customer Req. | Test Evidence now in repository |
+|---|---|
+| CR-01 | `tests/test_validation.py` |
+| CR-04 | `tests/test_allocation.py` |
+| CR-07 | `tests/test_bug.py` |
+| CR-08 | Full suite: 93 tests passing (Batch 10) |
+| CR-06 | Not yet covered — error-log test pending |
+| CR-09 | Not yet covered — audit verification test pending |
