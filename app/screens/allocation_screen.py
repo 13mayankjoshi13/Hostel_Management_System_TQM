@@ -3,7 +3,7 @@ Room Allocation screen. Same allocation_service pipeline as every prior
 batch — only the presentation changed.
 """
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 
 from app.services import student_service, room_service, allocation_service
 from app.utils.validation import ValidationError
@@ -54,8 +54,12 @@ class AllocationScreen(tk.Frame):
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
 
-        ttk.Button(content, text="Release Selected", style="Danger.TButton",
-                    command=self.on_release).pack(anchor="e", pady=(10, 0))
+        button_row = tk.Frame(content, bg=COLORS["surface"])
+        button_row.pack(anchor="e", pady=(10, 0))
+        ttk.Button(button_row, text="Export List (CSV)", style="Secondary.TButton",
+                    command=self.on_export).pack(side="left", padx=(0, 8))
+        ttk.Button(button_row, text="Release Selected", style="Danger.TButton",
+                    command=self.on_release).pack(side="left")
 
     def refresh_dropdowns(self):
         self._student_options = {
@@ -87,6 +91,19 @@ class AllocationScreen(tk.Frame):
             messagebox.showerror("Invalid Input", str(e))
         except Exception as e:
             handle_unexpected_error("Allocation", "allocate_room_ui", e)
+
+    def on_export(self):
+        path = filedialog.asksaveasfilename(defaultextension=".csv", initialfile="room_allotment_list.csv",
+                                             filetypes=[("CSV files", "*.csv")])
+        if not path:
+            return
+        try:
+            count = allocation_service.export_allocation_list(path)
+            messagebox.showinfo("Success", f"Exported {count} allocation(s).")
+        except ValidationError as e:
+            messagebox.showerror("Invalid Input", str(e))
+        except Exception as e:
+            handle_unexpected_error("Allocation", "export_list_ui", e)
 
     def on_release(self):
         selected = self.tree.selection()
