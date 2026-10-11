@@ -83,11 +83,11 @@ The five Q09 features are implemented:
 |---|---|
 | Exception Handling | `app/utils/exception_handler.py`; services convert database errors into controlled messages |
 | Strict Validation | `app/utils/validation.py`; forward-only status pipelines in the services |
-| Module Tests | `tests/` — 102 tests, all passing at Batch 14 |
+| Module Tests | `tests/` — 114 tests, all passing at Batch 15 |
 | Bug Tracker | `app/services/bug_service.py`, `app/screens/bug_screen.py`; a bug can only be marked Fixed with root cause, corrective action and test case |
 | Error Logs | `app/utils/logging_service.py` → `TQM/data/error_logs.csv` (plus audit and defect logs) |
 
-Also built: login with Administrator / Warden / Staff roles, user management (Administrator only), student, room, allocation and complaint modules, and a Quality Monitoring screen (Pareto and Fishbone).
+Also built: leave tracking, room allotment list export, a Washroom complaint category (from a hosteller interview), login with Administrator / Warden / Staff roles, user management (Administrator only), student, room, allocation and complaint modules, and a Quality Monitoring screen (Pareto and Fishbone).
 
 Quality results (defect counts, improvement percentages) are **not yet measured**; they will be reported only from real recorded data.
 

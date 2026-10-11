@@ -49,7 +49,7 @@ Each test should record:
 
 ## Implemented Test Inventory (as of Batch 10)
 
-Run: `python -m unittest discover -s tests -t .` — 102 tests, all passing at this point (7 added in Batch 12, 2 in Batch 14).
+Run: `python -m unittest discover -s tests -t .` — 114 tests, all passing at this point (12 added in Batch 15).
 
 | Test module | Tests | Covers |
 |---|---|---|
@@ -61,6 +61,7 @@ Run: `python -m unittest discover -s tests -t .` — 102 tests, all passing at t
 | `test_auth.py` | 24 | Hashing, login, roles, user management |
 | `test_logging.py` | 7 | Error-log and audit-log record fields, IDs, failure safety |
 | `test_exception_handler.py` | 2 | Unexpected error is logged; user sees a friendly message only |
+| `test_leave.py` | 12 | Leave tracking rules, allotment list export, Washroom category |
 
 ## Known Gaps
 
