@@ -70,3 +70,11 @@ Resulting requirements (added Batch 15):
 | CR-11 | Complaints should cover the issues hostellers actually report (food, maintenance, washroom). | Reported complaint types without a category | 0 |
 | CR-12 | A room allotment list should be available. | Allotment list unavailable for export | 0 |
 | CR-13 | Student leave should be traceable to a room. | Leaves recorded without an active room allocation | 0 |
+
+## Student-side Access (Batch 16)
+
+Hostellers are stakeholders (see Users and Stakeholders), so they get their own login and see only their own records.
+
+| ID | Customer Requirement | Measurement | Target |
+|---|---|---|---|
+| CR-14 | A hosteller can see their own room, file complaints, follow their status and record leave, and cannot see or change another student's records. | Cross-student data accesses allowed in defined tests | 0 |
