@@ -442,9 +442,7 @@ Error Logs (Batch 1), Bug Tracker (Batch 7).
 
 ## 7. How to Continue From Here
 
-Tell the new AI: *"Continue from Batch 10 — login/auth and the
-admin-only User Management screen are built (93 tests); next is PDCA
-documentation (TQM/PDCA.md) or a final documentation pass. Here's the current repo/ZIP."* and attach the latest
+Tell the new AI: *"Continue from Batch 11 — auth, User Management and PDCA/testing docs are done (93 tests); next is the missing error-log/audit-log tests and a final documentation pass. Here's the current repo/ZIP."* and attach the latest
 export of the repository. The AI should:
 1. Read this handoff file fully before writing any code.
 2. Confirm the current file structure matches section 3 above (ask to
@@ -458,3 +456,8 @@ export of the repository. The AI should:
 - `screens/user_screen.py` + admin-only sidebar item "User Management" (hidden for Warden/Staff; `show_screen` also blocks them).
 - 8 new tests in `tests/test_auth.py` (93 total passing).
 - UI for this batch was NOT screenshot-verified (no tkinter in that build environment) — verify visually first next time.
+
+## 9. Batch 11 — PDCA and documentation
+- Appended (never overwrote) to , , .
+- Gaps still open: tests for error-log and audit-log fields (CR-06, CR-09); real defect counts; visual check of the User Management screen.
+- Next: add those tests, then final portfolio/README pass.
