@@ -49,7 +49,7 @@ Each test should record:
 
 ## Implemented Test Inventory (as of Batch 10)
 
-Run: `python -m unittest discover -s tests -t .` — 100 tests, all passing at this point (7 added in Batch 12).
+Run: `python -m unittest discover -s tests -t .` — 102 tests, all passing at this point (7 added in Batch 12, 2 in Batch 14).
 
 | Test module | Tests | Covers |
 |---|---|---|
@@ -60,9 +60,9 @@ Run: `python -m unittest discover -s tests -t .` — 100 tests, all passing at t
 | `test_quality.py` | 7 | Quality monitoring calculations |
 | `test_auth.py` | 24 | Hashing, login, roles, user management |
 | `test_logging.py` | 7 | Error-log and audit-log record fields, IDs, failure safety |
+| `test_exception_handler.py` | 2 | Unexpected error is logged; user sees a friendly message only |
 
 ## Known Gaps
 
-- `exception_handler.py` is not unit-tested (it imports tkinter and shows a message box).
 - No integration tests across UI, services and database.
 - Test IDs and Actual-result records (see Test Record above) are not yet maintained per test; actual results are not yet measured beyond pass/fail.
