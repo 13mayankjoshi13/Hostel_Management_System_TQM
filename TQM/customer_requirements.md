@@ -53,3 +53,20 @@ Customer Requirement → Quality Objective → Software Feature → Test → Evi
 Example:
 
 CR-06 → QO-04 → Error Logs → Error Logging Test → `TQM/data/error_logs.csv`
+
+## Voice of the Customer — Hosteller Interview (28/09/2026)
+
+An informal conversation with a resident hosteller listed the following needs:
+
+- complaint filing for food;
+- room maintenance and washroom complaints;
+- a room allotment list;
+- tracking which student has gone on leave and from which room.
+
+Resulting requirements (added Batch 15):
+
+| ID | Customer Requirement | Measurement | Target |
+|---|---|---|---|
+| CR-11 | Complaints should cover the issues hostellers actually report (food, maintenance, washroom). | Reported complaint types without a category | 0 |
+| CR-12 | A room allotment list should be available. | Allotment list unavailable for export | 0 |
+| CR-13 | Student leave should be traceable to a room. | Leaves recorded without an active room allocation | 0 |
