@@ -476,3 +476,11 @@ export of the repository. The AI should:
 - New: `leaves` table, `services/leave_service.py`, `screens/leave_screen.py` (sidebar "Leave Tracking"), `allocation_service.export_allocation_list` + "Export List (CSV)" button, "Washroom" complaint category.
 - 12 new tests in `tests/test_leave.py`; suite is 114. UI not screenshot-verified (no tkinter in build environment).
 - Quality Objective IDs for CR-11 to CR-13 not yet defined.
+
+## 13. Batch 16 — Student side
+- New role `Student`; `users.student_id` links an account to a student record (migrated automatically for old databases). Admin creates student accounts in User Management and picks the student.
+- `session.get_student_id()`; `authenticate` returns and stores `student_id`.
+- `services/student_portal_service.py`: every function takes the student from the session, never from the caller (own-data only; non-student sessions rejected). Screens: `my_room_screen.py`, `my_complaints_screen.py`, `my_leave_screen.py`.
+- `main_window._allowed_screens(role)` decides sidebar items and blocks other screens: Student sees only the three portal screens; staff roles never see them.
+- 18 new tests in `tests/test_student_portal.py`; suite is 132. UI not screenshot-verified (no tkinter in build environment).
+- Known limits: staff-side services are gated by navigation, not re-checked per call; students cannot change their own password yet; deleting a student who has an account is blocked by a database error message.
