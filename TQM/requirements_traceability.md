@@ -39,3 +39,11 @@ Quality Objective IDs for CR-11 to CR-13 are not yet defined.
 | CR-14 | Student role, My Room / My Complaints / My Leave, ownership checks in `student_portal_service` | `tests/test_student_portal.py` |
 
 Quality Objective ID for CR-14 is not yet defined.
+
+## Calendar (Batch 18)
+
+| Customer Req. | Software Feature | Test Evidence |
+|---|---|---|
+| CR-15 | `events` table, `event_service`, Calendar screen, dashboard and My Room upcoming lists | `tests/test_events.py` |
+
+Quality Objective ID for CR-15 is not yet defined.
