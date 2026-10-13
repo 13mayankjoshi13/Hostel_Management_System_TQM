@@ -49,7 +49,7 @@ Each test should record:
 
 ## Implemented Test Inventory (as of Batch 10)
 
-Run: `python -m unittest discover -s tests -t .` — 132 tests, all passing at this point (18 added in Batch 16).
+Run: `python -m unittest discover -s tests -t .` — 140 tests, all passing at this point (8 added in Batch 17).
 
 | Test module | Tests | Covers |
 |---|---|---|
@@ -63,6 +63,8 @@ Run: `python -m unittest discover -s tests -t .` — 132 tests, all passing at t
 | `test_exception_handler.py` | 2 | Unexpected error is logged; user sees a friendly message only |
 | `test_leave.py` | 12 | Leave tracking rules, allotment list export, Washroom category |
 | `test_student_portal.py` | 18 | Student accounts, session, own-data isolation, database migration |
+| `test_events.py` | 10 | Calendar events: role gating, validation, duplicates, month/upcoming queries, default holidays, table migration |
+| `test_seed_demo.py` | 8 | Demo data loader: rooms within capacity, idempotent, registration/contact format, real logs untouched |
 
 ## Known Gaps
 
