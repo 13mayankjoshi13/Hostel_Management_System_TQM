@@ -98,10 +98,8 @@ python run.py                                  # first run creates admin / admin
 python -m unittest discover -s tests -t .      # run all module tests
 ```
 
-## Demo Data
+## Class Data
 
-`python -m app.database.seed_demo` loads the class list (56 students) with rooms, student logins and a few sample complaints and leaves. It is demo data only: registration numbers follow 24103020 + roll number (only Mayank's roll, 37, is known; the rest are assigned alphabetically), contact numbers are made up, the sample complaints and leaves are fictional, and it must not be counted in reported quality results. Student login: first and last name joined by an underscore (for example `mayank_joshi`), password `Welcome123`.
+`python -m app.database.seed_demo --real` loads the class list (56 students) with rooms and student logins (without `--real`, a few fictional sample complaints and leaves are added too). Names are the real class list, but: registration numbers follow 24103020 + roll number (only Mayank's roll, 37, is known; the rest are assigned alphabetically), contact numbers are made up, the sample complaints and leaves are fictional, and it must not be counted in reported quality results. Student login: first and last name joined by an underscore (for example `mayank_joshi`), password `Welcome123`.
 
-## Interface and Calendar
-
-The interface uses card-based screens, a sidebar and a dashboard with a month calendar showing holidays, hostel events and exams. Administrators and Wardens add or delete events in the Calendar screen; everyone else can view them. Default holidays are the 2026 Central Government list; compare with your university calendar.
+To use real registration numbers and contacts, edit them in the Students screen after loading.
