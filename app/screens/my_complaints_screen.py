@@ -5,7 +5,7 @@ from tkinter import ttk, messagebox
 from app.services import student_portal_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import (COLORS, section_header, form_row, build_panel, build_table,
+from app.theme import (COLORS, section_header, form_row, build_panel, build_table, form_card, split_layout,
                         style_treeview_status_tags, status_tag)
 
 _CATEGORIES = ["Maintenance", "Washroom", "Cleanliness", "Noise", "Security", "Food", "Other"]
@@ -16,24 +16,23 @@ class MyComplaintsScreen(tk.Frame):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
         section_header(self, "My Complaints", "Report a problem and follow its progress.", fonts)
+        self.left, self.right = split_layout(self)
 
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="x", padx=28, pady=(18, 22))
-        wrapper.columnconfigure(1, weight=1)
+        wrapper = form_card(self.left, "New complaint", self.fonts)
         self.category_var = tk.StringVar(value=_CATEGORIES[0])
         form_row(wrapper, fonts, 0, "Category", ttk.Combobox(
             wrapper, textvariable=self.category_var, values=_CATEGORIES, state="readonly"))
         self.description_text = tk.Text(wrapper, height=3, wrap="word", font=fonts["body"],
-                                          relief="solid", bd=1, bg=COLORS["surface"],
+                                          relief="flat", bd=0, padx=8, pady=6, bg=COLORS["surface"],
                                           fg=COLORS["text_primary"], insertbackground=COLORS["text_primary"],
-                                          highlightbackground=COLORS["border_strong"],
+                                          highlightthickness=1, highlightbackground=COLORS["border_strong"],
                                           highlightcolor=COLORS["accent"])
         form_row(wrapper, fonts, 1, "Description", self.description_text)
         ttk.Button(wrapper, text="Submit Complaint", style="Primary.TButton",
                     command=self.on_submit).grid(row=2, column=1, sticky="w", pady=(10, 0))
 
-        table_wrapper = tk.Frame(self, bg=COLORS["background"])
-        table_wrapper.pack(fill="both", expand=True, padx=28, pady=(0, 24))
+        table_wrapper = tk.Frame(self.right, bg=COLORS["background"])
+        table_wrapper.pack(fill="both", expand=True)
         content = build_panel(table_wrapper, "My Complaints", fonts)
         self.tree = build_table(content, ("id", "category", "description", "status", "assigned", "date"),
                                   ("ID", "Category", "Description", "Status", "Handled by", "Filed"),

@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 from app.services import allocation_service, leave_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags
+from app.theme import COLORS, status_tag, section_header, form_row, build_panel, build_table, style_treeview_status_tags, form_card, split_layout
 
 
 class LeaveScreen(tk.Frame):
@@ -16,14 +16,13 @@ class LeaveScreen(tk.Frame):
         self._student_options = {}
         section_header(self, "Leave Tracking",
                         "Record which hosteller is on leave and mark them returned.", fonts)
+        self.left, self.right = split_layout(self)
         self._build_form()
         self._build_table()
         self.refresh()
 
     def _build_form(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="x", padx=28, pady=(18, 22))
-        wrapper.columnconfigure(1, weight=1)
+        wrapper = form_card(self.left, "Record a leave", self.fonts)
 
         self.student_var = tk.StringVar()
         self.student_combo = ttk.Combobox(wrapper, textvariable=self.student_var, state="readonly")
@@ -40,8 +39,8 @@ class LeaveScreen(tk.Frame):
                     command=self.on_record).grid(row=4, column=1, sticky="w", pady=(10, 0))
 
     def _build_table(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="both", expand=True, padx=28, pady=(0, 24))
+        wrapper = tk.Frame(self.right, bg=COLORS["background"])
+        wrapper.pack(fill="both", expand=True)
         content = build_panel(wrapper, "Leaves", self.fonts)
         self.tree = build_table(content, ("id", "student", "room", "from", "to", "reason", "status"),
                                   ("ID", "Student", "Room", "From", "To", "Reason", "Status"),
@@ -85,7 +84,7 @@ class LeaveScreen(tk.Frame):
             self.tree.insert("", "end", values=(
                 leave["leave_id"], leave["student_name"], leave["room_number"],
                 leave["from_date"], leave["to_date"], leave["reason"], leave["status"],
-            ), tags=("default",))
+            ), tags=(status_tag(leave["status"]),))
 
     def refresh(self):
         self._student_options = {

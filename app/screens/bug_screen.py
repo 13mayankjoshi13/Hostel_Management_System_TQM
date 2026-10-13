@@ -9,7 +9,7 @@ from tkinter import ttk, messagebox, simpledialog
 from app.services import bug_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel, style_treeview_status_tags, status_tag
+from app.theme import COLORS, section_header, form_row, build_panel, style_treeview_status_tags, status_tag, form_card, split_layout
 
 _MODULES = ["Student", "Room", "Allocation", "Complaint", "Database", "UI", "Other"]
 _CATEGORIES = ["Functional", "UI/UX", "Validation", "Performance", "Data Integrity", "Security", "Other"]
@@ -24,14 +24,13 @@ class BugScreen(tk.Frame):
         self._bug_rows = {}
         section_header(self, "Bug Tracker",
                         "Log, work, and verify fixes for defects found during testing.", fonts)
+        self.left, self.right = split_layout(self)
         self._build_form()
         self._build_table()
         self.refresh()
 
     def _build_form(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="x", padx=28, pady=(18, 22))
-        wrapper.columnconfigure(1, weight=1)
+        wrapper = form_card(self.left, "Log a bug", self.fonts)
 
         self.module_var = tk.StringVar(value=_MODULES[0])
         form_row(wrapper, self.fonts, 0, "Module", ttk.Combobox(
@@ -45,9 +44,9 @@ class BugScreen(tk.Frame):
         form_row(wrapper, self.fonts, 2, "Title", ttk.Entry(wrapper, textvariable=self.title_var))
 
         self.description_text = tk.Text(wrapper, height=3, wrap="word", font=self.fonts["body"],
-                                          relief="solid", bd=1, bg=COLORS["surface"],
+                                          relief="flat", bd=0, padx=8, pady=6, bg=COLORS["surface"],
                                           fg=COLORS["text_primary"], insertbackground=COLORS["text_primary"],
-                                          highlightbackground=COLORS["border_strong"],
+                                          highlightthickness=1, highlightbackground=COLORS["border_strong"],
                                           highlightcolor=COLORS["accent"])
         form_row(wrapper, self.fonts, 3, "Description", self.description_text)
 
@@ -63,8 +62,8 @@ class BugScreen(tk.Frame):
                     command=self.on_log).grid(row=6, column=1, sticky="w", pady=(10, 0))
 
     def _build_table(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="both", expand=True, padx=28, pady=(0, 24))
+        wrapper = tk.Frame(self.right, bg=COLORS["background"])
+        wrapper.pack(fill="both", expand=True)
         content = build_panel(wrapper, "All Bugs", self.fonts)
 
         columns = ("id", "module", "title", "severity", "priority", "status", "date")

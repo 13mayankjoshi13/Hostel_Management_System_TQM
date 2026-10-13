@@ -8,7 +8,7 @@ from tkinter import ttk, messagebox
 from app.services import room_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags
+from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, form_card, split_layout
 
 
 class RoomScreen(tk.Frame):
@@ -16,14 +16,13 @@ class RoomScreen(tk.Frame):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
         section_header(self, "Rooms", "Manage rooms, types, and capacity.", fonts)
+        self.left, self.right = split_layout(self)
         self._build_form()
         self._build_table()
         self.refresh()
 
     def _build_form(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="x", padx=28, pady=(18, 22))
-        wrapper.columnconfigure(1, weight=1)
+        wrapper = form_card(self.left, "Add a room", self.fonts)
 
         self.room_no_var = tk.StringVar()
         self.type_var = tk.StringVar(value="Single")
@@ -39,8 +38,8 @@ class RoomScreen(tk.Frame):
                     command=self.on_add).grid(row=3, column=1, sticky="w", pady=(10, 0))
 
     def _build_table(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="both", expand=True, padx=28, pady=(0, 24))
+        wrapper = tk.Frame(self.right, bg=COLORS["background"])
+        wrapper.pack(fill="both", expand=True)
         content = build_panel(wrapper, "All Rooms", self.fonts)
 
         self.tree = build_table(content, ("id", "room_no", "type", "capacity"),

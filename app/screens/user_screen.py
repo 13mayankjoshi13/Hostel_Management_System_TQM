@@ -5,7 +5,7 @@ from tkinter import ttk, messagebox, simpledialog
 from app.services import auth_service, student_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel
+from app.theme import COLORS, section_header, form_row, build_panel, form_card, split_layout
 
 _ROLES = ["Administrator", "Warden", "Staff", "Student"]
 
@@ -18,14 +18,13 @@ class UserScreen(tk.Frame):
         self._student_options = {}
         section_header(self, "User Management",
                         "Create accounts, reset passwords and remove access.", fonts)
+        self.left, self.right = split_layout(self)
         self._build_form()
         self._build_table()
         self.refresh()
 
     def _build_form(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="x", padx=28, pady=(18, 22))
-        wrapper.columnconfigure(1, weight=1)
+        wrapper = form_card(self.left, "Create an account", self.fonts)
 
         self.username_var = tk.StringVar()
         form_row(wrapper, self.fonts, 0, "Username", ttk.Entry(wrapper, textvariable=self.username_var))
@@ -46,8 +45,8 @@ class UserScreen(tk.Frame):
                     command=self.on_create).grid(row=4, column=1, sticky="w", pady=(10, 0))
 
     def _build_table(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="both", expand=True, padx=28, pady=(0, 24))
+        wrapper = tk.Frame(self.right, bg=COLORS["background"])
+        wrapper.pack(fill="both", expand=True)
         content = build_panel(wrapper, "Accounts", self.fonts)
 
         columns = ("id", "username", "role", "student", "created")

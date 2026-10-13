@@ -8,7 +8,7 @@ from tkinter import ttk, messagebox, simpledialog
 from app.services import student_service, complaint_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, status_tag
+from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, status_tag, form_card, split_layout
 
 _CATEGORIES = ["Maintenance", "Washroom", "Cleanliness", "Noise", "Security", "Food", "Other"]
 
@@ -20,14 +20,13 @@ class ComplaintScreen(tk.Frame):
         self._student_options = {}
         self._complaint_rows = {}
         section_header(self, "Complaints", "Log, assign, and resolve hosteller complaints.", fonts)
+        self.left, self.right = split_layout(self)
         self._build_form()
         self._build_table()
         self.refresh()
 
     def _build_form(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="x", padx=28, pady=(18, 22))
-        wrapper.columnconfigure(1, weight=1)
+        wrapper = form_card(self.left, "Log a complaint", self.fonts)
 
         self.student_var = tk.StringVar()
         self.student_combo = ttk.Combobox(wrapper, textvariable=self.student_var, state="readonly")
@@ -38,13 +37,13 @@ class ComplaintScreen(tk.Frame):
             wrapper, textvariable=self.category_var, values=_CATEGORIES, state="readonly"))
 
         self.description_text = tk.Text(wrapper, height=3, wrap="word", font=self.fonts["body"],
-                                          relief="solid", bd=1, bg=COLORS["surface"],
+                                          relief="flat", bd=0, padx=8, pady=6, bg=COLORS["surface"],
                                           fg=COLORS["text_primary"], insertbackground=COLORS["text_primary"],
-                                          highlightbackground=COLORS["border_strong"],
+                                          highlightthickness=1, highlightbackground=COLORS["border_strong"],
                                           highlightcolor=COLORS["accent"])
         form_row(wrapper, self.fonts, 2, "Description", self.description_text)
 
-        button_row = tk.Frame(wrapper, bg=COLORS["background"])
+        button_row = tk.Frame(wrapper, bg=COLORS["surface"])
         button_row.grid(row=3, column=1, sticky="w", pady=(10, 0))
         ttk.Button(button_row, text="Log Complaint", style="Primary.TButton",
                     command=self.on_create).pack(side="left", padx=(0, 8))
@@ -52,8 +51,8 @@ class ComplaintScreen(tk.Frame):
                     command=self.refresh_student_dropdown).pack(side="left")
 
     def _build_table(self):
-        wrapper = tk.Frame(self, bg=COLORS["background"])
-        wrapper.pack(fill="both", expand=True, padx=28, pady=(0, 24))
+        wrapper = tk.Frame(self.right, bg=COLORS["background"])
+        wrapper.pack(fill="both", expand=True)
         content = build_panel(wrapper, "All Complaints", self.fonts)
 
         self.tree = build_table(

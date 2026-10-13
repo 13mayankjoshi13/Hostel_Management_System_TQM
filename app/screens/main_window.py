@@ -1,24 +1,17 @@
 """
-Application shell.
-
-Persistent sidebar (the most practical pattern for a tool used many
-times a day), styled plainly: white/near-white background, thin right
-border, text-only items, a 3px accent bar + medium-weight text for the
-active item, subtle gray hover. No icons, no color fills, no pill
-shapes — restrained on purpose.
-
-Batch 9 adds a login gate: splash -> login -> dashboard. The sidebar
-footer shows who's logged in and a Log Out link that returns to the
-login screen (clearing the session) rather than closing the app.
+Application shell: icon sidebar, top bar (screen name, clock, account),
+and the screens. Login gate: splash -> login -> home screen for the role.
 """
 import tkinter as tk
+from datetime import datetime
 
 from app.config import APP_NAME
-from app.theme import COLORS, apply_theme, bind_hover
+from app.theme import COLORS, apply_theme, draw_icon, icon_tile, initials, _round_rect
 from app.services import auth_service
 from app.screens.splash_screen import SplashScreen
 from app.screens.login_screen import LoginScreen
 from app.screens.dashboard_screen import DashboardScreen
+from app.screens.calendar_screen import CalendarScreen
 from app.screens.student_screen import StudentScreen
 from app.screens.room_screen import RoomScreen
 from app.screens.allocation_screen import AllocationScreen
@@ -32,56 +25,105 @@ from app.screens.my_complaints_screen import MyComplaintsScreen
 from app.screens.my_leave_screen import MyLeaveScreen
 from app.utils import session
 
+# key, label, icon
 _NAV_ITEMS = [
-    ("Dashboard", "Dashboard"),
-    ("Students", "Students"),
-    ("Rooms", "Rooms"),
-    ("Allocation", "Room Allocation"),
-    ("Complaints", "Complaints"),
-    ("Leaves", "Leave Tracking"),
-    ("Bugs", "Bug Tracker"),
-    ("Quality", "Quality Monitoring"),
-    ("Users", "User Management"),
-    ("MyRoom", "My Room"),
-    ("MyComplaints", "My Complaints"),
-    ("MyLeave", "My Leave"),
+    ("Dashboard", "Dashboard", "grid"),
+    ("Calendar", "Calendar", "calendar"),
+    ("Students", "Students", "user"),
+    ("Rooms", "Rooms", "door"),
+    ("Allocation", "Room Allocation", "key"),
+    ("Complaints", "Complaints", "chat"),
+    ("Leaves", "Leave Tracking", "plane"),
+    ("Bugs", "Bug Tracker", "bug"),
+    ("Quality", "Quality Monitoring", "chart"),
+    ("Users", "User Management", "users"),
+    ("MyRoom", "My Room", "home"),
+    ("MyComplaints", "My Complaints", "chat"),
+    ("MyLeave", "My Leave", "plane"),
 ]
 
 _ADMIN_ONLY = {"Users"}
 _STUDENT_ONLY = {"MyRoom", "MyComplaints", "MyLeave"}
+_EVERYONE = {"Calendar"}
 
 
 def _allowed_screens(role: str) -> list:
-    keys = [key for key, _ in _NAV_ITEMS]
+    keys = [key for key, _, _ in _NAV_ITEMS]
     if role == "Student":
-        return [k for k in keys if k in _STUDENT_ONLY]
+        return [k for k in keys if k in _STUDENT_ONLY] + [k for k in keys if k in _EVERYONE]
     allowed = [k for k in keys if k not in _STUDENT_ONLY]
     if role != "Administrator":
         allowed = [k for k in allowed if k not in _ADMIN_ONLY]
     return allowed
 
 
+def _home_screen(role: str) -> str:
+    return "MyRoom" if role == "Student" else "Dashboard"
+
+
+class NavItem(tk.Canvas):
+    """Sidebar entry: rounded highlight when active, icon + label."""
+
+    def __init__(self, parent, key, label, icon, fonts, on_click):
+        super().__init__(parent, height=42, bg=COLORS["sidebar_bg"], highlightthickness=0, bd=0, cursor="hand2")
+        self.key, self.label, self.icon, self.fonts = key, label, icon, fonts
+        self.active = False
+        self.hover = False
+        self.bind("<Configure>", lambda e: self._draw())
+        self.bind("<Button-1>", lambda e: on_click(key))
+        self.bind("<Enter>", lambda e: self._set_hover(True))
+        self.bind("<Leave>", lambda e: self._set_hover(False))
+
+    def _set_hover(self, value):
+        self.hover = value
+        self._draw()
+
+    def set_active(self, value):
+        self.active = value
+        self._draw()
+
+    def _draw(self):
+        self.delete("all")
+        w = max(self.winfo_width(), 60)
+        bg = COLORS["accent_soft"] if self.active else COLORS["background"] if self.hover else COLORS["sidebar_bg"]
+        if bg != COLORS["sidebar_bg"]:
+            _round_rect(self, 0, 2, w - 1, 40, 12, fill=bg, outline="")
+        color = COLORS["accent"] if self.active else COLORS["text_tertiary"]
+        icon = tk.Canvas(self, width=20, height=20, bg=bg, highlightthickness=0, bd=0)
+        draw_icon(icon, self.icon, 20, color)
+        icon.bind("<Button-1>", lambda e: self.event_generate("<Button-1>"))
+        self.create_window(16, 11, anchor="nw", window=icon)
+        self.create_text(48, 21, anchor="w", text=self.label,
+                         fill=COLORS["accent"] if self.active else COLORS["text_secondary"],
+                         font=self.fonts["nav_active"] if self.active else self.fonts["nav"])
+
+
 class MainWindow(tk.Tk):
     def __init__(self, show_splash: bool = True):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("1150x820")
-        self.minsize(980, 680)
+        height = min(800, max(self.winfo_screenheight() - 80, 640))
+        self.geometry(f"1280x{height}")
+        self.minsize(1100, 640)
 
         self.fonts = apply_theme(self)
         self.screens = {}
-        self._nav_rows = {}
-        self._nav_frames = {}
+        self._nav_items = {}
+        self._current = None
 
         body = tk.Frame(self, bg=COLORS["background"])
         body.pack(fill="both", expand=True)
 
         self._build_sidebar(body)
 
-        self.content = tk.Frame(body, bg=COLORS["background"])
-        self.content.pack(side="left", fill="both", expand=True)
+        main = tk.Frame(body, bg=COLORS["background"])
+        main.pack(side="left", fill="both", expand=True)
+        self._build_topbar(main)
+        self.content = tk.Frame(main, bg=COLORS["background"])
+        self.content.pack(fill="both", expand=True)
 
         self._create_screens()
+        self._tick()
 
         if show_splash:
             self.withdraw()
@@ -95,73 +137,102 @@ class MainWindow(tk.Tk):
     def _enter_app(self, user: dict):
         self._update_account_info(user)
         allowed = _allowed_screens(user["role"])
-        for frame in self._nav_frames.values():
-            frame.pack_forget()
-        for key, _ in _NAV_ITEMS:
+        for item in self._nav_items.values():
+            item.pack_forget()
+        for key, _, _ in _NAV_ITEMS:
             if key in allowed:
-                self._nav_frames[key].pack(fill="x")
+                self._nav_items[key].pack(fill="x", padx=14, pady=1)
         self.deiconify()
-        self.show_screen(allowed[0])
+        self.show_screen(_home_screen(user["role"]))
 
     def _handle_logout(self):
         auth_service.logout()
         self.withdraw()
         self._show_login()
 
+    # ------------------------------------------------------------ chrome
     def _build_sidebar(self, parent):
-        sidebar = tk.Frame(parent, bg=COLORS["sidebar_bg"], width=210)
+        sidebar = tk.Frame(parent, bg=COLORS["sidebar_bg"], width=232)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
+        tk.Frame(parent, bg=COLORS["border"], width=1).pack(side="left", fill="y")
 
         brand = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
-        brand.pack(fill="x", padx=20, pady=(22, 18))
-        tk.Label(brand, text="Hostel MS", bg=COLORS["sidebar_bg"], fg=COLORS["text_primary"],
-                  font=self.fonts["brand"], justify="left").pack(anchor="w")
-        tk.Label(brand, text="Administration", bg=COLORS["sidebar_bg"], fg=COLORS["text_tertiary"],
-                  font=self.fonts["subheader"], justify="left").pack(anchor="w", pady=(1, 0))
+        brand.pack(fill="x", padx=18, pady=(20, 18))
+        icon_tile(brand, "home", COLORS["accent"], size=40, bg=COLORS["sidebar_bg"]).pack(side="left")
+        text = tk.Frame(brand, bg=COLORS["sidebar_bg"])
+        text.pack(side="left", padx=(10, 0))
+        tk.Label(text, text="Hostel MS", bg=COLORS["sidebar_bg"], fg=COLORS["text_primary"],
+                  font=self.fonts["brand"]).pack(anchor="w")
+        tk.Label(text, text="Management System", bg=COLORS["sidebar_bg"], fg=COLORS["text_tertiary"],
+                  font=self.fonts["small"]).pack(anchor="w")
 
-        tk.Frame(sidebar, bg=COLORS["border"], height=1).pack(fill="x")
-
-        nav_wrap = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
-        nav_wrap.pack(fill="x", pady=8)
-
-        for key, label in _NAV_ITEMS:
-            row = tk.Frame(nav_wrap, bg=COLORS["sidebar_bg"])
-            row.pack(fill="x")
-            bar = tk.Frame(row, bg=COLORS["sidebar_bg"], width=3)
-            bar.pack(side="left", fill="y")
-            btn = tk.Label(row, text=label, bg=COLORS["sidebar_bg"], fg=COLORS["text_secondary"],
-                            font=self.fonts["nav"], anchor="w", padx=17, pady=9, cursor="hand2")
-            btn.pack(side="left", fill="x", expand=True)
-            btn.bind("<Button-1>", lambda e, k=key: self.show_screen(k))
-            bind_hover(btn, COLORS["sidebar_bg"], "#EFEFF1")
-            self._nav_rows[key] = (bar, btn)
-            self._nav_frames[key] = row
+        self.nav_wrap = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
+        self.nav_wrap.pack(fill="x")
+        for key, label, icon in _NAV_ITEMS:
+            self._nav_items[key] = NavItem(self.nav_wrap, key, label, icon, self.fonts, self.show_screen)
 
         tk.Frame(sidebar, bg=COLORS["sidebar_bg"]).pack(fill="both", expand=True)
-        tk.Frame(sidebar, bg=COLORS["border"], height=1).pack(fill="x")
+        footer = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
+        footer.pack(fill="x", padx=18, pady=(0, 16))
+        tk.Frame(footer, bg=COLORS["border"], height=1).pack(fill="x", pady=(0, 10))
+        logout = tk.Label(footer, text="Log out", bg=COLORS["sidebar_bg"], fg=COLORS["accent"],
+                           font=self.fonts["body_bold"], cursor="hand2")
+        logout.pack(anchor="w")
+        logout.bind("<Button-1>", lambda e: self._handle_logout())
+        tk.Label(footer, text="TQM Q09 — Reduce Bugs", bg=COLORS["sidebar_bg"], fg=COLORS["text_tertiary"],
+                  font=self.fonts["small"]).pack(anchor="w", pady=(6, 0))
 
-        account_area = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
-        account_area.pack(fill="x", padx=20, pady=(12, 6))
-        self.account_label = tk.Label(account_area, text="", bg=COLORS["sidebar_bg"],
-                                        fg=COLORS["text_primary"], font=self.fonts["label"],
-                                        wraplength=170, justify="left")
-        self.account_label.pack(anchor="w")
-        logout_link = tk.Label(account_area, text="Log out", bg=COLORS["sidebar_bg"],
-                                 fg=COLORS["accent"], font=self.fonts["label"], cursor="hand2")
-        logout_link.pack(anchor="w", pady=(2, 0))
-        logout_link.bind("<Button-1>", lambda e: self._handle_logout())
+    def _build_topbar(self, parent):
+        bar = tk.Frame(parent, bg=COLORS["background"], height=64)
+        bar.pack(fill="x", padx=28)
+        bar.pack_propagate(False)
 
-        tk.Frame(sidebar, bg=COLORS["border"], height=1).pack(fill="x")
-        tk.Label(sidebar, text="TQM Q09 — Reduce Bugs", bg=COLORS["sidebar_bg"],
-                  fg=COLORS["text_tertiary"], font=self.fonts["subheader"], wraplength=170,
-                  justify="left").pack(anchor="w", padx=20, pady=14)
+        self.crumb = tk.Label(bar, text="", bg=COLORS["background"], fg=COLORS["text_tertiary"],
+                               font=self.fonts["label"])
+        self.crumb.pack(side="left")
+
+        account = tk.Frame(bar, bg=COLORS["background"])
+        account.pack(side="right")
+        self.avatar = tk.Canvas(account, width=38, height=38, bg=COLORS["background"], highlightthickness=0)
+        self.avatar.pack(side="right", padx=(10, 0))
+        names = tk.Frame(account, bg=COLORS["background"])
+        names.pack(side="right")
+        self.account_name = tk.Label(names, text="", bg=COLORS["background"], fg=COLORS["text_primary"],
+                                      font=self.fonts["body_bold"])
+        self.account_name.pack(anchor="e")
+        self.account_role = tk.Label(names, text="", bg=COLORS["background"], fg=COLORS["text_tertiary"],
+                                      font=self.fonts["small"])
+        self.account_role.pack(anchor="e")
+
+        tk.Frame(account, bg=COLORS["border_strong"], width=1, height=28).pack(side="right", padx=16)
+        clock = tk.Frame(account, bg=COLORS["background"])
+        clock.pack(side="right")
+        self.clock_time = tk.Label(clock, text="", bg=COLORS["background"], fg=COLORS["text_primary"],
+                                    font=self.fonts["body_bold"])
+        self.clock_time.pack(anchor="e")
+        self.clock_date = tk.Label(clock, text="", bg=COLORS["background"], fg=COLORS["text_tertiary"],
+                                    font=self.fonts["small"])
+        self.clock_date.pack(anchor="e")
+
+    def _tick(self):
+        now = datetime.now()
+        self.clock_time.configure(text=now.strftime("%I:%M:%S %p"))
+        self.clock_date.configure(text=now.strftime("%a, %d %b %Y"))
+        self.after(1000, self._tick)
 
     def _update_account_info(self, user: dict):
-        self.account_label.configure(text=f"{user['username']} · {user['role']}")
+        self.account_name.configure(text=user["username"].replace("_", " ").title())
+        self.account_role.configure(text=user["role"])
+        self.avatar.delete("all")
+        self.avatar.create_oval(0, 0, 37, 37, fill=COLORS["accent"], outline="")
+        self.avatar.create_text(19, 19, text=initials(user["username"]), fill="#FFFFFF",
+                                font=self.fonts["body_bold"])
 
+    # ------------------------------------------------------------ screens
     def _create_screens(self):
-        self.screens["Dashboard"] = DashboardScreen(self.content, self.fonts)
+        self.screens["Dashboard"] = DashboardScreen(self.content, self.fonts, navigate=self.show_screen)
+        self.screens["Calendar"] = CalendarScreen(self.content, self.fonts)
         self.screens["Students"] = StudentScreen(self.content, self.fonts)
         self.screens["Rooms"] = RoomScreen(self.content, self.fonts)
         self.screens["Allocation"] = AllocationScreen(self.content, self.fonts)
@@ -179,10 +250,10 @@ class MainWindow(tk.Tk):
     def show_screen(self, key: str):
         if key not in _allowed_screens(session.get_role()):
             return
+        self._current = key
         self.screens[key].tkraise()
         self.screens[key].refresh()
-        for nav_key, (bar, btn) in self._nav_rows.items():
-            active = nav_key == key
-            bar.configure(bg=COLORS["accent"] if active else COLORS["sidebar_bg"])
-            btn.configure(fg=COLORS["text_primary"] if active else COLORS["text_secondary"],
-                          font=self.fonts["nav_active"] if active else self.fonts["nav"])
+        labels = {k: label for k, label, _ in _NAV_ITEMS}
+        self.crumb.configure(text=f"Hostel MS  /  {labels[key]}")
+        for nav_key, item in self._nav_items.items():
+            item.set_active(nav_key == key)
