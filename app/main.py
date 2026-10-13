@@ -32,6 +32,13 @@ def run():
                    "ensure_default_admin", status="Open", message_reference=str(exc))
 
     try:
+        from app.services.event_service import ensure_default_holidays
+        ensure_default_holidays()
+    except Exception as exc:
+        log_error("Calendar", type(exc).__name__, "Medium",
+                   "ensure_default_holidays", status="Open", message_reference=str(exc))
+
+    try:
         from app.screens.main_window import MainWindow
         app = MainWindow()
         app.mainloop()
