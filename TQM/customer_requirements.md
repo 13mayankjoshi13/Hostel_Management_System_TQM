@@ -78,3 +78,11 @@ Hostellers are stakeholders (see Users and Stakeholders), so they get their own 
 | ID | Customer Requirement | Measurement | Target |
 |---|---|---|---|
 | CR-14 | A hosteller can see their own room, file complaints, follow their status and record leave, and cannot see or change another student's records. | Cross-student data accesses allowed in defined tests | 0 |
+
+## Calendar and Visual Design (Batch 18)
+
+| ID | Customer Requirement | Measurement | Target |
+|---|---|---|---|
+| CR-15 | Everyone can see holidays and hostel events in a calendar; only an Administrator or Warden can change them. | Calendar changes allowed for other roles in defined tests | 0 |
+
+Default holiday dates come from the 2026 Central Government list and may differ from the university calendar; edit them in the Calendar screen.
