@@ -484,3 +484,16 @@ export of the repository. The AI should:
 - `main_window._allowed_screens(role)` decides sidebar items and blocks other screens: Student sees only the three portal screens; staff roles never see them.
 - 18 new tests in `tests/test_student_portal.py`; suite is 132. UI not screenshot-verified (no tkinter in build environment).
 - Known limits: staff-side services are gated by navigation, not re-checked per call; students cannot change their own password yet; deleting a student who has an account is blocked by a database error message.
+
+## 14. Batch 17 — Demo data
+- `app/database/seed_demo.py` (`python -m app.database.seed_demo`): 56 students, Block A / Block B double rooms (2 per room, plus empty A201 and B201), a Student login each (`firstname_lastname`, password `Welcome123`), 5 sample complaints, 3 sample leaves. Idempotent.
+- Block grouping is an editable column in the `STUDENTS` list. Registration number = `24103020` + roll (Mayank = 37; others assigned alphabetically, so they are guesses). Contacts are made-up Indian-style mobile numbers. Re-running upgrades old `DEMO###` students in place.
+- Audit/error entries from seeding go to a throwaway file so `TQM/data` evidence stays clean. Demo complaints/leaves do appear in dashboard counts.
+- 8 new tests in `tests/test_seed_demo.py`; suite is 140.
+
+## 15. Batch 18 — UI redesign and calendar
+- Restyled all screens after a user-supplied dashboard reference: `app/theme.py` v5 (palette, `Card`, `form_card`, `split_layout`, `kpi_row`, vector icons, `ScrollFrame`), sidebar + top bar in `main_window.py`, new splash/login, dashboard (calendar, quick actions, upcoming, KPI cards, rooms grid/recent activity).
+- Calendar: `events` table (Holiday / Hostel Event / Exam), `services/event_service.py` (Administrator/Warden edit only), `screens/calendar_widget.py`, `screens/calendar_screen.py`; 23 default 2026 holidays seeded on first run (Central Government list; may differ from the university's).
+- `validation.py`: `validate_event_date/title/kind`. 10 new tests in `tests/test_events.py`; suite is 150.
+- Layouts were checked with Xvfb screenshots using bitmap fonts only; Segoe UI look on Windows is unverified. No image files are used.
+- Known limits unchanged from section 14, plus: CR-15 has no Quality Objective ID.
