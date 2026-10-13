@@ -114,6 +114,17 @@ def initialize_database(db_path: str = None) -> None:
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS events (
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_date TEXT NOT NULL,
+            title TEXT NOT NULL,
+            kind TEXT NOT NULL DEFAULT 'Hostel Event',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE (event_date, title)
+        )
+    """)
+
     # Migration: link a student-role account to its student record.
     existing = {row["name"] for row in cur.execute("PRAGMA table_info(users)")}
     if "student_id" not in existing:
