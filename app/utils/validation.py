@@ -118,6 +118,33 @@ def validate_leave_reason(reason: str) -> str:
     return reason
 
 
+def validate_event_date(value: str) -> str:
+    try:
+        return datetime.strptime(str(value).strip(), "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        raise ValidationError("Date must be in YYYY-MM-DD format.")
+
+
+def validate_event_title(title: str) -> str:
+    if title is None or not str(title).strip():
+        raise ValidationError("Event title cannot be empty.")
+    title = str(title).strip()
+    if len(title) < 3:
+        raise ValidationError("Event title must be at least 3 characters long.")
+    if len(title) > 60:
+        raise ValidationError("Event title cannot exceed 60 characters.")
+    return title
+
+
+def validate_event_kind(kind: str) -> str:
+    allowed = ["Holiday", "Hostel Event", "Exam"]
+    kind = str(kind).strip() if kind is not None else ""
+    for option in allowed:
+        if kind.lower() == option.lower():
+            return option
+    raise ValidationError(f"Event type must be one of: {', '.join(allowed)}.")
+
+
 def validate_assigned_to(name: str) -> str:
     if name is None or not str(name).strip():
         raise ValidationError("Assigned staff name cannot be empty.")
