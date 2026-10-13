@@ -83,7 +83,7 @@ The five Q09 features are implemented:
 |---|---|
 | Exception Handling | `app/utils/exception_handler.py`; services convert database errors into controlled messages |
 | Strict Validation | `app/utils/validation.py`; forward-only status pipelines in the services |
-| Module Tests | `tests/` — 132 tests, all passing at Batch 16 |
+| Module Tests | `tests/` — 140 tests, all passing at Batch 17 |
 | Bug Tracker | `app/services/bug_service.py`, `app/screens/bug_screen.py`; a bug can only be marked Fixed with root cause, corrective action and test case |
 | Error Logs | `app/utils/logging_service.py` → `TQM/data/error_logs.csv` (plus audit and defect logs) |
 
@@ -97,3 +97,11 @@ Quality results (defect counts, improvement percentages) are **not yet measured*
 python run.py                                  # first run creates admin / admin123 — change it in User Management
 python -m unittest discover -s tests -t .      # run all module tests
 ```
+
+## Demo Data
+
+`python -m app.database.seed_demo` loads the class list (56 students) with rooms, student logins and a few sample complaints and leaves. It is demo data only: registration numbers follow 24103020 + roll number (only Mayank's roll, 37, is known; the rest are assigned alphabetically), contact numbers are made up, the sample complaints and leaves are fictional, and it must not be counted in reported quality results. Student login: first and last name joined by an underscore (for example `mayank_joshi`), password `Welcome123`.
+
+## Interface and Calendar
+
+The interface uses card-based screens, a sidebar and a dashboard with a month calendar showing holidays, hostel events and exams. Administrators and Wardens add or delete events in the Calendar screen; everyone else can view them. Default holidays are the 2026 Central Government list; compare with your university calendar.
