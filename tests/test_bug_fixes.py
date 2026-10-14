@@ -52,6 +52,24 @@ class TestBugFixes(unittest.TestCase):
         for index, number in enumerate(("6123456789", "7123456789", "8123456789", "9123456789")):
             self.assertTrue(student_service.add_student(f"Test Name", f"241030200{index}", number))
 
+    def test_bug_003_room_number_case_duplicate_rejected(self):
+        room_service.add_room("Q1", "Single", 1)
+        with self.assertRaises(ValidationError):
+            room_service.add_room("q1", "Single", 1)
+
+    def test_bug_003_room_number_stored_upper_case(self):
+        room_service.add_room("b12", "Single", 1)
+        self.assertEqual(room_service.get_all_rooms()[0]["room_number"], "B12")
+
+    def test_bug_003_existing_mixed_case_room_still_blocks_duplicate(self):
+        import sqlite3
+        conn = sqlite3.connect(self.db)
+        conn.execute("INSERT INTO rooms (room_number, room_type, capacity) VALUES ('c5', 'Single', 1)")
+        conn.commit()
+        conn.close()
+        with self.assertRaises(ValidationError):
+            room_service.add_room("C5", "Single", 1)
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
