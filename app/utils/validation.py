@@ -45,10 +45,12 @@ def validate_contact_number(contact: str) -> str:
     if contact is None or not str(contact).strip():
         raise ValidationError("Contact number cannot be empty.")
     contact = str(contact).strip()
-    if not contact.isdigit():
+    if not (contact.isascii() and contact.isdigit()):
         raise ValidationError("Contact number must contain digits only.")
     if len(contact) != 10:
         raise ValidationError("Contact number must be exactly 10 digits.")
+    if contact[0] not in "6789":
+        raise ValidationError("Contact number must start with 6, 7, 8 or 9.")
     return contact
 
 
