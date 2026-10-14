@@ -35,6 +35,14 @@ BUGS = [
         "corrective_action": "Store room numbers in upper case and compare with UPPER(room_number) in add_room.",
         "test_case": "tests/test_bug_fixes.py::test_bug_003_*",
     },
+    {
+        "module": "Room", "category": "Validation", "severity": "Low", "priority": "Low",
+        "title": "Room capacity silently converts 1.5 and True to 1",
+        "description": "add_room(\"R1\", \"Single\", 1.5) or capacity True creates a room with capacity 1 instead of rejecting the input.",
+        "root_cause": "validate_capacity called int() directly, which truncates floats and treats bool as 0/1.",
+        "corrective_action": "Reject bool and non-integral floats before int() in validate_capacity.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_004_*",
+    },
 ]
 
 
