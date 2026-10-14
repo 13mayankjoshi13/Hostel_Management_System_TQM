@@ -8,6 +8,7 @@ from app.utils.validation import (
     validate_room_number,
     validate_room_type,
     validate_capacity,
+    validate_type_capacity,
     ValidationError,
 )
 from app.utils.logging_service import log_error, log_audit
@@ -17,6 +18,7 @@ def add_room(room_number: str, room_type: str, capacity) -> int:
     clean_room_no = validate_room_number(room_number)
     clean_type = validate_room_type(room_type)
     clean_capacity = validate_capacity(capacity)
+    validate_type_capacity(clean_type, clean_capacity)
 
     conn = get_connection()
     try:
