@@ -27,6 +27,14 @@ BUGS = [
         "corrective_action": "Require ASCII digits and a first digit of 6, 7, 8 or 9 in validate_contact_number.",
         "test_case": "tests/test_bug_fixes.py::test_bug_002_*",
     },
+    {
+        "module": "Room", "category": "Data Integrity", "severity": "Medium", "priority": "Medium",
+        "title": "Room numbers differing only in letter case are stored as separate rooms",
+        "description": "Adding room 'Q1' and then 'q1' creates two rooms, so one physical room can exist twice.",
+        "root_cause": "Duplicate check compared room_number exactly, and the value was stored as typed.",
+        "corrective_action": "Store room numbers in upper case and compare with UPPER(room_number) in add_room.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_003_*",
+    },
 ]
 
 
