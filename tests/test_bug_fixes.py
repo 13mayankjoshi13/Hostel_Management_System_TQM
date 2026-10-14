@@ -70,6 +70,15 @@ class TestBugFixes(unittest.TestCase):
         with self.assertRaises(ValidationError):
             room_service.add_room("C5", "Single", 1)
 
+    def test_bug_004_non_whole_capacity_rejected(self):
+        for capacity in (1.5, True, False, "1.5", None):
+            with self.assertRaises(ValidationError, msg=repr(capacity)):
+                room_service.add_room("R1", "Single", capacity)
+
+    def test_bug_004_whole_capacity_forms_accepted(self):
+        for number, capacity in enumerate((1, "1", 1.0)):
+            self.assertTrue(room_service.add_room(f"R{number}", "Single", capacity))
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
