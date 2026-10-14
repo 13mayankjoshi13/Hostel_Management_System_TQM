@@ -62,7 +62,7 @@ def validate_room_number(room_no: str) -> str:
         raise ValidationError("Room number cannot exceed 10 characters.")
     if not all(ch.isalnum() for ch in room_no):
         raise ValidationError("Room number must be alphanumeric only.")
-    return room_no
+    return room_no.upper()
 
 
 def validate_capacity(capacity) -> int:
