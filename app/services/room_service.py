@@ -23,7 +23,7 @@ def add_room(room_number: str, room_type: str, capacity) -> int:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT room_id FROM rooms WHERE room_number = ?", (clean_room_no,))
+        cur.execute("SELECT room_id FROM rooms WHERE UPPER(room_number) = ?", (clean_room_no,))
         if cur.fetchone() is not None:
             raise ValidationError(f"Room '{clean_room_no}' already exists.")
 
