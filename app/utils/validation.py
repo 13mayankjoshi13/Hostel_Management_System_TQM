@@ -304,3 +304,13 @@ def validate_room_type(room_type: str) -> str:
     if room_type not in allowed:
         raise ValidationError(f"Room type must be one of: {', '.join(sorted(allowed))}.")
     return room_type
+
+
+_CAPACITY_BY_TYPE = {"Single": (1, 1), "Double": (2, 2), "Triple": (3, 3), "Dormitory": (4, 10)}
+
+
+def validate_type_capacity(room_type: str, capacity: int) -> None:
+    low, high = _CAPACITY_BY_TYPE[room_type]
+    if not low <= capacity <= high:
+        expected = str(low) if low == high else f"{low} to {high}"
+        raise ValidationError(f"A {room_type} room must have capacity {expected}, not {capacity}.")
