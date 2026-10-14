@@ -19,6 +19,14 @@ BUGS = [
         "corrective_action": "Added validate_type_capacity (Single 1, Double 2, Triple 3, Dormitory 4-10) and call it in add_room.",
         "test_case": "tests/test_bug_fixes.py::test_bug_001_*",
     },
+    {
+        "module": "Student", "category": "Validation", "severity": "Medium", "priority": "Medium",
+        "title": "Contact number accepts numbers that cannot be Indian mobiles",
+        "description": "Student screen accepts 10-digit contacts starting with 0-5 (e.g. 0123456789) and non-ASCII digits.",
+        "root_cause": "validate_contact_number checked only digits-only and length 10; str.isdigit also allows non-ASCII digits.",
+        "corrective_action": "Require ASCII digits and a first digit of 6, 7, 8 or 9 in validate_contact_number.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_002_*",
+    },
 ]
 
 
