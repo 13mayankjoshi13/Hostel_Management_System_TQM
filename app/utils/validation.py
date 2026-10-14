@@ -66,6 +66,8 @@ def validate_room_number(room_no: str) -> str:
 
 
 def validate_capacity(capacity) -> int:
+    if isinstance(capacity, bool) or (isinstance(capacity, float) and not capacity.is_integer()):
+        raise ValidationError("Room capacity must be a whole number.")
     try:
         capacity = int(capacity)
     except (TypeError, ValueError):
