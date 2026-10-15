@@ -15,6 +15,7 @@ Only Mayank's roll is known; the others are ASSIGNED in alphabetical order
 and contact numbers are made up — replace both with real values.
 """
 import os
+from datetime import date, timedelta
 import random
 import tempfile
 
@@ -57,10 +58,14 @@ SAMPLE_COMPLAINTS = [
     ("Sachin Sharma", "Washroom", "Washroom door lock is broken.", "Hostel Maintenance", "Lock replaced."),
     ("Khushi Kandpal", "Cleanliness", "Corridor is not cleaned regularly.", None, None),
 ]
+def _day(offset):
+    return (date.today() + timedelta(days=offset)).isoformat()
+
+
 SAMPLE_LEAVES = [
-    ("Deepak Joshi", "2026-10-12", "2026-10-16", "Home visit", False),
-    ("Lokesh Maurya", "2026-10-03", "2026-10-06", "Home visit", True),
-    ("Neha Rawat", "2026-10-14", "2026-10-18", "Home visit", False),
+    ("Deepak Joshi", _day(2), _day(6), "Home visit", False),
+    ("Lokesh Maurya", _day(-7), _day(-4), "Home visit", True),
+    ("Neha Rawat", _day(4), _day(8), "Home visit", False),
 ]
 
 
