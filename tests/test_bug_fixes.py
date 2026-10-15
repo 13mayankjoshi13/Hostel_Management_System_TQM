@@ -3,9 +3,11 @@ import os
 import tempfile
 import unittest
 
+from datetime import date, timedelta
+
 from app.database import db as db_module, log_bugs
 from app.database.db import initialize_database
-from app.services import room_service, bug_service, student_service
+from app.services import room_service, bug_service, student_service, auth_service
 from app.utils.validation import ValidationError
 
 
@@ -78,6 +80,35 @@ class TestBugFixes(unittest.TestCase):
     def test_bug_004_whole_capacity_forms_accepted(self):
         for number, capacity in enumerate((1, "1", 1.0)):
             self.assertTrue(room_service.add_room(f"R{number}", "Single", capacity))
+
+    def test_bug_005_username_case_duplicate_rejected(self):
+        auth_service.create_user("Bob", "Secret123", "Staff")
+        with self.assertRaises(ValidationError):
+            auth_service.create_user("bob", "Secret123", "Staff")
+
+    def test_bug_005_login_ignores_username_case(self):
+        auth_service.create_user("Bob", "Secret123", "Staff")
+        self.assertEqual(auth_service.authenticate("BOB", "Secret123")["username"], "Bob")
+
+    def test_bug_005_wrong_password_still_rejected(self):
+        auth_service.create_user("Bob", "Secret123", "Staff")
+        with self.assertRaises(ValidationError):
+            auth_service.authenticate("bob", "Wrong123")
+
+    def test_bug_006_impossible_leave_dates_rejected(self):
+        from app.utils.validation import validate_leave_dates
+        today = date.today()
+        iso = lambda n: (today + timedelta(days=n)).isoformat()
+        for start, end in (("1900-01-01", "1900-01-02"), (iso(0), iso(181)), (iso(-400), iso(-399)), (iso(400), iso(401))):
+            with self.assertRaises(ValidationError, msg=f"{start}..{end}"):
+                validate_leave_dates(start, end)
+
+    def test_bug_006_normal_leave_dates_accepted(self):
+        from app.utils.validation import validate_leave_dates
+        today = date.today()
+        self.assertEqual(validate_leave_dates((today - timedelta(days=3)).isoformat(),
+                                               (today + timedelta(days=177)).isoformat())[0],
+                         (today - timedelta(days=3)).isoformat())
 
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
