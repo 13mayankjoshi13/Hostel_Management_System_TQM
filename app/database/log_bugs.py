@@ -43,6 +43,22 @@ BUGS = [
         "corrective_action": "Reject bool and non-integral floats before int() in validate_capacity.",
         "test_case": "tests/test_bug_fixes.py::test_bug_004_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "High", "priority": "High",
+        "title": "Usernames Bob and bob can both be created and login is case-sensitive",
+        "description": "Two accounts whose usernames differ only in case can exist, so look-alike accounts are possible and logging in as BOB fails.",
+        "root_cause": "create_user and authenticate compared usernames with exact case-sensitive matching.",
+        "corrective_action": "Compare usernames with LOWER() in create_user (duplicate check) and authenticate (lookup).",
+        "test_case": "tests/test_bug_fixes.py::test_bug_005_*",
+    },
+    {
+        "module": "Other", "category": "Validation", "severity": "Medium", "priority": "Medium",
+        "title": "Leave dates accept impossible ranges such as year 1900 or multi-year leaves",
+        "description": "Leave screen accepts a leave dated 1900-01-01 or one lasting 5 years, which makes leave tracking meaningless.",
+        "root_cause": "validate_leave_dates only checked the format and that the end is not before the start.",
+        "corrective_action": "Limit a leave to 180 days and require dates within one year of today.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_006_*",
+    },
 ]
 
 
