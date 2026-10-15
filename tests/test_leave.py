@@ -3,11 +3,16 @@ import csv
 import os
 import tempfile
 import unittest
+from datetime import date, timedelta
 
 from app.database import db as db_module
 from app.database.db import initialize_database
 from app.services import student_service, room_service, allocation_service, leave_service, complaint_service
 from app.utils.validation import ValidationError
+
+
+def _day(offset):
+    return (date.today() + timedelta(days=offset)).isoformat()
 
 
 class TestLeave(unittest.TestCase):
@@ -47,45 +52,45 @@ class TestLeave(unittest.TestCase):
 
     def test_record_leave_success_stores_room(self):
         self._allocate()
-        leave_service.record_leave(self.student_id, "2026-10-01", "2026-10-05", "Family function")
+        leave_service.record_leave(self.student_id, _day(-9), _day(-5), "Family function")
         leave = leave_service.get_all_leaves()[0]
         self.assertEqual((leave["room_number"], leave["status"]), ("A101", "On Leave"))
 
     def test_leave_requires_active_allocation(self):
         with self.assertRaises(ValidationError):
-            leave_service.record_leave(self.student_id, "2026-10-01", "2026-10-05", "Home")
+            leave_service.record_leave(self.student_id, _day(-9), _day(-5), "Home")
 
     def test_invalid_date_format_rejected(self):
         self._allocate()
         with self.assertRaises(ValidationError):
-            leave_service.record_leave(self.student_id, "01-10-2026", "2026-10-05", "Home")
+            leave_service.record_leave(self.student_id, "01-10-2026", _day(-5), "Home")
 
     def test_end_before_start_rejected(self):
         self._allocate()
         with self.assertRaises(ValidationError):
-            leave_service.record_leave(self.student_id, "2026-10-05", "2026-10-01", "Home")
+            leave_service.record_leave(self.student_id, _day(-5), _day(-9), "Home")
 
     def test_empty_reason_rejected(self):
         self._allocate()
         with self.assertRaises(ValidationError):
-            leave_service.record_leave(self.student_id, "2026-10-01", "2026-10-05", "  ")
+            leave_service.record_leave(self.student_id, _day(-9), _day(-5), "  ")
 
     def test_second_open_leave_rejected(self):
         self._allocate()
-        leave_service.record_leave(self.student_id, "2026-10-01", "2026-10-05", "Home")
+        leave_service.record_leave(self.student_id, _day(-9), _day(-5), "Home")
         with self.assertRaises(ValidationError):
-            leave_service.record_leave(self.student_id, "2026-10-10", "2026-10-12", "Trip")
+            leave_service.record_leave(self.student_id, _day(0), _day(2), "Trip")
 
     def test_mark_returned_then_new_leave_allowed(self):
         self._allocate()
-        leave_id = leave_service.record_leave(self.student_id, "2026-10-01", "2026-10-05", "Home")
+        leave_id = leave_service.record_leave(self.student_id, _day(-9), _day(-5), "Home")
         leave_service.mark_returned(leave_id)
         self.assertEqual(leave_service.get_all_leaves()[0]["status"], "Returned")
-        leave_service.record_leave(self.student_id, "2026-10-10", "2026-10-12", "Trip")
+        leave_service.record_leave(self.student_id, _day(0), _day(2), "Trip")
 
     def test_mark_returned_twice_rejected(self):
         self._allocate()
-        leave_id = leave_service.record_leave(self.student_id, "2026-10-01", "2026-10-05", "Home")
+        leave_id = leave_service.record_leave(self.student_id, _day(-9), _day(-5), "Home")
         leave_service.mark_returned(leave_id)
         with self.assertRaises(ValidationError):
             leave_service.mark_returned(leave_id)
