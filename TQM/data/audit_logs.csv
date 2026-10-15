@@ -6,3 +6,15 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-11T15:21:38,admin,Administrator,Complaint,Create,1,Success,Logged 'Washroom' complaint for student 1.
 2026-10-11T15:22:04,admin,Administrator,Complaint,Assign,1,Success,Assigned to 'assign'.
 2026-10-11T15:24:19,admin,Administrator,Complaint,Resolve,1,Success,Resolved at 2026-10-11T15:24:19.
+2026-10-11T20:31:41,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-11T20:32:54,admin,Administrator,Student,Create,2,Success,Registered student 'Mayankkkkk' (AU2024).
+2026-10-11T20:35:31,admin,Administrator,User,Create,2,Success,Created account 'mayankjoshi13' with role 'Student'.
+2026-10-11T20:35:36,admin,Administrator,Auth,Logout,admin,Success,'admin' logged out.
+2026-10-11T20:35:50,mayankjoshi13,Student,Auth,Login,2,Success,'mayankjoshi13' logged in.
+2026-10-11T20:36:26,mayankjoshi13,Student,Auth,Logout,mayankjoshi13,Success,'mayankjoshi13' logged out.
+2026-10-13T20:41:28,system_admin,Administrator,Calendar,Seed,defaults,Success,Loaded 23 default 2026 holidays.
+2026-10-13T20:42:11,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-13T20:47:56,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-13T20:54:46,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-13T22:16:59,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-14T21:52:57,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
