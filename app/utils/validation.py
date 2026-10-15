@@ -9,7 +9,7 @@ the cleaned value on success, so callers can do:
 
 instead of checking booleans everywhere.
 """
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 
 class ValidationError(Exception):
@@ -100,6 +100,9 @@ def validate_complaint_description(description: str) -> str:
     return description
 
 
+MAX_LEAVE_DAYS = 180
+
+
 def validate_leave_dates(from_date: str, to_date: str) -> tuple:
     try:
         start = datetime.strptime(str(from_date).strip(), "%Y-%m-%d").date()
@@ -108,6 +111,11 @@ def validate_leave_dates(from_date: str, to_date: str) -> tuple:
         raise ValidationError("Dates must be in YYYY-MM-DD format.")
     if end < start:
         raise ValidationError("The leave end date cannot be before the start date.")
+    if (end - start).days > MAX_LEAVE_DAYS:
+        raise ValidationError(f"A leave cannot be longer than {MAX_LEAVE_DAYS} days.")
+    today = date.today()
+    if start < today - timedelta(days=365) or end > today + timedelta(days=365):
+        raise ValidationError("Leave dates must be within one year of today.")
     return start.isoformat(), end.isoformat()
 
 
