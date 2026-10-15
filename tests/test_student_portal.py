@@ -3,6 +3,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from datetime import date, timedelta
 
 from app.database import db as db_module
 from app.database.db import initialize_database
@@ -10,6 +11,10 @@ from app.services import (auth_service, student_service, room_service, allocatio
                            student_portal_service as portal)
 from app.utils import session
 from app.utils.validation import ValidationError
+
+
+def _day(offset):
+    return (date.today() + timedelta(days=offset)).isoformat()
 
 
 class TestStudentPortal(unittest.TestCase):
@@ -114,14 +119,14 @@ class TestStudentPortal(unittest.TestCase):
 
     def test_apply_leave_and_return(self):
         self._login("student1")
-        leave_id = portal.apply_leave("2026-10-01", "2026-10-05", "Family function")
+        leave_id = portal.apply_leave(_day(-9), _day(-5), "Family function")
         self.assertEqual(portal.my_leaves()[0]["status"], "On Leave")
         portal.return_from_leave(leave_id)
         self.assertEqual(portal.my_leaves()[0]["status"], "Returned")
 
     def test_student_cannot_return_another_students_leave(self):
         self._login("student1")
-        leave_id = portal.apply_leave("2026-10-01", "2026-10-05", "Family function")
+        leave_id = portal.apply_leave(_day(-9), _day(-5), "Family function")
         self._login("student2")
         with self.assertRaises(ValidationError):
             portal.return_from_leave(leave_id)
@@ -129,7 +134,7 @@ class TestStudentPortal(unittest.TestCase):
 
     def test_students_only_see_their_own_leaves(self):
         self._login("student1")
-        portal.apply_leave("2026-10-01", "2026-10-05", "Family function")
+        portal.apply_leave(_day(-9), _day(-5), "Family function")
         self._login("student2")
         self.assertEqual(portal.my_leaves(), [])
 
