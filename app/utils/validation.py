@@ -38,8 +38,10 @@ def validate_registration_number(reg_no: str) -> str:
     reg_no = str(reg_no).strip()
     if len(reg_no) < 3 or len(reg_no) > 30:
         raise ValidationError("Registration number must be between 3 and 30 characters.")
-    if not all(ch.isalnum() for ch in reg_no):
-        raise ValidationError("Registration number must be alphanumeric only.")
+    if not all(ch.isascii() and ch.isalnum() for ch in reg_no):
+        raise ValidationError("Registration number must be letters and digits only (A-Z, 0-9).")
+    if set(reg_no) == {"0"}:
+        raise ValidationError("Registration number cannot be all zeros.")
     return reg_no
 
 
@@ -62,8 +64,8 @@ def validate_room_number(room_no: str) -> str:
     room_no = str(room_no).strip()
     if len(room_no) > 10:
         raise ValidationError("Room number cannot exceed 10 characters.")
-    if not all(ch.isalnum() for ch in room_no):
-        raise ValidationError("Room number must be alphanumeric only.")
+    if not all(ch.isascii() and ch.isalnum() for ch in room_no):
+        raise ValidationError("Room number must be letters and digits only (A-Z, 0-9).")
     return room_no.upper()
 
 
@@ -187,7 +189,7 @@ def validate_username(username: str) -> str:
     username = str(username).strip()
     if len(username) < 3 or len(username) > 30:
         raise ValidationError("Username must be between 3 and 30 characters.")
-    if not all(ch.isalnum() or ch == "_" for ch in username):
+    if not all((ch.isascii() and ch.isalnum()) or ch == "_" for ch in username):
         raise ValidationError("Username may only contain letters, numbers, and underscores.")
     return username
 
