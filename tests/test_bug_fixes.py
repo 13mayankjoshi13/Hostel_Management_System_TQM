@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 from app.database import db as db_module, log_bugs
 from app.database.db import initialize_database
-from app.services import room_service, bug_service, student_service, auth_service
+from app.services import room_service, bug_service, student_service, auth_service, allocation_service
 from app.utils.validation import ValidationError
 
 
@@ -109,6 +109,41 @@ class TestBugFixes(unittest.TestCase):
         self.assertEqual(validate_leave_dates((today - timedelta(days=3)).isoformat(),
                                                (today + timedelta(days=177)).isoformat())[0],
                          (today - timedelta(days=3)).isoformat())
+
+    def _error_rows(self):
+        import app.utils.logging_service as ls
+        return open(ls.ERROR_LOG_CSV).read().count("\n") if os.path.exists(ls.ERROR_LOG_CSV) else 0
+
+    def test_bug_007_in_use_student_and_room_give_specific_message(self):
+        sid = student_service.add_student("Aa Bb", "2410302001", "9876543210")
+        rid = room_service.add_room("A1", "Single", 1)
+        allocation_service.allocate_room(sid, rid)
+        with self.assertRaisesRegex(ValidationError, "active room allocation"):
+            student_service.delete_student(sid)
+        with self.assertRaisesRegex(ValidationError, "allocated"):
+            room_service.delete_room(rid)
+        self.assertEqual(self._error_rows(), 0)
+
+    def test_bug_007_history_blocks_delete_with_message(self):
+        sid = student_service.add_student("Aa Bb", "2410302001", "9876543210")
+        rid = room_service.add_room("A1", "Single", 1)
+        aid = allocation_service.allocate_room(sid, rid)
+        allocation_service.release_allocation(aid)
+        with self.assertRaisesRegex(ValidationError, "records"):
+            student_service.delete_student(sid)
+        with self.assertRaisesRegex(ValidationError, "history"):
+            room_service.delete_room(rid)
+
+    def test_bug_007_missing_ids_and_unused_records(self):
+        with self.assertRaisesRegex(ValidationError, "does not exist"):
+            student_service.delete_student(999)
+        with self.assertRaisesRegex(ValidationError, "does not exist"):
+            room_service.delete_room(999)
+        sid = student_service.add_student("Aa Bb", "2410302001", "9876543210")
+        rid = room_service.add_room("A1", "Single", 1)
+        student_service.delete_student(sid)
+        room_service.delete_room(rid)
+        self.assertEqual((student_service.get_all_students(), room_service.get_all_rooms()), ([], []))
 
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
