@@ -23,6 +23,7 @@ from app.screens.user_screen import UserScreen
 from app.screens.my_room_screen import MyRoomScreen
 from app.screens.my_complaints_screen import MyComplaintsScreen
 from app.screens.my_leave_screen import MyLeaveScreen
+from app.screens.my_details_screen import MyDetailsScreen
 from app.utils import session
 
 # key, label, icon
@@ -40,10 +41,11 @@ _NAV_ITEMS = [
     ("MyRoom", "My Room", "home"),
     ("MyComplaints", "My Complaints", "chat"),
     ("MyLeave", "My Leave", "plane"),
+    ("MyDetails", "My Details", "user"),
 ]
 
 _ADMIN_ONLY = {"Users"}
-_STUDENT_ONLY = {"MyRoom", "MyComplaints", "MyLeave"}
+_STUDENT_ONLY = {"MyRoom", "MyComplaints", "MyLeave", "MyDetails"}
 _EVERYONE = {"Calendar"}
 
 
@@ -244,6 +246,7 @@ class MainWindow(tk.Tk):
         self.screens["MyRoom"] = MyRoomScreen(self.content, self.fonts)
         self.screens["MyComplaints"] = MyComplaintsScreen(self.content, self.fonts)
         self.screens["MyLeave"] = MyLeaveScreen(self.content, self.fonts)
+        self.screens["MyDetails"] = MyDetailsScreen(self.content, self.fonts)
         for screen in self.screens.values():
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
 
