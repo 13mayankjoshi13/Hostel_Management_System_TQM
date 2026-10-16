@@ -145,6 +145,17 @@ class TestBugFixes(unittest.TestCase):
         room_service.delete_room(rid)
         self.assertEqual((student_service.get_all_students(), room_service.get_all_rooms()), ([], []))
 
+    def test_bug_008_export_rooms_in_natural_order(self):
+        import csv
+        for i, number in enumerate(("B3", "A10", "A2", "A1", "AB1")):
+            allocation_service.allocate_room(student_service.add_student(f"Stud {chr(65 + i)}x", f"24103020{i:02d}", "9876543210"),
+                                             room_service.add_room(number, "Single", 1))
+        path = os.path.join(self.tmp, "x.csv")
+        allocation_service.export_allocation_list(path)
+        with open(path, newline="") as f:
+            rooms = [row[0] for row in list(csv.reader(f))[1:]]
+        self.assertEqual(rooms, ["A1", "A2", "A10", "AB1", "B3"])
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
