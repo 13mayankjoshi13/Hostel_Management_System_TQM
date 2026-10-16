@@ -20,6 +20,7 @@ import sqlite3
 from datetime import date as date_cls
 
 from app.database.db import get_connection
+from app.utils import session
 from app.utils.validation import (
     validate_bug_module, validate_bug_category, validate_bug_title,
     validate_bug_description, validate_severity, validate_priority,
@@ -41,7 +42,7 @@ def _get_bug_or_raise(cur, bug_id: int) -> sqlite3.Row:
 
 
 def log_bug(module: str, category: str, title: str, description: str,
-            severity: str, priority: str) -> int:
+            severity: str, priority: str, reported_by: str = None) -> int:
     """Validate and insert a new bug with status 'Open'. Returns the new bug_id."""
     clean_module = validate_bug_module(module)
     clean_category = validate_bug_category(category)
@@ -50,15 +51,16 @@ def log_bug(module: str, category: str, title: str, description: str,
     clean_severity = validate_severity(severity)
     clean_priority = validate_priority(priority)
     today = date_cls.today().isoformat()
+    reporter = (reported_by or "").strip() or session.get_user()
 
     conn = get_connection()
     try:
         cur = conn.cursor()
         cur.execute(
             "INSERT INTO bugs (date, module, category, title, description, "
-            "severity, priority, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Open')",
+            "severity, priority, status, reported_by) VALUES (?, ?, ?, ?, ?, ?, ?, 'Open', ?)",
             (today, clean_module, clean_category, clean_title, clean_description,
-             clean_severity, clean_priority),
+             clean_severity, clean_priority, reporter),
         )
         conn.commit()
         bug_id = cur.lastrowid
@@ -106,11 +108,13 @@ def start_progress(bug_id: int) -> None:
         conn.close()
 
 
-def mark_fixed(bug_id: int, root_cause: str, corrective_action: str, test_case: str) -> None:
+def mark_fixed(bug_id: int, root_cause: str, corrective_action: str, test_case: str,
+               fixed_by: str = None) -> None:
     """Move a bug from 'In Progress' to 'Fixed'. Requires full documentation."""
     clean_root_cause = validate_root_cause(root_cause)
     clean_corrective_action = validate_corrective_action(corrective_action)
     clean_test_case = validate_test_case(test_case)
+    fixer = (fixed_by or "").strip() or session.get_user()
 
     conn = get_connection()
     try:
@@ -123,8 +127,8 @@ def mark_fixed(bug_id: int, root_cause: str, corrective_action: str, test_case: 
             )
         cur.execute(
             "UPDATE bugs SET status = 'Fixed', root_cause = ?, corrective_action = ?, "
-            "test_case = ? WHERE bug_id = ?",
-            (clean_root_cause, clean_corrective_action, clean_test_case, bug_id),
+            "test_case = ?, fixed_by = ? WHERE bug_id = ?",
+            (clean_root_cause, clean_corrective_action, clean_test_case, fixer, bug_id),
         )
         conn.commit()
 
@@ -132,7 +136,7 @@ def mark_fixed(bug_id: int, root_cause: str, corrective_action: str, test_case: 
                    bug["description"], bug["severity"], bug["priority"], "Fixed",
                    clean_root_cause, clean_corrective_action, clean_test_case)
         log_audit("Bug", "MarkFixed", str(bug_id), "Success",
-                   f"Fixed. Root cause: {clean_root_cause[:60]}")
+                   f"Fixed by {fixer}. Root cause: {clean_root_cause[:60]}")
     except ValidationError:
         raise
     except sqlite3.Error as exc:
