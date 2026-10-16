@@ -17,6 +17,7 @@ class StudentScreen(tk.Frame):
         self.fonts = fonts
         section_header(self, "Students", "Add, edit and review hosteller records.", fonts)
         self._editing_id = None
+        self._restoring = False
         self.left, self.right = split_layout(self)
         self._build_form()
         self._build_table()
@@ -66,7 +67,7 @@ class StudentScreen(tk.Frame):
 
     def on_select(self, _event=None):
         selected = self.tree.selection()
-        if not selected:
+        if not selected or self._restoring:
             return
         values = self.tree.item(selected[0], "values")
         self._editing_id = int(values[0])
@@ -112,8 +113,18 @@ class StudentScreen(tk.Frame):
     def refresh(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
-        for student in student_service.get_all_students(self.sort_var.get()):
-            self.tree.insert("", "end", values=(
-                student["student_id"], student["name"],
-                student["registration_number"], student["contact_number"],
-            ), tags=("default",))
+        self._restoring = True
+        try:
+            for student in student_service.get_all_students(self.sort_var.get()):
+                item = self.tree.insert("", "end", values=(
+                    student["student_id"], student["name"],
+                    student["registration_number"], student["contact_number"],
+                ), tags=("default",))
+                if student["student_id"] == self._editing_id:
+                    self.tree.selection_set(item)
+                    self.tree.see(item)
+            if self._editing_id is not None and not self.tree.selection():
+                self._editing_id = None
+                self.save_button.state(["disabled"])
+        finally:
+            self._restoring = False
