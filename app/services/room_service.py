@@ -65,9 +65,22 @@ def delete_room(room_id: int) -> None:
     conn = get_connection()
     try:
         cur = conn.cursor()
+        cur.execute("SELECT room_number FROM rooms WHERE room_id = ?", (room_id,))
+        room = cur.fetchone()
+        if room is None:
+            raise ValidationError("That room does not exist.")
+        cur.execute("SELECT COUNT(*) AS n FROM allocations WHERE room_id = ? AND status = 'Active'", (room_id,))
+        if cur.fetchone()["n"]:
+            raise ValidationError(f"Room '{room['room_number']}' has students allocated. Release them first.")
+        cur.execute("SELECT (SELECT COUNT(*) FROM allocations WHERE room_id = ?) + "
+                    "(SELECT COUNT(*) FROM leaves WHERE room_id = ?) AS n", (room_id, room_id))
+        if cur.fetchone()["n"]:
+            raise ValidationError(f"Room '{room['room_number']}' has allocation or leave history, so it cannot be deleted.")
         cur.execute("DELETE FROM rooms WHERE room_id = ?", (room_id,))
         conn.commit()
         log_audit("Room", "Delete", str(room_id), "Success", "Room record deleted.")
+    except ValidationError:
+        raise
     except sqlite3.Error as exc:
         log_error("Room", "DatabaseError", "High", "delete_room",
                    status="Open", message_reference=str(exc))
