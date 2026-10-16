@@ -14,7 +14,8 @@ import tkinter as tk
 from tkinter import ttk
 
 from app.services import quality_service
-from app.theme import COLORS, section_header, build_panel, build_stat_row
+from app.theme import (COLORS, section_header, build_panel, build_stat_row, ScrollFrame, build_table,
+                        style_treeview_status_tags)
 
 _FISHBONE_COLORS = {
     "People": "#B45309", "Process": "#1D4ED8", "Software/Code": "#3457D5",
@@ -30,25 +31,37 @@ class QualityScreen(tk.Frame):
                         "SQC tools generated live from real bug records — nothing on this page is sample data.",
                         fonts)
 
-        self.stats_slot = tk.Frame(self, bg=COLORS["background"])
+        scroll = ScrollFrame(self, bg=COLORS["background"])
+        scroll.pack(fill="both", expand=True)
+        body = scroll.inner
+
+        self.stats_slot = tk.Frame(body, bg=COLORS["background"])
         self.stats_slot.pack(fill="x", padx=28, pady=(0, 20))
 
-        charts_wrapper = tk.Frame(self, bg=COLORS["background"])
-        charts_wrapper.pack(fill="both", expand=True, padx=28, pady=(0, 24))
+        charts_wrapper = tk.Frame(body, bg=COLORS["background"])
+        charts_wrapper.pack(fill="x", padx=28, pady=(0, 24))
 
         pareto_wrap = tk.Frame(charts_wrapper, bg=COLORS["background"])
-        pareto_wrap.pack(fill="both", expand=True, pady=(0, 20))
+        pareto_wrap.pack(fill="x", pady=(0, 20))
         pareto_content = build_panel(pareto_wrap, "Pareto Chart — Defects by Category", self.fonts)
-        self.pareto_canvas = tk.Canvas(pareto_content, height=200, bg=COLORS["surface"],
+        self.pareto_canvas = tk.Canvas(pareto_content, height=230, bg=COLORS["surface"],
                                          highlightthickness=0)
-        self.pareto_canvas.pack(fill="both", expand=True)
+        self.pareto_canvas.pack(fill="x")
 
         fishbone_wrap = tk.Frame(charts_wrapper, bg=COLORS["background"])
-        fishbone_wrap.pack(fill="both", expand=True)
+        fishbone_wrap.pack(fill="x", pady=(0, 20))
         fishbone_content = build_panel(fishbone_wrap, "Fishbone Diagram — Cause and Effect", self.fonts)
-        self.fishbone_canvas = tk.Canvas(fishbone_content, height=260, bg=COLORS["surface"],
+        self.fishbone_canvas = tk.Canvas(fishbone_content, height=320, bg=COLORS["surface"],
                                            highlightthickness=0)
-        self.fishbone_canvas.pack(fill="both", expand=True)
+        self.fishbone_canvas.pack(fill="x")
+
+        people_wrap = tk.Frame(charts_wrapper, bg=COLORS["background"])
+        people_wrap.pack(fill="x")
+        people_content = build_panel(people_wrap, "Who found and who fixed", self.fonts)
+        self.people_tree = build_table(people_content, ("person", "reported", "fixed"),
+                                         ("Person", "Bugs reported", "Bugs fixed"), (220, 120, 120), height=4)
+        self.people_tree.pack(fill="x")
+        style_treeview_status_tags(self.people_tree)
 
         self.pareto_canvas.bind("<Configure>", lambda e: self._draw_pareto())
         self.fishbone_canvas.bind("<Configure>", lambda e: self._draw_fishbone())
@@ -211,7 +224,14 @@ class QualityScreen(tk.Frame):
             c.create_text(bx, min(y, range_end), text=f"(+{len(causes) - limit} more)",
                           fill=COLORS["text_tertiary"], font=self.fonts["label"])
 
+    def _refresh_people(self):
+        for row in self.people_tree.get_children():
+            self.people_tree.delete(row)
+        for person, reported, fixed in quality_service.get_people_summary():
+            self.people_tree.insert("", "end", values=(person, reported, fixed), tags=("default",))
+
     def refresh(self):
         self._refresh_stats()
+        self._refresh_people()
         self.after(10, self._draw_pareto)
         self.after(10, self._draw_fishbone)
