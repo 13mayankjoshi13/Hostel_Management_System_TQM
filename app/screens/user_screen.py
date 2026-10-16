@@ -5,7 +5,7 @@ from tkinter import ttk, messagebox, simpledialog
 from app.services import auth_service, student_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel, form_card, split_layout
+from app.theme import COLORS, section_header, form_row, build_panel, form_card, split_layout, build_table, style_treeview_status_tags, status_tag
 
 _ROLES = ["Administrator", "Warden", "Staff", "Student"]
 
@@ -49,19 +49,22 @@ class UserScreen(tk.Frame):
         wrapper.pack(fill="both", expand=True)
         content = build_panel(wrapper, "Accounts", self.fonts)
 
-        columns = ("id", "username", "role", "student", "created")
-        self.tree = ttk.Treeview(content, columns=columns, show="headings", height=8)
-        for col, label, width in zip(columns, ("ID", "Username", "Role", "Linked student", "Created"),
-                                      (50, 160, 110, 160, 160)):
-            self.tree.heading(col, text=label)
-            self.tree.column(col, width=width, anchor="w")
+        self.pending_label = tk.Label(content, text="", anchor="w", bg=COLORS["surface"],
+                                       fg=COLORS["warning"], font=self.fonts["label"])
+        self.pending_label.pack(fill="x", pady=(0, 6))
+        self.tree = build_table(content, ("id", "username", "role", "status", "student", "created"),
+                                  ("ID", "Username", "Role", "Status", "Linked student", "Created"),
+                                  (50, 150, 100, 80, 160, 150), height=8)
         self.tree.pack(fill="both", expand=True)
+        style_treeview_status_tags(self.tree)
 
         button_row = tk.Frame(content, bg=COLORS["surface"])
         button_row.pack(anchor="e", pady=(10, 0))
+        ttk.Button(button_row, text="Approve Selected", style="Primary.TButton",
+                    command=self.on_approve).pack(side="left", padx=(0, 8))
         ttk.Button(button_row, text="Change Password", style="Secondary.TButton",
                     command=self.on_change_password).pack(side="left", padx=(0, 8))
-        ttk.Button(button_row, text="Delete Account", style="Secondary.TButton",
+        ttk.Button(button_row, text="Delete / Reject", style="Secondary.TButton",
                     command=self.on_delete).pack(side="left")
 
     def on_create(self):
@@ -85,6 +88,19 @@ class UserScreen(tk.Frame):
             messagebox.showerror("No Selection", "Select an account first.")
             return None
         return self._rows.get(selected[0])
+
+    def on_approve(self):
+        user = self._selected()
+        if user is None:
+            return
+        try:
+            auth_service.approve_user(user["user_id"])
+            self.refresh()
+            messagebox.showinfo("Success", f"'{user['username']}' can now log in.")
+        except ValidationError as e:
+            messagebox.showerror("Invalid Input", str(e))
+        except Exception as e:
+            handle_unexpected_error("User", "approve_user_ui", e)
 
     def on_change_password(self):
         user = self._selected()
@@ -128,8 +144,12 @@ class UserScreen(tk.Frame):
             for s in student_service.get_all_students() if s["student_id"] not in linked
         }
         self.student_combo["values"] = list(self._student_options.keys())
-        for user in users:
+        pending = sum(1 for u in users if u["status"] == "Pending")
+        self.pending_label.configure(
+            text=f"{pending} account(s) waiting for approval." if pending else "")
+        for user in sorted(users, key=lambda u: (u["status"] != "Pending", u["user_id"])):
             item = self.tree.insert("", "end", values=(
-                user["user_id"], user["username"], user["role"],
-                user["student_name"] or "—", user["created_at"]))
+                user["user_id"], user["username"], user["role"], user["status"],
+                user["student_name"] or "—", user["created_at"]),
+                tags=(status_tag(user["status"]) if user["status"] == "Pending" else "default",))
             self._rows[item] = user
