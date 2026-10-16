@@ -83,6 +83,14 @@ BUGS = [
         "corrective_action": "Compute the percentage with integer half-up rounding.",
         "test_case": "tests/test_bug_fixes.py::test_bug_009_*",
     },
+    {
+        "module": "Student", "category": "Validation", "severity": "Low", "priority": "Medium",
+        "title": "Student name keeps extra spaces and tabs, and accepts names with no letters",
+        "description": "'Ravi  Kumar' (two spaces) and 'Jean<tab>Luc' are stored as typed, and '...' or \"-'-\" are accepted as names.",
+        "root_cause": "validate_student_name only trimmed the ends and allowed any whitespace and punctuation characters.",
+        "corrective_action": "Collapse every whitespace run to one space and require at least one letter.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_010_*",
+    },
 ]
 
 
