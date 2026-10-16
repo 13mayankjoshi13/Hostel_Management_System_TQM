@@ -85,10 +85,24 @@ def delete_student(student_id: int) -> None:
     conn = get_connection()
     try:
         cur = conn.cursor()
+        cur.execute("SELECT name FROM students WHERE student_id = ?", (student_id,))
+        student = cur.fetchone()
+        if student is None:
+            raise ValidationError("That student does not exist.")
+        cur.execute("SELECT COUNT(*) AS n FROM allocations WHERE student_id = ? AND status = 'Active'", (student_id,))
+        if cur.fetchone()["n"]:
+            raise ValidationError(f"{student['name']} has an active room allocation. Release it first.")
+        for table, what in (("allocations", "allocation"), ("complaints", "complaint"),
+                            ("leaves", "leave"), ("users", "login account")):
+            cur.execute(f"SELECT COUNT(*) AS n FROM {table} WHERE student_id = ?", (student_id,))
+            if cur.fetchone()["n"]:
+                raise ValidationError(f"{student['name']} has {what} records, so the student cannot be deleted.")
         cur.execute("DELETE FROM students WHERE student_id = ?", (student_id,))
         conn.commit()
         log_audit("Student", "Delete", str(student_id), "Success",
                    "Student record deleted.")
+    except ValidationError:
+        raise
     except sqlite3.Error as exc:
         log_error("Student", "DatabaseError", "High", "delete_student",
                    status="Open", message_reference=str(exc))
