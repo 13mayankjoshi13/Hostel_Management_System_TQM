@@ -47,3 +47,13 @@ Quality Objective ID for CR-14 is not yet defined.
 | CR-15 | `events` table, `event_service`, Calendar screen, dashboard and My Room upcoming lists | `tests/test_events.py` |
 
 Quality Objective ID for CR-15 is not yet defined.
+
+## Sign-up, Edit/Sort and Bug Visibility (Batch 29)
+
+| Customer Req. | Software Feature | Test Evidence |
+|---|---|---|
+| CR-16 | `register_student`, `approve_user`, pending status check in `authenticate`, Sign-up dialog, Approve button in User Management | `tests/test_requests_batch.py` (TestSignup) |
+| CR-17 | `update_student`, `get_all_students(sort_by)`, `update_my_details`, My Details screen, edit and sort in Students screen | `tests/test_requests_batch.py` (TestStudentEditAndSort, TestPortalDetails) |
+| CR-18 | `reported_by` / `fixed_by` on bugs, Open / Solved filter and detail view, "Who found and who fixed" table | `tests/test_requests_batch.py` (TestBugPeople) |
+
+Quality Objective IDs for CR-16 to CR-18 are not yet defined.
