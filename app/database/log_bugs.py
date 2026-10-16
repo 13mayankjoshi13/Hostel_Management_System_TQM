@@ -75,6 +75,14 @@ BUGS = [
         "corrective_action": "Sort by block letters, then the numeric part, then the full room number (_room_order).",
         "test_case": "tests/test_bug_fixes.py::test_bug_008_*",
     },
+    {
+        "module": "Other", "category": "Functional", "severity": "Low", "priority": "Low",
+        "title": "Quality fix rate rounds halves to even, so 12.5% shows as 12%",
+        "description": "Quality summary shows 12% for 1 fixed of 8 bugs and 38% for 3 of 8, because halves round to the nearest even number.",
+        "root_cause": "get_quality_summary used Python round(), which uses banker's rounding.",
+        "corrective_action": "Compute the percentage with integer half-up rounding.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_009_*",
+    },
 ]
 
 
