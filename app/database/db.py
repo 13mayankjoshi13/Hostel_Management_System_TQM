@@ -130,5 +130,13 @@ def initialize_database(db_path: str = None) -> None:
     if "student_id" not in existing:
         cur.execute("ALTER TABLE users ADD COLUMN student_id INTEGER REFERENCES students(student_id)")
 
+    if "status" not in existing:
+        cur.execute("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'Active'")
+
+    bug_columns = {row["name"] for row in cur.execute("PRAGMA table_info(bugs)")}
+    for column in ("reported_by", "fixed_by"):
+        if column not in bug_columns:
+            cur.execute(f"ALTER TABLE bugs ADD COLUMN {column} TEXT")
+
     conn.commit()
     conn.close()
