@@ -174,6 +174,22 @@ class TestBugFixes(unittest.TestCase):
         from app.services.quality_service import get_quality_summary
         self.assertEqual(get_quality_summary()["fix_rate_pct"], 0)
 
+    def test_bug_010_name_whitespace_normalised(self):
+        from app.utils.validation import validate_student_name
+        self.assertEqual(validate_student_name("  ravi   kumar "), "ravi kumar")
+        self.assertEqual(validate_student_name("Jean\tLuc"), "Jean Luc")
+        self.assertEqual(validate_student_name("Anne-Marie O'Brien"), "Anne-Marie O'Brien")
+
+    def test_bug_010_names_without_letters_rejected(self):
+        from app.utils.validation import validate_student_name
+        for name in ("...", "-'-", ". .", "  \t "):
+            with self.assertRaises(ValidationError, msg=repr(name)):
+                validate_student_name(name)
+
+    def test_bug_010_spacing_variants_stored_once(self):
+        student_service.add_student("Ravi  Kumar", "2410302001", "9876543210")
+        self.assertEqual(student_service.get_all_students()[0]["name"], "Ravi Kumar")
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
