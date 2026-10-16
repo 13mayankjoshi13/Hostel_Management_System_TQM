@@ -51,7 +51,7 @@ def get_quality_summary() -> dict:
         if b["status"] in ("Open", "In Progress") and b["severity"] in ("Critical", "High")
     )
     fixed_or_closed = by_status.get("Fixed", 0) + by_status.get("Closed", 0)
-    fix_rate_pct = round(fixed_or_closed / total * 100) if total > 0 else 0
+    fix_rate_pct = (fixed_or_closed * 200 + total) // (2 * total) if total > 0 else 0
 
     return {
         "total": total,
