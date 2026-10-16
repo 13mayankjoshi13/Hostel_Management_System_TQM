@@ -14,7 +14,8 @@ import os
 import sqlite3
 
 from app.database.db import get_connection
-from app.utils.validation import validate_username, validate_password, validate_role, ValidationError
+from app.utils.validation import (validate_username, validate_password, validate_role,
+                                    validate_registration_number, validate_contact_number, ValidationError)
 from app.utils.logging_service import log_error, log_audit
 from app.utils import session
 
@@ -50,7 +51,7 @@ def create_user(username: str, password: str, role: str, student_id: int = None)
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT user_id FROM users WHERE username = ?", (clean_username,))
+        cur.execute("SELECT user_id FROM users WHERE LOWER(username) = LOWER(?)", (clean_username,))
         if cur.fetchone() is not None:
             raise ValidationError(f"Username '{clean_username}' is already taken.")
         if clean_role == "Student":
@@ -95,11 +96,13 @@ def authenticate(username: str, password: str) -> dict:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username = ?", (str(username).strip(),))
+        cur.execute("SELECT * FROM users WHERE LOWER(username) = LOWER(?) ORDER BY user_id", (str(username).strip(),))
         user = cur.fetchone()
 
         if user is None or not _verify_password(password, user["password_hash"]):
             raise ValidationError("Invalid username or password.")
+        if user["status"] != "Active":
+            raise ValidationError("Your account is waiting for an administrator to approve it.")
 
         session.set_session(user["username"], user["role"], user["student_id"])
         log_audit("Auth", "Login", str(user["user_id"]), "Success",
@@ -157,7 +160,7 @@ def list_users() -> list:
     try:
         cur = conn.cursor()
         cur.execute("""
-            SELECT u.user_id, u.username, u.role, u.created_at, u.student_id, s.name AS student_name
+            SELECT u.user_id, u.username, u.role, u.status, u.created_at, u.student_id, s.name AS student_name
             FROM users u LEFT JOIN students s ON s.student_id = u.student_id
             ORDER BY u.user_id
         """)
@@ -218,5 +221,73 @@ def delete_user(user_id: int) -> None:
         log_error("User", "DatabaseError", "High", "delete_user",
                    status="Open", message_reference=str(exc))
         raise ValidationError("Could not delete the account due to a database error.")
+    finally:
+        conn.close()
+
+
+def register_student(username: str, password: str, registration_number: str, contact_number: str) -> int:
+    """
+    Self sign-up from the login screen. The registration number must belong to a student the
+    hostel has already recorded, and the contact number must match the record. The account stays
+    'Pending' until an Administrator approves it.
+    """
+    clean_username = validate_username(username)
+    clean_password = validate_password(password)
+    clean_reg = validate_registration_number(registration_number)
+    clean_contact = validate_contact_number(contact_number)
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT student_id, contact_number FROM students WHERE registration_number = ?", (clean_reg,))
+        student = cur.fetchone()
+        if student is None or student["contact_number"] != clean_contact:
+            raise ValidationError("Registration number and contact number do not match a hostel record. "
+                                  "Ask the hostel office to add or correct your details.")
+        cur.execute("SELECT user_id FROM users WHERE LOWER(username) = LOWER(?)", (clean_username,))
+        if cur.fetchone() is not None:
+            raise ValidationError(f"Username '{clean_username}' is already taken.")
+        cur.execute("SELECT user_id FROM users WHERE student_id = ?", (student["student_id"],))
+        if cur.fetchone() is not None:
+            raise ValidationError("This student already has an account.")
+        cur.execute("INSERT INTO users (username, password_hash, role, student_id, status) "
+                    "VALUES (?, ?, 'Student', ?, 'Pending')",
+                    (clean_username, _hash_password(clean_password), student["student_id"]))
+        conn.commit()
+        user_id = cur.lastrowid
+        log_audit("User", "SignUp", str(user_id), "Success",
+                   f"'{clean_username}' requested a student account (pending approval).")
+        return user_id
+    except ValidationError:
+        raise
+    except sqlite3.Error as exc:
+        log_error("User", "DatabaseError", "High", "register_student",
+                   status="Open", message_reference=str(exc))
+        raise ValidationError("Could not create the account due to a database error.")
+    finally:
+        conn.close()
+
+
+def approve_user(user_id: int) -> None:
+    if session.get_role() != "Administrator":
+        raise ValidationError("Only an Administrator can approve accounts.")
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT username, status FROM users WHERE user_id = ?", (user_id,))
+        row = cur.fetchone()
+        if row is None:
+            raise ValidationError("That user account does not exist.")
+        if row["status"] == "Active":
+            raise ValidationError("That account is already active.")
+        cur.execute("UPDATE users SET status = 'Active' WHERE user_id = ?", (user_id,))
+        conn.commit()
+        log_audit("User", "Approve", str(user_id), "Success", f"Approved account '{row['username']}'.")
+    except ValidationError:
+        raise
+    except sqlite3.Error as exc:
+        log_error("User", "DatabaseError", "High", "approve_user",
+                   status="Open", message_reference=str(exc))
+        raise ValidationError("Could not approve the account due to a database error.")
     finally:
         conn.close()
