@@ -67,6 +67,14 @@ BUGS = [
         "corrective_action": "Check existence and dependent records before deleting and raise a specific message; no database error is triggered.",
         "test_case": "tests/test_bug_fixes.py::test_bug_007_*",
     },
+    {
+        "module": "Allocation", "category": "Functional", "severity": "Low", "priority": "Medium",
+        "title": "Allotment list export sorts rooms as text so A10 comes before A2",
+        "description": "The exported allotment CSV orders rooms A1, A10, A2, A3 instead of A1, A2, A3, A10.",
+        "root_cause": "export_allocation_list sorted by the room number string, which compares character by character.",
+        "corrective_action": "Sort by block letters, then the numeric part, then the full room number (_room_order).",
+        "test_case": "tests/test_bug_fixes.py::test_bug_008_*",
+    },
 ]
 
 
