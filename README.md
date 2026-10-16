@@ -98,8 +98,16 @@ python run.py                                  # first run creates admin / admin
 python -m unittest discover -s tests -t .      # run all module tests
 ```
 
-## Class Data
+## Demo Data
 
-`python -m app.database.seed_demo --real` loads the class list (56 students) with rooms and student logins (without `--real`, a few fictional sample complaints and leaves are added too). Names are the real class list, but: registration numbers follow 24103020 + roll number (only Mayank's roll, 37, is known; the rest are assigned alphabetically), contact numbers are made up, the sample complaints and leaves are fictional, and it must not be counted in reported quality results. Student login: first and last name joined by an underscore (for example `mayank_joshi`), password `Welcome123`.
+`python -m app.database.seed_demo` loads the class list (56 students) with rooms, student logins and a few sample complaints and leaves. It is demo data only: registration numbers follow 24103020 + roll number (only Mayank's roll, 37, is known; the rest are assigned alphabetically), contact numbers are made up, the sample complaints and leaves are fictional, and it must not be counted in reported quality results. Student login: first and last name joined by an underscore (for example `mayank_joshi`), password `Welcome123`.
 
-To use real registration numbers and contacts, edit them in the Students screen after loading.
+## Interface and Calendar
+
+The interface uses card-based screens, a sidebar and a dashboard with a month calendar showing holidays, hostel events and exams. Administrators and Wardens add or delete events in the Calendar screen; everyone else can view them. Default holidays are the 2026 Central Government list; compare with your university calendar.
+
+## Sign-up, Editing and Bug Visibility
+
+- Login screen → "New student? Create an account": the student enters the registration number and contact number the hostel has on record plus a username and password. The account stays Pending until an Administrator clicks Approve Selected in User Management. Delete / Reject removes a request.
+- Students screen: select a row to edit it, and sort by newest, oldest, name or registration number. Students edit their own name and contact in My Details (the registration number stays with the hostel office).
+- Bug Tracker: Show All / Open / Solved, with Reported and Fixed by columns and a detail view of how a bug was found and fixed. Quality Monitoring scrolls and has a "Who found and who fixed" table. Run `python -m app.database.log_bugs` again to set Mayank as reporter and fixer on BUG-001 to BUG-009.
