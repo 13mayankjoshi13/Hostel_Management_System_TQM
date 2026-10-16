@@ -64,7 +64,8 @@ Run: `python -m unittest discover -s tests -t .` — 140 tests, all passing at t
 | `test_leave.py` | 12 | Leave tracking rules, allotment list export, Washroom category |
 | `test_student_portal.py` | 18 | Student accounts, session, own-data isolation, database migration |
 | `test_events.py` | 10 | Calendar events: role gating, validation, duplicates, month/upcoming queries, default holidays, table migration |
-| `test_seed_demo.py` | 8 | Demo data loader: rooms within capacity, idempotent, registration/contact format, real logs untouched |
+| `test_requests_batch.py` | 23 | Student sign-up and approval, student edit and sort, own-details edit, bug reporter/fixer and people summary |
+| `test_seed_demo.py` | 9 | Demo data loader: rooms within capacity, idempotent, registration/contact format, real logs untouched |
 
 ## Known Gaps
 
