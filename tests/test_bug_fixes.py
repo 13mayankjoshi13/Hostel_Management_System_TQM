@@ -156,6 +156,24 @@ class TestBugFixes(unittest.TestCase):
             rooms = [row[0] for row in list(csv.reader(f))[1:]]
         self.assertEqual(rooms, ["A1", "A2", "A10", "AB1", "B3"])
 
+    def test_bug_009_fix_rate_rounds_half_up(self):
+        from app.services.quality_service import get_quality_summary
+        for expected, fixed, total in ((13, 1, 8), (38, 3, 8), (0, 0, 8), (100, 8, 8), (33, 1, 3), (67, 2, 3)):
+            ids = [bug_service.log_bug("Room", "Validation", f"Bug number {i}", "description text", "Low", "Low")
+                   for i in range(total)]
+            for bug_id in ids[:fixed]:
+                bug_service.start_progress(bug_id)
+                bug_service.mark_fixed(bug_id, "root cause x", "action taken", "test x")
+            self.assertEqual(get_quality_summary()["fix_rate_pct"], expected, f"{fixed}/{total}")
+            conn = db_module.get_connection()
+            conn.execute("DELETE FROM bugs")
+            conn.commit()
+            conn.close()
+
+    def test_bug_009_no_bugs_gives_zero(self):
+        from app.services.quality_service import get_quality_summary
+        self.assertEqual(get_quality_summary()["fix_rate_pct"], 0)
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
