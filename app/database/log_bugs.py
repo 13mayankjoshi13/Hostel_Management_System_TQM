@@ -7,7 +7,7 @@ Bug screen uses. Safe to re-run: a bug whose title is already logged is skipped.
 
 Bugs stop at 'Fixed'; close them in the Bug screen after re-testing.
 """
-from app.database.db import initialize_database
+from app.database.db import get_connection, initialize_database
 from app.services import bug_service
 
 BUGS = [
@@ -86,6 +86,21 @@ BUGS = [
 ]
 
 
+PERSON = "Mayank"
+
+
+def _fill_missing_people() -> None:
+    """Bugs logged by an earlier version of this script have no reporter/fixer; set them."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE bugs SET reported_by = ? WHERE reported_by IS NULL", (PERSON,))
+        conn.execute("UPDATE bugs SET fixed_by = ? WHERE fixed_by IS NULL AND status IN ('Fixed', 'Closed')",
+                     (PERSON,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def run() -> int:
     initialize_database()
     existing = {b["title"] for b in bug_service.get_all_bugs()}
@@ -94,10 +109,12 @@ def run() -> int:
         if bug["title"] in existing:
             continue
         bug_id = bug_service.log_bug(bug["module"], bug["category"], bug["title"], bug["description"],
-                                       bug["severity"], bug["priority"])
+                                       bug["severity"], bug["priority"], reported_by=PERSON)
         bug_service.start_progress(bug_id)
-        bug_service.mark_fixed(bug_id, bug["root_cause"], bug["corrective_action"], bug["test_case"])
+        bug_service.mark_fixed(bug_id, bug["root_cause"], bug["corrective_action"], bug["test_case"],
+                                fixed_by=PERSON)
         added += 1
+    _fill_missing_people()
     return added
 
 
