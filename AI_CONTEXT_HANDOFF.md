@@ -497,3 +497,9 @@ export of the repository. The AI should:
 - `validation.py`: `validate_event_date/title/kind`. 10 new tests in `tests/test_events.py`; suite is 150.
 - Layouts were checked with Xvfb screenshots using bitmap fonts only; Segoe UI look on Windows is unverified. No image files are used.
 - Known limits unchanged from section 14, plus: CR-15 has no Quality Objective ID.
+
+## 16. Batches 20-29 — bug fixing and requests
+- Bugs BUG-001 to BUG-009 found by exploratory testing, fixed and written up in `docs/bugs/`; `python -m app.database.log_bugs` loads them into the Bug Tracker (idempotent) with Mayank as reporter and fixer. Regression tests in `tests/test_bug_fixes.py`.
+- Batch 29: `users.status` (Pending/Active), `register_student`, `approve_user`, Sign-up dialog (`signup_screen.py`); `bugs.reported_by` / `fixed_by` (defect CSV columns unchanged); bug screen filter and detail; Quality screen scrolls and shows people; `update_student`, `get_all_students(sort_by)`, `My Details` screen (`student_portal_service.my_details/update_my_details`).
+- Suite is 195 tests. Sign-up verifies registration number plus contact number against an existing student record; students the hostel has not added cannot sign up.
+- Known limits: pending/active status is checked only at login; rejecting a request means deleting the account; the defect CSV has no reporter/fixer columns.
