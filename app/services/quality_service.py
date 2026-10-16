@@ -101,3 +101,14 @@ def get_fishbone_data() -> dict:
         branch = CATEGORY_TO_FISHBONE.get(b["category"], "Measurement")
         branches[branch].append(b["title"])
     return branches
+
+
+def get_people_summary() -> list:
+    """[(person, reported, fixed), ...] from the bug records, most active first."""
+    people = {}
+    for b in bug_service.get_all_bugs():
+        if b.get("reported_by"):
+            people.setdefault(b["reported_by"], [0, 0])[0] += 1
+        if b.get("fixed_by"):
+            people.setdefault(b["fixed_by"], [0, 0])[1] += 1
+    return sorted(((n, r, f) for n, (r, f) in people.items()), key=lambda t: (-(t[1] + t[2]), t[0]))
