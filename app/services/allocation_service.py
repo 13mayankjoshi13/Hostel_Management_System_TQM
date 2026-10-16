@@ -25,6 +25,7 @@ message BEFORE any row is written — this is Poka-Yoke (error prevention),
 not error correction after the fact.
 """
 import csv
+import re
 import sqlite3
 
 from app.database.db import get_connection
@@ -176,6 +177,11 @@ def get_active_allocations() -> list:
         conn.close()
 
 
+def _room_order(room_number: str) -> tuple:
+    letters, digits = re.match(r"([^\d]*)(\d*)", room_number).groups()
+    return letters.upper(), int(digits or 0), room_number
+
+
 def export_allocation_list(path: str) -> int:
     """Write the active room allotment list to a CSV file. Returns the row count."""
     rows = get_active_allocations()
@@ -183,7 +189,7 @@ def export_allocation_list(path: str) -> int:
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["Room", "Type", "Student", "Allocated At"])
-            for r in sorted(rows, key=lambda r: r["room_number"]):
+            for r in sorted(rows, key=lambda r: _room_order(r["room_number"])):
                 writer.writerow([r["room_number"], r["room_type"], r["student_name"], r["allocated_at"]])
     except OSError as exc:
         log_error("Allocation", "FileError", "Medium", "export_allocation_list",
