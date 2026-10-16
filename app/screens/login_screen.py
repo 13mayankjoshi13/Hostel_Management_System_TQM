@@ -6,6 +6,7 @@ authenticate() succeeds.
 import tkinter as tk
 from tkinter import ttk
 
+from app.screens.signup_screen import SignupDialog
 from app.theme import COLORS, icon_tile
 from app.config import APP_NAME
 from app.services import auth_service
@@ -23,7 +24,7 @@ class LoginScreen(tk.Toplevel):
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", lambda: None)  # must log in to proceed
 
-        width, height = 780, 460
+        width, height = 780, 520
         self.update_idletasks()
         x = (self.winfo_screenwidth() - width) // 2
         y = (self.winfo_screenheight() - height) // 2
@@ -69,9 +70,14 @@ class LoginScreen(tk.Toplevel):
         ttk.Button(wrapper, text="Log In", style="Primary.TButton",
                     command=self.on_login).pack(fill="x", pady=(4, 0))
 
+        signup = tk.Label(wrapper, text="New student? Create an account", bg=COLORS["surface"],
+                           fg=COLORS["accent"], font=fonts["label"], cursor="hand2")
+        signup.pack(anchor="w", pady=(14, 0))
+        signup.bind("<Button-1>", lambda e: SignupDialog(self, self.fonts))
+
         tk.Label(wrapper, text="First run default: admin / admin123",
                   bg=COLORS["surface"], fg=COLORS["text_tertiary"], font=fonts["label"]).pack(
-            anchor="w", pady=(18, 0))
+            anchor="w", pady=(10, 0))
 
         username_entry.bind("<Return>", lambda e: password_entry.focus_set())
         password_entry.bind("<Return>", lambda e: self.on_login())
