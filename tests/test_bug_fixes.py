@@ -190,6 +190,24 @@ class TestBugFixes(unittest.TestCase):
         student_service.add_student("Ravi  Kumar", "2410302001", "9876543210")
         self.assertEqual(student_service.get_all_students()[0]["name"], "Ravi Kumar")
 
+    def test_bug_011_non_ascii_identifiers_rejected(self):
+        from app.utils.validation import validate_registration_number, validate_room_number, validate_username
+        arabic_digits = "\u0662\u0664\u0661\u0660\u0663\u0660\u0662\u0660\u0663\u0667"
+        cyrillic_a = "\u0430dmin"
+        for check, value in ((validate_registration_number, arabic_digits),
+                             (validate_registration_number, "0000000000"),
+                             (validate_room_number, "\u0410101"),
+                             (validate_username, cyrillic_a)):
+            with self.assertRaises(ValidationError, msg=repr(value)):
+                check(value)
+
+    def test_bug_011_ascii_identifiers_still_accepted(self):
+        from app.utils.validation import validate_registration_number, validate_room_number, validate_username
+        self.assertEqual(validate_registration_number("2410302037"), "2410302037")
+        self.assertEqual(validate_registration_number("BT24A0007"), "BT24A0007")
+        self.assertEqual(validate_room_number("a101"), "A101")
+        self.assertEqual(validate_username("mayank_joshi"), "mayank_joshi")
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
