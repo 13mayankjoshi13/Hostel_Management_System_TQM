@@ -59,6 +59,14 @@ BUGS = [
         "corrective_action": "Limit a leave to 180 days and require dates within one year of today.",
         "test_case": "tests/test_bug_fixes.py::test_bug_006_*",
     },
+    {
+        "module": "Other", "category": "Functional", "severity": "Medium", "priority": "Medium",
+        "title": "Deleting a student or room that is in use shows a generic database error",
+        "description": "Deleting a student or room with allocations, complaints, leaves or an account fails with 'database error' and logs a High error; deleting a missing id reports success.",
+        "root_cause": "delete_student and delete_room relied on the foreign-key failure instead of checking dependent records first.",
+        "corrective_action": "Check existence and dependent records before deleting and raise a specific message; no database error is triggered.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_007_*",
+    },
 ]
 
 
