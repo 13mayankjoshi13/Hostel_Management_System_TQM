@@ -86,3 +86,11 @@ Hostellers are stakeholders (see Users and Stakeholders), so they get their own 
 | CR-15 | Everyone can see holidays and hostel events in a calendar; only an Administrator or Warden can change them. | Calendar changes allowed for other roles in defined tests | 0 |
 
 Default holiday dates come from the 2026 Central Government list and may differ from the university calendar; edit them in the Calendar screen.
+
+## Student Sign-up, Self-service and Bug Visibility (Batch 29)
+
+| ID | Customer Requirement | Measurement | Target |
+|---|---|---|---|
+| CR-16 | A student can request an account from the login screen, but cannot log in until an Administrator approves it. | Pending accounts that could log in in defined tests | 0 |
+| CR-17 | Student details can be edited by the hostel office, and by each student for their own name and contact; the student list can be sorted. | Edits allowed to another student's record in defined tests | 0 |
+| CR-18 | The Bug Tracker shows open and solved bugs, who reported each bug and who fixed it. | Bugs without a reporter, or fixed bugs without a fixer, in defined tests | 0 |
