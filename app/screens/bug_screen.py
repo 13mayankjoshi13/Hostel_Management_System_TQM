@@ -9,12 +9,13 @@ from tkinter import ttk, messagebox, simpledialog
 from app.services import bug_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel, style_treeview_status_tags, status_tag, form_card, split_layout
+from app.theme import COLORS, section_header, form_row, build_panel, style_treeview_status_tags, status_tag, form_card, split_layout, build_table
 
 _MODULES = ["Student", "Room", "Allocation", "Complaint", "Database", "UI", "Other"]
 _CATEGORIES = ["Functional", "UI/UX", "Validation", "Performance", "Data Integrity", "Security", "Other"]
 _SEVERITIES = ["Low", "Medium", "High", "Critical"]
 _PRIORITIES = ["Low", "Medium", "High"]
+_FILTERS = {"All": None, "Open": ("Open", "In Progress"), "Solved": ("Fixed", "Closed")}
 
 
 class BugScreen(tk.Frame):
@@ -64,18 +65,32 @@ class BugScreen(tk.Frame):
     def _build_table(self):
         wrapper = tk.Frame(self.right, bg=COLORS["background"])
         wrapper.pack(fill="both", expand=True)
-        content = build_panel(wrapper, "All Bugs", self.fonts)
+        content = build_panel(wrapper, "Bugs", self.fonts)
 
-        columns = ("id", "module", "title", "severity", "priority", "status", "date")
-        self.tree = ttk.Treeview(content, columns=columns, show="headings", height=8)
-        for col, label, width in zip(
-            columns, ("ID", "Module", "Title", "Severity", "Priority", "Status", "Date"),
-            (45, 90, 260, 80, 80, 100, 100),
-        ):
-            self.tree.heading(col, text=label)
-            self.tree.column(col, width=width, anchor="w")
+        filter_row = tk.Frame(content, bg=COLORS["surface"])
+        filter_row.pack(fill="x", pady=(0, 8))
+        tk.Label(filter_row, text="Show", bg=COLORS["surface"], fg=COLORS["text_secondary"],
+                  font=self.fonts["label"]).pack(side="left", padx=(0, 8))
+        self.filter_var = tk.StringVar(value="All")
+        filter_box = ttk.Combobox(filter_row, textvariable=self.filter_var, values=list(_FILTERS),
+                                   state="readonly", width=12)
+        filter_box.pack(side="left")
+        filter_box.bind("<<ComboboxSelected>>", lambda e: self.refresh())
+        self.count_label = tk.Label(filter_row, text="", bg=COLORS["surface"], fg=COLORS["text_secondary"],
+                                     font=self.fonts["label"])
+        self.count_label.pack(side="right")
+
+        self.tree = build_table(content, ("id", "title", "severity", "status", "reported", "fixed", "date"),
+                                  ("ID", "Title", "Severity", "Status", "Reported", "Fixed by", "Date"),
+                                  (34, 270, 66, 70, 74, 74, 84), height=7)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
+        self.tree.bind("<<TreeviewSelect>>", self.on_select)
+
+        self.detail = tk.Label(content, text="Select a bug to see how it was found and fixed.", anchor="nw",
+                                justify="left", wraplength=520, bg=COLORS["surface"],
+                                fg=COLORS["text_secondary"], font=self.fonts["label"])
+        self.detail.pack(fill="x", pady=(10, 0))
 
         button_row = tk.Frame(content, bg=COLORS["surface"])
         button_row.pack(anchor="e", pady=(10, 0))
@@ -85,6 +100,21 @@ class BugScreen(tk.Frame):
                     command=self.on_mark_fixed).pack(side="left", padx=(0, 8))
         ttk.Button(button_row, text="Close Bug", style="Primary.TButton",
                     command=self.on_close).pack(side="left")
+
+    def on_select(self, _event=None):
+        selected = self.tree.selection()
+        bug = self._bug_rows.get(selected[0]) if selected else None
+        if bug is None:
+            return
+        lines = [f"{bug['title']}  ({bug['module']} · {bug['category']} · {bug['severity']}/{bug['priority']})",
+                 f"Found: {bug['description']}",
+                 f"Reported by {bug.get('reported_by') or '—'} on {bug['date']}"]
+        if bug["status"] in ("Fixed", "Closed"):
+            lines += [f"Root cause: {bug.get('root_cause') or '—'}",
+                      f"Fix: {bug.get('corrective_action') or '—'}",
+                      f"Test: {bug.get('test_case') or '—'}",
+                      f"Fixed by {bug.get('fixed_by') or '—'}"]
+        self.detail.configure(text="\n".join(lines))
 
     def on_log(self):
         description = self.description_text.get("1.0", "end").strip()
@@ -161,9 +191,16 @@ class BugScreen(tk.Frame):
         for row in self.tree.get_children():
             self.tree.delete(row)
         self._bug_rows = {}
-        for bug in bug_service.get_all_bugs():
+        bugs = bug_service.get_all_bugs()
+        wanted = _FILTERS[self.filter_var.get()]
+        for bug in bugs:
+            if wanted is not None and bug["status"] not in wanted:
+                continue
             item_id = self.tree.insert("", "end", values=(
-                bug["bug_id"], bug["module"], bug["title"], bug["severity"],
-                bug["priority"], bug["status"], bug["date"],
+                bug["bug_id"], bug["title"], bug["severity"], bug["status"],
+                bug.get("reported_by") or "—", bug.get("fixed_by") or "—", bug["date"],
             ), tags=(status_tag(bug["status"]),))
             self._bug_rows[item_id] = bug
+        solved = sum(1 for b in bugs if b["status"] in _FILTERS["Solved"])
+        open_count = sum(1 for b in bugs if b["status"] in _FILTERS["Open"])
+        self.count_label.configure(text=f"{open_count} open · {solved} solved · {len(bugs)} total")
