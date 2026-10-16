@@ -99,6 +99,14 @@ BUGS = [
         "corrective_action": "Require ASCII letters and digits (plus underscore for usernames) and reject all-zero registration numbers.",
         "test_case": "tests/test_bug_fixes.py::test_bug_011_*",
     },
+    {
+        "module": "UI", "category": "UI/UX", "severity": "Low", "priority": "Medium",
+        "title": "Students screen loses the highlighted row after re-sorting while an edit is open",
+        "description": "Select a student, change the sort order: the row is no longer highlighted but the form and Save Changes stay active, so a save changes a student the user cannot see selected.",
+        "root_cause": "refresh() rebuilt the table without restoring the selection that the edit form was tied to.",
+        "corrective_action": "Re-select the row of the student being edited after every refresh without overwriting the form; clear the edit state if that student is gone.",
+        "test_case": "tests/test_student_screen_ui.py::test_bug_012_*",
+    },
 ]
 
 
