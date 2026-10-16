@@ -64,6 +64,7 @@ STATUS_FG = {
     "Closed": "#71717A",
     "On Leave": "#E58A00",
     "Returned": "#16A34A",
+    "Pending": "#E58A00",
 }
 
 
