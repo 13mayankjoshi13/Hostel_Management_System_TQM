@@ -91,6 +91,14 @@ BUGS = [
         "corrective_action": "Collapse every whitespace run to one space and require at least one letter.",
         "test_case": "tests/test_bug_fixes.py::test_bug_010_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "Medium", "priority": "Medium",
+        "title": "Registration number, room number and username accept look-alike non-ASCII characters",
+        "description": "A registration number in Arabic-Indic digits, a username using a Cyrillic 'a', or an all-zero registration number is accepted.",
+        "root_cause": "The validators used str.isalnum(), which is true for letters and digits of every script.",
+        "corrective_action": "Require ASCII letters and digits (plus underscore for usernames) and reject all-zero registration numbers.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_011_*",
+    },
 ]
 
 
