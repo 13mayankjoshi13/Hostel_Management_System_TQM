@@ -6,7 +6,7 @@ the caller, so one student can never read or change another's data.
 import sqlite3
 
 from app.database.db import get_connection
-from app.services import complaint_service, leave_service
+from app.services import complaint_service, leave_service, student_service
 from app.utils import session
 from app.utils.logging_service import log_error
 from app.utils.validation import ValidationError
@@ -75,3 +75,18 @@ def return_from_leave(leave_id: int) -> None:
     if not owned:
         raise ValidationError("That leave record was not found.")
     leave_service.mark_returned(leave_id)
+
+
+def my_details() -> dict:
+    """The student's own record."""
+    sid = _current_student_id()
+    rows = _query("SELECT student_id, name, registration_number, contact_number FROM students "
+                  "WHERE student_id = ?", (sid,), "my_details")
+    return rows[0] if rows else {}
+
+
+def update_my_details(name: str, contact_number: str) -> None:
+    """Students may change their name and contact; the registration number stays as the hostel recorded it."""
+    sid = _current_student_id()
+    current = my_details()
+    student_service._update(sid, name, current["registration_number"], contact_number)
