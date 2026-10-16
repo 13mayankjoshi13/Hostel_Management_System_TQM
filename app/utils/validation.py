@@ -20,13 +20,15 @@ class ValidationError(Exception):
 def validate_student_name(name: str) -> str:
     if name is None or not str(name).strip():
         raise ValidationError("Student name cannot be empty.")
-    name = str(name).strip()
+    name = " ".join(str(name).split())
     if len(name) < 2:
         raise ValidationError("Student name must be at least 2 characters long.")
     if len(name) > 100:
         raise ValidationError("Student name cannot exceed 100 characters.")
     if not all(ch.isalpha() or ch.isspace() or ch in ".'-" for ch in name):
         raise ValidationError("Student name contains invalid characters.")
+    if not any(ch.isalpha() for ch in name):
+        raise ValidationError("Student name must contain letters.")
     return name
 
 
