@@ -61,16 +61,26 @@ class AllocationScreen(tk.Frame):
                     command=self.on_release).pack(side="left")
 
     def refresh_dropdowns(self):
+        """Offer only students without a room and rooms with a free bed."""
+        active = allocation_service.get_active_allocations()
+        housed = {a["student_id"] for a in active}
+        occupied = {}
+        for a in active:
+            occupied[a["room_id"]] = occupied.get(a["room_id"], 0) + 1
         self._student_options = {
             f"{s['student_id']} — {s['name']} ({s['registration_number']})": s["student_id"]
-            for s in student_service.get_all_students()
+            for s in student_service.get_all_students() if s["student_id"] not in housed
         }
         self._room_options = {
-            f"{r['room_id']} — {r['room_number']} ({r['room_type']}, cap {r['capacity']})": r["room_id"]
-            for r in room_service.get_all_rooms()
+            f"{r['room_id']} — {r['room_number']} ({r['room_type']}, {occupied.get(r['room_id'], 0)}/{r['capacity']} used)": r["room_id"]
+            for r in room_service.get_all_rooms() if occupied.get(r["room_id"], 0) < r["capacity"]
         }
         self.student_combo["values"] = list(self._student_options.keys())
         self.room_combo["values"] = list(self._room_options.keys())
+        if self.student_var.get() not in self._student_options:
+            self.student_var.set("")
+        if self.room_var.get() not in self._room_options:
+            self.room_var.set("")
 
     def on_allocate(self):
         student_label = self.student_var.get()
@@ -84,7 +94,7 @@ class AllocationScreen(tk.Frame):
             allocation_service.allocate_room(student_id, room_id)
             self.student_var.set("")
             self.room_var.set("")
-            self.refresh_allocations()
+            self.refresh()
             messagebox.showinfo("Success", "Room allocated successfully.")
         except ValidationError as e:
             messagebox.showerror("Invalid Input", str(e))
@@ -112,7 +122,7 @@ class AllocationScreen(tk.Frame):
         allocation_id = self.tree.item(selected[0])["values"][0]
         try:
             allocation_service.release_allocation(allocation_id)
-            self.refresh_allocations()
+            self.refresh()
             messagebox.showinfo("Success", "Allocation released.")
         except ValidationError as e:
             messagebox.showerror("Invalid Input", str(e))
