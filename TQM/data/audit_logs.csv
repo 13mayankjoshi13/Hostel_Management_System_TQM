@@ -60,3 +60,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-17T14:17:13,system_admin,Administrator,Bug,Create,14,Success,"Logged bug 'Complaint, leave and bug tables lose the selected row after every action' (Low/Medium)."
 2026-10-17T14:17:13,system_admin,Administrator,Bug,StartProgress,14,Success,Moved to In Progress.
 2026-10-17T14:17:13,system_admin,Administrator,Bug,MarkFixed,14,Success,Fixed by Mayank. Root cause: The refresh methods deleted and re-inserted every row withou
+2026-10-17T14:24:28,system_admin,Administrator,Bug,Create,15,Success,Logged bug 'Sign-up dialog still lets the request be sent again and then shows a red error' (Low/Medium).
+2026-10-17T14:24:28,system_admin,Administrator,Bug,StartProgress,15,Success,Moved to In Progress.
+2026-10-17T14:24:28,system_admin,Administrator,Bug,MarkFixed,15,Success,Fixed by Mayank. Root cause: Only the entry fields were disabled after success; the submi
