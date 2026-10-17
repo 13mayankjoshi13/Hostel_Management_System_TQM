@@ -18,3 +18,42 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-13T20:54:46,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
 2026-10-13T22:16:59,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
 2026-10-14T21:52:57,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-17T14:11:00,system_admin,Administrator,Bug,Create,1,Success,Logged bug 'Room type and capacity are not checked against each other' (Medium/Medium).
+2026-10-17T14:11:00,system_admin,Administrator,Bug,StartProgress,1,Success,Moved to In Progress.
+2026-10-17T14:11:00,system_admin,Administrator,Bug,MarkFixed,1,Success,Fixed by Mayank. Root cause: add_room validated type and capacity separately; no rule lin
+2026-10-17T14:11:00,system_admin,Administrator,Bug,Create,2,Success,Logged bug 'Contact number accepts numbers that cannot be Indian mobiles' (Medium/Medium).
+2026-10-17T14:11:00,system_admin,Administrator,Bug,StartProgress,2,Success,Moved to In Progress.
+2026-10-17T14:11:00,system_admin,Administrator,Bug,MarkFixed,2,Success,Fixed by Mayank. Root cause: validate_contact_number checked only digits-only and length 
+2026-10-17T14:11:00,system_admin,Administrator,Bug,Create,3,Success,Logged bug 'Room numbers differing only in letter case are stored as separate rooms' (Medium/Medium).
+2026-10-17T14:11:00,system_admin,Administrator,Bug,StartProgress,3,Success,Moved to In Progress.
+2026-10-17T14:11:00,system_admin,Administrator,Bug,MarkFixed,3,Success,"Fixed by Mayank. Root cause: Duplicate check compared room_number exactly, and the value "
+2026-10-17T14:11:00,system_admin,Administrator,Bug,Create,4,Success,Logged bug 'Room capacity silently converts 1.5 and True to 1' (Low/Low).
+2026-10-17T14:11:00,system_admin,Administrator,Bug,StartProgress,4,Success,Moved to In Progress.
+2026-10-17T14:11:00,system_admin,Administrator,Bug,MarkFixed,4,Success,"Fixed by Mayank. Root cause: validate_capacity called int() directly, which truncates flo"
+2026-10-17T14:11:00,system_admin,Administrator,Bug,Create,5,Success,Logged bug 'Usernames Bob and bob can both be created and login is case-sensitive' (High/High).
+2026-10-17T14:11:00,system_admin,Administrator,Bug,StartProgress,5,Success,Moved to In Progress.
+2026-10-17T14:11:00,system_admin,Administrator,Bug,MarkFixed,5,Success,Fixed by Mayank. Root cause: create_user and authenticate compared usernames with exact c
+2026-10-17T14:11:00,system_admin,Administrator,Bug,Create,6,Success,Logged bug 'Leave dates accept impossible ranges such as year 1900 or multi-year leaves' (Medium/Medium).
+2026-10-17T14:11:00,system_admin,Administrator,Bug,StartProgress,6,Success,Moved to In Progress.
+2026-10-17T14:11:00,system_admin,Administrator,Bug,MarkFixed,6,Success,Fixed by Mayank. Root cause: validate_leave_dates only checked the format and that the en
+2026-10-17T14:11:00,system_admin,Administrator,Bug,Create,7,Success,Logged bug 'Deleting a student or room that is in use shows a generic database error' (Medium/Medium).
+2026-10-17T14:11:00,system_admin,Administrator,Bug,StartProgress,7,Success,Moved to In Progress.
+2026-10-17T14:11:00,system_admin,Administrator,Bug,MarkFixed,7,Success,Fixed by Mayank. Root cause: delete_student and delete_room relied on the foreign-key fai
+2026-10-17T14:11:00,system_admin,Administrator,Bug,Create,8,Success,Logged bug 'Allotment list export sorts rooms as text so A10 comes before A2' (Low/Medium).
+2026-10-17T14:11:01,system_admin,Administrator,Bug,StartProgress,8,Success,Moved to In Progress.
+2026-10-17T14:11:01,system_admin,Administrator,Bug,MarkFixed,8,Success,"Fixed by Mayank. Root cause: export_allocation_list sorted by the room number string, whi"
+2026-10-17T14:11:01,system_admin,Administrator,Bug,Create,9,Success,"Logged bug 'Quality fix rate rounds halves to even, so 12.5% shows as 12%' (Low/Low)."
+2026-10-17T14:11:01,system_admin,Administrator,Bug,StartProgress,9,Success,Moved to In Progress.
+2026-10-17T14:11:01,system_admin,Administrator,Bug,MarkFixed,9,Success,"Fixed by Mayank. Root cause: get_quality_summary used Python round(), which uses banker's"
+2026-10-17T14:11:01,system_admin,Administrator,Bug,Create,10,Success,"Logged bug 'Student name keeps extra spaces and tabs, and accepts names with no letters' (Low/Medium)."
+2026-10-17T14:11:01,system_admin,Administrator,Bug,StartProgress,10,Success,Moved to In Progress.
+2026-10-17T14:11:01,system_admin,Administrator,Bug,MarkFixed,10,Success,Fixed by Mayank. Root cause: validate_student_name only trimmed the ends and allowed any 
+2026-10-17T14:11:01,system_admin,Administrator,Bug,Create,11,Success,"Logged bug 'Registration number, room number and username accept look-alike non-ASCII characters' (Medium/Medium)."
+2026-10-17T14:11:01,system_admin,Administrator,Bug,StartProgress,11,Success,Moved to In Progress.
+2026-10-17T14:11:01,system_admin,Administrator,Bug,MarkFixed,11,Success,"Fixed by Mayank. Root cause: The validators used str.isalnum(), which is true for letters"
+2026-10-17T14:11:01,system_admin,Administrator,Bug,Create,12,Success,Logged bug 'Students screen loses the highlighted row after re-sorting while an edit is open' (Low/Medium).
+2026-10-17T14:11:01,system_admin,Administrator,Bug,StartProgress,12,Success,Moved to In Progress.
+2026-10-17T14:11:01,system_admin,Administrator,Bug,MarkFixed,12,Success,Fixed by Mayank. Root cause: refresh() rebuilt the table without restoring the selection 
+2026-10-17T14:11:01,system_admin,Administrator,Bug,Create,13,Success,Logged bug 'Allocation screen lists students who already have a room and rooms that are full' (Low/Medium).
+2026-10-17T14:11:01,system_admin,Administrator,Bug,StartProgress,13,Success,Moved to In Progress.
+2026-10-17T14:11:01,system_admin,Administrator,Bug,MarkFixed,13,Success,"Fixed by Mayank. Root cause: refresh_dropdowns offered every student and room, and was no"
