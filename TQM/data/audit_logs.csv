@@ -57,3 +57,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-17T14:11:01,system_admin,Administrator,Bug,Create,13,Success,Logged bug 'Allocation screen lists students who already have a room and rooms that are full' (Low/Medium).
 2026-10-17T14:11:01,system_admin,Administrator,Bug,StartProgress,13,Success,Moved to In Progress.
 2026-10-17T14:11:01,system_admin,Administrator,Bug,MarkFixed,13,Success,"Fixed by Mayank. Root cause: refresh_dropdowns offered every student and room, and was no"
+2026-10-17T14:17:13,system_admin,Administrator,Bug,Create,14,Success,"Logged bug 'Complaint, leave and bug tables lose the selected row after every action' (Low/Medium)."
+2026-10-17T14:17:13,system_admin,Administrator,Bug,StartProgress,14,Success,Moved to In Progress.
+2026-10-17T14:17:13,system_admin,Administrator,Bug,MarkFixed,14,Success,Fixed by Mayank. Root cause: The refresh methods deleted and re-inserted every row withou
