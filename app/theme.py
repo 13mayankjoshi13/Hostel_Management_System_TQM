@@ -407,6 +407,16 @@ def status_tag(status: str) -> str:
     return f"status_{status.lower()}"
 
 
+def keep_selection(tree: ttk.Treeview, rebuild) -> None:
+    """Run rebuild() (which refills the tree) and re-select the rows that were selected, matched by their first column."""
+    wanted = {str(tree.item(item, "values")[0]) for item in tree.selection()}
+    rebuild()
+    for item in tree.get_children():
+        if str(tree.item(item, "values")[0]) in wanted:
+            tree.selection_add(item)
+            tree.see(item)
+
+
 def bind_hover(widget, normal_bg: str, hover_bg: str):
     widget.bind("<Enter>", lambda e: widget.configure(bg=hover_bg))
     widget.bind("<Leave>", lambda e: widget.configure(bg=normal_bg))
