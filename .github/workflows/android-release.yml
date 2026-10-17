@@ -10,11 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository FIRST so Gradle files are present
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Step 2: Set up Java with cache AFTER checkout
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
