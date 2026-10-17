@@ -115,6 +115,14 @@ BUGS = [
         "corrective_action": "Offer only students without an active room and rooms with a free bed (showing used/capacity), and refresh the lists after allocate and release.",
         "test_case": "tests/test_allocation_screen_ui.py::test_bug_013_*",
     },
+    {
+        "module": "UI", "category": "UI/UX", "severity": "Low", "priority": "Medium",
+        "title": "Complaint, leave and bug tables lose the selected row after every action",
+        "description": "After Assign, Mark Returned or Start Progress the table refreshes and nothing is selected, so the next step (Resolve, Mark Fixed) says 'Select a complaint first' until the row is clicked again.",
+        "root_cause": "The refresh methods deleted and re-inserted every row without restoring the selection.",
+        "corrective_action": "Added keep_selection() in theme.py, which re-selects the same rows by ID after a refresh, and used it in the three screens.",
+        "test_case": "tests/test_selection_ui.py::test_bug_014_*",
+    },
 ]
 
 
