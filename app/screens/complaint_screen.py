@@ -8,7 +8,7 @@ from tkinter import ttk, messagebox, simpledialog
 from app.services import student_service, complaint_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, status_tag, form_card, split_layout
+from app.theme import keep_selection, COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, status_tag, form_card, split_layout
 
 _CATEGORIES = ["Maintenance", "Washroom", "Cleanliness", "Noise", "Security", "Food", "Other"]
 
@@ -135,6 +135,9 @@ class ComplaintScreen(tk.Frame):
             handle_unexpected_error("Complaint", "resolve_complaint_ui", e)
 
     def refresh_table(self):
+        keep_selection(self.tree, self._rebuild_table)
+
+    def _rebuild_table(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
         self._complaint_rows = {}
