@@ -24,18 +24,14 @@ jobs:
           pip install pyinstaller
           if (Test-Path requirements.txt) { pip install -r requirements.txt }
 
-      - name: Build Executable with PyInstaller
+      - name: Build Single Standalone Executable
         run: |
-          pyinstaller --noconfirm --onedir --windowed --name "HostelManagementSystem" run.py
+          pyinstaller --noconfirm --onefile --windowed --name "HostelManagementSystem" run.py
 
-      - name: Compress Build Output
-        run: |
-          Compress-Archive -Path dist/HostelManagementSystem/* -DestinationPath HostelManagementSystem_Windows.zip
-
-      - name: Create GitHub Release
+      - name: Create GitHub Release and Upload EXE
         uses: softprops/action-gh-release@v2
         with:
-          files: HostelManagementSystem_Windows.zip
+          files: dist/HostelManagementSystem.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
