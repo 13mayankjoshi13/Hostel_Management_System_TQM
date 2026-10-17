@@ -68,6 +68,7 @@ class CalendarScreen(tk.Frame):
             event_service.add_event(self.date_var.get(), self.title_var.get(), self.kind_var.get())
             self.title_var.set("")
             self.refresh()
+            self.calendar.show_date(date.fromisoformat(self.date_var.get().strip()))
             messagebox.showinfo("Success", "Event added.")
         except ValidationError as e:
             messagebox.showerror("Invalid Input", str(e))
