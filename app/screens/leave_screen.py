@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 from app.services import allocation_service, leave_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, status_tag, section_header, form_row, build_panel, build_table, style_treeview_status_tags, form_card, split_layout
+from app.theme import keep_selection, COLORS, status_tag, section_header, form_row, build_panel, build_table, style_treeview_status_tags, form_card, split_layout
 
 
 class LeaveScreen(tk.Frame):
@@ -78,6 +78,9 @@ class LeaveScreen(tk.Frame):
             handle_unexpected_error("Leave", "mark_returned_ui", e)
 
     def refresh_table(self):
+        keep_selection(self.tree, self._rebuild_table)
+
+    def _rebuild_table(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
         for leave in leave_service.get_all_leaves():
