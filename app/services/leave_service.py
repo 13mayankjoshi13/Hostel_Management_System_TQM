@@ -9,15 +9,12 @@ import sqlite3
 from datetime import datetime
 
 from app.database.db import get_connection
-from app.utils.validation import validate_leave_dates, validate_leave_reason, ValidationError
+from app.utils.validation import validate_leave_dates, validate_leave_reason, validate_record_id, ValidationError
 from app.utils.logging_service import log_error, log_audit
 
 
 def record_leave(student_id: int, from_date: str, to_date: str, reason: str) -> int:
-    try:
-        student_id = int(student_id)
-    except (TypeError, ValueError):
-        raise ValidationError("Please select a student.")
+    student_id = validate_record_id(student_id, "Please select a student.")
     start, end = validate_leave_dates(from_date, to_date)
     clean_reason = validate_leave_reason(reason)
 
