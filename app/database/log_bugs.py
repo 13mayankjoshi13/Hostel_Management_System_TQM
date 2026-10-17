@@ -131,6 +131,14 @@ BUGS = [
         "corrective_action": "Disable the submit button after success and rename Cancel to Close.",
         "test_case": "tests/test_signup_ui.py::test_bug_015_*",
     },
+    {
+        "module": "UI", "category": "UI/UX", "severity": "Low", "priority": "Medium",
+        "title": "Calendar stays on the current month after adding an event in another month",
+        "description": "Adding an event dated in a different month shows 'Event added' but the calendar still shows this month, so the new event is not visible.",
+        "root_cause": "on_add refreshed the calendar without moving it to the month of the new event.",
+        "corrective_action": "Add CalendarWidget.show_date and call it with the saved event's date after a successful add.",
+        "test_case": "tests/test_calendar_ui.py::test_bug_016_*",
+    },
 ]
 
 
