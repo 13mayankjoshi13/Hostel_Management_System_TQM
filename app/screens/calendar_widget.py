@@ -63,6 +63,10 @@ class CalendarWidget(tk.Frame):
         self.month = (m - 1) % 12 + 1
         self.refresh()
 
+    def show_date(self, day: date):
+        self.year, self.month, self.selected = day.year, day.month, day
+        self.refresh()
+
     def go_today(self):
         today = date.today()
         self.year, self.month, self.selected = today.year, today.month, today
