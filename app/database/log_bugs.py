@@ -139,6 +139,14 @@ BUGS = [
         "corrective_action": "Add CalendarWidget.show_date and call it with the saved event's date after a successful add.",
         "test_case": "tests/test_calendar_ui.py::test_bug_016_*",
     },
+    {
+        "module": "Allocation", "category": "Validation", "severity": "Medium", "priority": "Medium",
+        "title": "Complaint, leave and allocation accept True or 1.9 as a student/room ID",
+        "description": "create_complaint(1.9, ...) was saved against student 1 and True was treated as ID 1, so a malformed ID silently acted on the wrong record.",
+        "root_cause": "IDs were converted with int(), which truncates floats and accepts booleans.",
+        "corrective_action": "Add validate_record_id (rejects bools and non-whole floats) and use it in complaint, leave and allocation services.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_017_*",
+    },
 ]
 
 
