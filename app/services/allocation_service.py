@@ -29,7 +29,7 @@ import re
 import sqlite3
 
 from app.database.db import get_connection
-from app.utils.validation import ValidationError
+from app.utils.validation import ValidationError, validate_record_id
 from app.utils.logging_service import log_error, log_audit
 
 
@@ -82,11 +82,8 @@ def allocate_room(student_id: int, room_id: int) -> int:
     the allocation. Returns the new allocation_id.
     Raises ValidationError with a specific message on any failed check.
     """
-    try:
-        student_id = int(student_id)
-        room_id = int(room_id)
-    except (TypeError, ValueError):
-        raise ValidationError("Please select a student and a room.")
+    student_id = validate_record_id(student_id, "Please select a student and a room.")
+    room_id = validate_record_id(room_id, "Please select a student and a room.")
 
     conn = get_connection()
     try:
