@@ -123,6 +123,14 @@ BUGS = [
         "corrective_action": "Added keep_selection() in theme.py, which re-selects the same rows by ID after a refresh, and used it in the three screens.",
         "test_case": "tests/test_selection_ui.py::test_bug_014_*",
     },
+    {
+        "module": "UI", "category": "UI/UX", "severity": "Low", "priority": "Medium",
+        "title": "Sign-up dialog still lets the request be sent again and then shows a red error",
+        "description": "After 'Request sent' the Request Account button stays active; clicking it again replaces the success message with \"Username is already taken\" in red.",
+        "root_cause": "Only the entry fields were disabled after success; the submit button was left enabled.",
+        "corrective_action": "Disable the submit button after success and rename Cancel to Close.",
+        "test_case": "tests/test_signup_ui.py::test_bug_015_*",
+    },
 ]
 
 
