@@ -22,6 +22,7 @@ from app.utils.validation import (
     validate_complaint_category,
     validate_complaint_description,
     validate_assigned_to,
+    validate_record_id,
     validate_resolution_notes,
     ValidationError,
 )
@@ -41,10 +42,7 @@ def _get_complaint_or_raise(cur, complaint_id: int) -> sqlite3.Row:
 
 def create_complaint(student_id: int, category: str, description: str) -> int:
     """Validate and insert a new complaint with status 'Open'."""
-    try:
-        student_id = int(student_id)
-    except (TypeError, ValueError):
-        raise ValidationError("Please select a student.")
+    student_id = validate_record_id(student_id, "Please select a student.")
 
     clean_category = validate_complaint_category(category)
     clean_description = validate_complaint_description(description)
