@@ -9,7 +9,7 @@ from tkinter import ttk, messagebox, simpledialog
 from app.services import bug_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, section_header, form_row, build_panel, style_treeview_status_tags, status_tag, form_card, split_layout, build_table
+from app.theme import keep_selection, COLORS, section_header, form_row, build_panel, style_treeview_status_tags, status_tag, form_card, split_layout, build_table
 
 _MODULES = ["Student", "Room", "Allocation", "Complaint", "Database", "UI", "Other"]
 _CATEGORIES = ["Functional", "UI/UX", "Validation", "Performance", "Data Integrity", "Security", "Other"]
@@ -105,6 +105,7 @@ class BugScreen(tk.Frame):
         selected = self.tree.selection()
         bug = self._bug_rows.get(selected[0]) if selected else None
         if bug is None:
+            self.detail.configure(text="Select a bug to see how it was found and fixed.")
             return
         lines = [f"{bug['title']}  ({bug['module']} · {bug['category']} · {bug['severity']}/{bug['priority']})",
                  f"Found: {bug['description']}",
@@ -188,6 +189,10 @@ class BugScreen(tk.Frame):
             handle_unexpected_error("Bug", "close_bug_ui", e)
 
     def refresh(self):
+        keep_selection(self.tree, self._rebuild)
+        self.on_select()
+
+    def _rebuild(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
         self._bug_rows = {}
