@@ -107,6 +107,14 @@ BUGS = [
         "corrective_action": "Re-select the row of the student being edited after every refresh without overwriting the form; clear the edit state if that student is gone.",
         "test_case": "tests/test_student_screen_ui.py::test_bug_012_*",
     },
+    {
+        "module": "Allocation", "category": "UI/UX", "severity": "Low", "priority": "Medium",
+        "title": "Allocation screen lists students who already have a room and rooms that are full",
+        "description": "After allocating a room the student and room stay in the dropdowns, so the next pick can be one that the system will reject; releasing a room does not update the lists either.",
+        "root_cause": "refresh_dropdowns offered every student and room, and was not re-run after allocate or release.",
+        "corrective_action": "Offer only students without an active room and rooms with a free bed (showing used/capacity), and refresh the lists after allocate and release.",
+        "test_case": "tests/test_allocation_screen_ui.py::test_bug_013_*",
+    },
 ]
 
 
