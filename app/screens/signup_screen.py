@@ -45,10 +45,11 @@ class SignupDialog(tk.Toplevel):
         self.message.pack(anchor="w", pady=(0, 6))
         buttons = tk.Frame(wrapper, bg=COLORS["surface"])
         buttons.pack(fill="x")
-        ttk.Button(buttons, text="Request Account", style="Primary.TButton",
-                    command=self.on_submit).pack(side="left", fill="x", expand=True)
-        ttk.Button(buttons, text="Cancel", style="Secondary.TButton",
-                    command=self.close).pack(side="left", padx=(8, 0))
+        self.submit_button = ttk.Button(buttons, text="Request Account", style="Primary.TButton",
+                                         command=self.on_submit)
+        self.submit_button.pack(side="left", fill="x", expand=True)
+        self.cancel_button = ttk.Button(buttons, text="Cancel", style="Secondary.TButton", command=self.close)
+        self.cancel_button.pack(side="left", padx=(8, 0))
 
         self.transient(master)
         self.protocol("WM_DELETE_WINDOW", self.close)
@@ -71,5 +72,7 @@ class SignupDialog(tk.Toplevel):
             return
         for entry in self.entries:
             entry.configure(state="disabled")
+        self.submit_button.state(["disabled"])
+        self.cancel_button.configure(text="Close")
         self.message.configure(text="Request sent. You can log in once an administrator approves your account.",
                                 fg=COLORS["success"])
