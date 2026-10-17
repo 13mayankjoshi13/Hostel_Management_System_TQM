@@ -69,6 +69,16 @@ def validate_room_number(room_no: str) -> str:
     return room_no.upper()
 
 
+def validate_record_id(value, message: str) -> int:
+    """Whole-number record id; rejects bools and fractional values instead of truncating them."""
+    if isinstance(value, bool) or (isinstance(value, float) and not value.is_integer()):
+        raise ValidationError(message)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        raise ValidationError(message)
+
+
 def validate_capacity(capacity) -> int:
     if isinstance(capacity, bool) or (isinstance(capacity, float) and not capacity.is_integer()):
         raise ValidationError("Room capacity must be a whole number.")
