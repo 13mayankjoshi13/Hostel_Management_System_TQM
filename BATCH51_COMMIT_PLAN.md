@@ -21,4 +21,4 @@ git commit -m "docs: write up BUG-031 (how found, root cause, fix, test)"
 git push
 ```
 
-Add `app/database/backups/` and `app/database/hostel.db` to `.gitignore` (they hold real student data). After pulling: `python -m app.database.log_bugs`.
+
