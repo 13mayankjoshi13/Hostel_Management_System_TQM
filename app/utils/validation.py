@@ -144,11 +144,18 @@ def validate_leave_reason(reason: str) -> str:
     return reason
 
 
+EVENT_WINDOW_YEARS = 5
+
+
 def validate_event_date(value: str) -> str:
     try:
-        return datetime.strptime(str(value).strip(), "%Y-%m-%d").date().isoformat()
+        parsed = datetime.strptime(str(value).strip(), "%Y-%m-%d").date()
     except ValueError:
         raise ValidationError("Date must be in YYYY-MM-DD format.")
+    today = date.today()
+    if abs(parsed.year - today.year) > EVENT_WINDOW_YEARS:
+        raise ValidationError(f"Event date must be within {EVENT_WINDOW_YEARS} years of today.")
+    return parsed.isoformat()
 
 
 def validate_event_title(title: str) -> str:
