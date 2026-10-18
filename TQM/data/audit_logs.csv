@@ -93,3 +93,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T12:33:03,system_admin,Administrator,Bug,Create,25,Success,Logged bug 'Login has no limit on wrong passwords' (High/High).
 2026-10-18T12:33:03,system_admin,Administrator,Bug,StartProgress,25,Success,Moved to In Progress.
 2026-10-18T12:33:03,system_admin,Administrator,Bug,MarkFixed,25,Success,Fixed by Mayank. Root cause: authenticate checked the password on every call and kept no 
+2026-10-18T12:36:20,system_admin,Administrator,Bug,Create,26,Success,Logged bug 'Errors inside button/timer callbacks are never logged or shown' (High/High).
+2026-10-18T12:36:20,system_admin,Administrator,Bug,StartProgress,26,Success,Moved to In Progress.
+2026-10-18T12:36:20,system_admin,Administrator,Bug,MarkFixed,26,Success,"Fixed by Mayank. Root cause: Tkinter does not let callback exceptions escape mainloop, so"
