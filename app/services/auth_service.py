@@ -326,7 +326,7 @@ def register_student(username: str, password: str, registration_number: str, con
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT student_id, contact_number FROM students WHERE registration_number = ?", (clean_reg,))
+        cur.execute("SELECT student_id, contact_number FROM students WHERE UPPER(registration_number) = UPPER(?)", (clean_reg,))
         student = cur.fetchone()
         if student is None or student["contact_number"] != clean_contact:
             raise ValidationError("Registration number and contact number do not match a hostel record. "
