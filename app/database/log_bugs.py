@@ -155,6 +155,14 @@ BUGS = [
         "corrective_action": "Close the student's open leave (Returned, with timestamp) in the same transaction as the release.",
         "test_case": "tests/test_bug_fixes.py::test_bug_018_*",
     },
+    {
+        "module": "Complaint", "category": "Validation", "severity": "Low", "priority": "Medium",
+        "title": "Assign/resolve/release/delete actions accept True or 1.9 as a record ID",
+        "description": "assign_complaint(True, ...) changed complaint 1; the same unchecked ID handling remained in the resolve, return, release, delete and approve actions after BUG-017.",
+        "root_cause": "BUG-017 fixed only the create paths; the other ID-taking services still passed raw values to SQLite, which treats True as 1.",
+        "corrective_action": "Apply validate_record_id at the start of every service function that takes a record ID.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_019_*",
+    },
 ]
 
 
