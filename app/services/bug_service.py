@@ -68,7 +68,7 @@ def log_bug(module: str, category: str, title: str, description: str,
         bug_id = cur.lastrowid
 
         log_defect(_defect_id(bug_id), today, clean_module, clean_category, clean_title,
-                   clean_description, clean_severity, clean_priority, "Open")
+                   clean_description, clean_severity, clean_priority, "Open", reported_by=reporter)
         log_audit("Bug", "Create", str(bug_id), "Success",
                    f"Logged bug '{clean_title}' ({clean_severity}/{clean_priority}).")
         return bug_id
@@ -100,7 +100,8 @@ def start_progress(bug_id: int) -> None:
         conn.commit()
 
         log_defect(_defect_id(bug_id), bug["date"], bug["module"], bug["category"], bug["title"],
-                   bug["description"], bug["severity"], bug["priority"], "In Progress")
+                   bug["description"], bug["severity"], bug["priority"], "In Progress",
+                   reported_by=bug["reported_by"] or "")
         log_audit("Bug", "StartProgress", str(bug_id), "Success", "Moved to In Progress.")
     except ValidationError:
         raise
@@ -139,7 +140,8 @@ def mark_fixed(bug_id: int, root_cause: str, corrective_action: str, test_case: 
 
         log_defect(_defect_id(bug_id), bug["date"], bug["module"], bug["category"], bug["title"],
                    bug["description"], bug["severity"], bug["priority"], "Fixed",
-                   clean_root_cause, clean_corrective_action, clean_test_case)
+                   clean_root_cause, clean_corrective_action, clean_test_case,
+                   reported_by=bug["reported_by"] or "", fixed_by=fixer)
         log_audit("Bug", "MarkFixed", str(bug_id), "Success",
                    f"Fixed by {fixer}. Root cause: {clean_root_cause[:60]}")
     except ValidationError:
@@ -170,7 +172,8 @@ def close_bug(bug_id: int) -> None:
 
         log_defect(_defect_id(bug_id), bug["date"], bug["module"], bug["category"], bug["title"],
                    bug["description"], bug["severity"], bug["priority"], "Closed",
-                   bug["root_cause"] or "", bug["corrective_action"] or "", bug["test_case"] or "")
+                   bug["root_cause"] or "", bug["corrective_action"] or "", bug["test_case"] or "",
+                   reported_by=bug["reported_by"] or "", fixed_by=bug["fixed_by"] or "")
         log_audit("Bug", "Close", str(bug_id), "Success", "Closed.")
     except ValidationError:
         raise
