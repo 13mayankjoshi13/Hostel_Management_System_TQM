@@ -275,6 +275,14 @@ BUGS = [
         "corrective_action": "Track mouse and keyboard activity and log the user out after 15 minutes of inactivity (IDLE_TIMEOUT_MINUTES), recording an IdleLogout audit entry and returning to the login window.",
         "test_case": "tests/test_idle.py::test_bug_033_*",
     },
+    {
+        "module": "Database", "category": "Data Integrity", "severity": "High", "priority": "Medium",
+        "title": "Records saved before the validation fixes are never checked",
+        "description": "Rules added over time (case-insensitive registration numbers, capacity, one active room, valid contacts) only apply to new entries; bad rows already in a real database stayed unnoticed.",
+        "root_cause": "Validation runs only on writes; nothing looked at existing data.",
+        "corrective_action": "Add a read-only data check (python -m app.database.check_data) covering duplicate registration numbers, over-full rooms, double allocations, orphan rows, stranded leaves, unlinked accounts and values today's rules reject; run it at start-up and write each finding to the error log.",
+        "test_case": "tests/test_check_data.py::test_bug_034_*",
+    },
 ]
 
 
