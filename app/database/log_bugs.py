@@ -219,6 +219,14 @@ BUGS = [
         "corrective_action": "Add report_tk_callback_exception to the exception handler and install it on the main window, so these errors are logged (module Application) and shown with the usual friendly message.",
         "test_case": "tests/test_callback_errors_ui.py::test_bug_026_*",
     },
+    {
+        "module": "Database", "category": "Functional", "severity": "High", "priority": "High",
+        "title": "App exits silently when the database cannot be opened",
+        "description": "With a damaged or locked database the app wrote the problem to the console and quit; started by double-click there is no console, so the user saw nothing happen.",
+        "root_cause": "main.run() reported start-up failures only with print() to stderr.",
+        "corrective_action": "Show the failure in a message window (with the error id and what to check) for database start-up errors and for a crash of the main window, besides logging it.",
+        "test_case": "tests/test_startup_errors.py::test_bug_027_*",
+    },
 ]
 
 
