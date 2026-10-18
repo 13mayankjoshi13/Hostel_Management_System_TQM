@@ -450,6 +450,27 @@ class TestBugFixes(unittest.TestCase):
             conn.close()
         self.assertEqual(first, 1)
 
+    def test_bug_032_users_can_change_their_own_password(self):
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        sid = student_service.add_student("Test Kid", "2410302099", "9876500000")
+        auth_service.create_user("kid", "Secret123", "Student", sid)
+        with self.assertRaises(ValidationError):
+            auth_service.change_own_password("Secret123", "Another123")
+        session.clear_session()
+        with self.assertRaises(ValidationError):
+            auth_service.change_own_password("Secret123", "Another123")
+        auth_service.authenticate("kid", "Secret123")
+        for current, new in (("wrong-one1", "Another123"), ("Secret123", "Secret123"),
+                             ("Secret123", "short"), ("Secret123", auth_service.SEED_PASSWORD)):
+            with self.assertRaises(ValidationError):
+                auth_service.change_own_password(current, new)
+        auth_service.change_own_password("Secret123", "Another123")
+        session.clear_session()
+        with self.assertRaises(ValidationError):
+            auth_service.authenticate("kid", "Secret123")
+        self.assertEqual(auth_service.authenticate("kid", "Another123")["username"], "kid")
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
