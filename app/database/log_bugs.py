@@ -259,6 +259,14 @@ BUGS = [
         "corrective_action": "Take a verified backup once a day at start-up (kept 7 days, in app/database/backups), never back up a file that fails its integrity check, and add restore (python -m app.database.backup restore FILE) that keeps the old file as *.before_restore.",
         "test_case": "tests/test_backup.py::test_bug_031_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "High", "priority": "High",
+        "title": "Users cannot change their own password",
+        "description": "Only an Administrator could set anyone's password. A student or warden who suspected their password was known had no way to change it, and every password an admin handed out stayed in use.",
+        "root_cause": "Only an admin-side change_password existed; there was no self-service path.",
+        "corrective_action": "Add change_own_password (current password required, new one must differ and not be a known default) and a 'Change password' link in the sidebar for every role.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_032_*",
+    },
 ]
 
 
