@@ -267,6 +267,16 @@ class TestBugFixes(unittest.TestCase):
         self.assertEqual(row["description"], "'+1 description long enough here")
         self.assertEqual(row["date"][:2], "20")
 
+    def test_bug_021_event_dates_limited_to_a_sensible_window(self):
+        from app.services import event_service
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        for bad in ("9999-01-01", "1900-01-01"):
+            with self.assertRaises(ValidationError):
+                event_service.add_event(bad, "Far Away Fest", "Hostel Event")
+        near = date(date.today().year + 1, 3, 3).isoformat()
+        self.assertIsInstance(event_service.add_event(near, "Spring Fest", "Hostel Event"), int)
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
