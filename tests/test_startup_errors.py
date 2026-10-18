@@ -10,6 +10,9 @@ import app.main as app_main
 class TestStartupErrors(unittest.TestCase):
 
     def setUp(self):
+        patcher = mock.patch("app.database.backup.create_backup", return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.tmp = tempfile.mkdtemp()
         import app.utils.logging_service as ls
 
