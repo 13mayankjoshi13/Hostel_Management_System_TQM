@@ -81,3 +81,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T11:49:10,system_admin,Administrator,Bug,Create,21,Success,Logged bug 'Calendar accepts events dated year 9999 or 1900' (Low/Medium).
 2026-10-18T11:49:10,system_admin,Administrator,Bug,StartProgress,21,Success,Moved to In Progress.
 2026-10-18T11:49:10,system_admin,Administrator,Bug,MarkFixed,21,Success,"Fixed by Mayank. Root cause: validate_event_date only checked the YYYY-MM-DD format, not "
+2026-10-18T11:54:32,system_admin,Administrator,Bug,Create,22,Success,Logged bug 'Calendar lets 'Fest' and 'FEST' (or 'Fest  Night') duplicate an event on one date' (Low/Low).
+2026-10-18T11:54:32,system_admin,Administrator,Bug,StartProgress,22,Success,Moved to In Progress.
+2026-10-18T11:54:32,system_admin,Administrator,Bug,MarkFixed,22,Success,Fixed by Mayank. Root cause: Titles were only trimmed at the ends and the duplicate query
