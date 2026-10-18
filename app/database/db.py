@@ -138,5 +138,16 @@ def initialize_database(db_path: str = None) -> None:
         if column not in bug_columns:
             cur.execute(f"ALTER TABLE bugs ADD COLUMN {column} TEXT")
 
+    for index_sql in (
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_one_active_room_per_student "
+        "ON allocations(student_id) WHERE status = 'Active'",
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_one_open_leave_per_student "
+        "ON leaves(student_id) WHERE status = 'On Leave'",
+    ):
+        try:
+            cur.execute(index_sql)
+        except sqlite3.IntegrityError:
+            pass
+
     conn.commit()
     conn.close()
