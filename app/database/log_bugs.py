@@ -147,6 +147,14 @@ BUGS = [
         "corrective_action": "Add validate_record_id (rejects bools and non-whole floats) and use it in complaint, leave and allocation services.",
         "test_case": "tests/test_bug_fixes.py::test_bug_017_*",
     },
+    {
+        "module": "Allocation", "category": "Data Integrity", "severity": "Medium", "priority": "Medium",
+        "title": "Student stays 'On Leave' after their room allocation is released",
+        "description": "Releasing a room while the student has an open leave left the leave 'On Leave' with no active room, so the Leave screen showed a stale open leave.",
+        "root_cause": "release_allocation only updated the allocation and never touched the student's open leave.",
+        "corrective_action": "Close the student's open leave (Returned, with timestamp) in the same transaction as the release.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_018_*",
+    },
 ]
 
 
