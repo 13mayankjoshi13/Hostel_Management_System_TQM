@@ -3,12 +3,14 @@ Application shell: icon sidebar, top bar (screen name, clock, account),
 and the screens. Login gate: splash -> login -> home screen for the role.
 """
 import tkinter as tk
+from tkinter import messagebox, simpledialog
 from datetime import datetime
 
 from app.config import APP_NAME
 from app.utils.exception_handler import report_tk_callback_exception
 from app.theme import COLORS, apply_theme, draw_icon, icon_tile, initials, _round_rect
 from app.services import auth_service
+from app.utils.validation import ValidationError
 from app.screens.splash_screen import SplashScreen
 from app.screens.login_screen import LoginScreen
 from app.screens.dashboard_screen import DashboardScreen
@@ -138,7 +140,23 @@ class MainWindow(tk.Tk):
     def _show_login(self):
         LoginScreen(self, self.fonts, on_success=self._enter_app)
 
+    def _force_password_change(self) -> bool:
+        prompt = "The default password must be replaced before you continue.\nNew password:"
+        while True:
+            new_password = simpledialog.askstring("Set a new password", prompt, parent=self, show="•")
+            if new_password is None:
+                return False
+            try:
+                auth_service.complete_forced_password_change(new_password)
+                messagebox.showinfo("Password changed", "Your password has been updated.", parent=self)
+                return True
+            except ValidationError as e:
+                prompt = f"{e}\nNew password:"
+
     def _enter_app(self, user: dict):
+        if user.get("must_change_password") and not self._force_password_change():
+            self._handle_logout()
+            return
         self._update_account_info(user)
         allowed = _allowed_screens(user["role"])
         for item in self._nav_items.values():
