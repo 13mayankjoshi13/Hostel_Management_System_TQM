@@ -195,6 +195,14 @@ BUGS = [
         "corrective_action": "Add session.require_roles and call it in the staff services (student, room, allocation, complaint, bug) and the admin-only account services.",
         "test_case": "tests/test_bug_fixes.py::test_bug_023_*",
     },
+    {
+        "module": "Allocation", "category": "Data Integrity", "severity": "High", "priority": "High",
+        "title": "Simultaneous allocations can overfill a room",
+        "description": "Eight allocation calls at once on a capacity-1 room put 2 students in it in testing; the capacity check and the insert were not one atomic step.",
+        "root_cause": "allocate_room read the room count and then inserted under SQLite's default deferred transaction, so two callers could both pass the check.",
+        "corrective_action": "Start allocate_room with BEGIN IMMEDIATE so checks and insert hold the write lock, and add unique partial indexes: one active room per student, one open leave per student.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_024_*",
+    },
 ]
 
 
