@@ -7,10 +7,10 @@ from tkinter import messagebox, simpledialog
 from datetime import datetime
 
 from app.config import APP_NAME
-from app.utils.exception_handler import report_tk_callback_exception
 from app.theme import COLORS, apply_theme, draw_icon, icon_tile, initials, _round_rect
 from app.services import auth_service
 from app.utils.validation import ValidationError
+from app.utils.exception_handler import handle_unexpected_error, report_tk_callback_exception
 from app.screens.splash_screen import SplashScreen
 from app.screens.login_screen import LoginScreen
 from app.screens.dashboard_screen import DashboardScreen
@@ -167,6 +167,26 @@ class MainWindow(tk.Tk):
         self.deiconify()
         self.show_screen(_home_screen(user["role"]))
 
+    def _change_own_password(self):
+        current = simpledialog.askstring("Change password", "Current password:", parent=self, show="•")
+        if current is None:
+            return
+        new = simpledialog.askstring("Change password", "New password:", parent=self, show="•")
+        if new is None:
+            return
+        again = simpledialog.askstring("Change password", "Type the new password again:", parent=self, show="•")
+        if again is None:
+            return
+        try:
+            if new != again:
+                raise ValidationError("The two new passwords do not match.")
+            auth_service.change_own_password(current, new)
+            messagebox.showinfo("Password changed", "Your password has been updated.", parent=self)
+        except ValidationError as e:
+            messagebox.showerror("Invalid Input", str(e), parent=self)
+        except Exception as e:
+            handle_unexpected_error("User", "change_own_password_ui", e)
+
     def _handle_logout(self):
         auth_service.logout()
         self.withdraw()
@@ -198,6 +218,10 @@ class MainWindow(tk.Tk):
         footer = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
         footer.pack(fill="x", padx=18, pady=(0, 16))
         tk.Frame(footer, bg=COLORS["border"], height=1).pack(fill="x", pady=(0, 10))
+        change_pw = tk.Label(footer, text="Change password", bg=COLORS["sidebar_bg"], fg=COLORS["text_secondary"],
+                              font=self.fonts["body"], cursor="hand2")
+        change_pw.pack(anchor="w", pady=(0, 8))
+        change_pw.bind("<Button-1>", lambda e: self._change_own_password())
         logout = tk.Label(footer, text="Log out", bg=COLORS["sidebar_bg"], fg=COLORS["accent"],
                            font=self.fonts["body_bold"], cursor="hand2")
         logout.pack(anchor="w")
