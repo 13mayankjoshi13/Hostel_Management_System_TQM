@@ -12,6 +12,7 @@ only (hashlib) — no new dependency.
 import hashlib
 import os
 import sqlite3
+from datetime import datetime, timedelta
 
 from app.database.db import get_connection
 from app.utils.validation import (
@@ -19,6 +20,9 @@ from app.utils.validation import (
                                     validate_registration_number, validate_contact_number, ValidationError)
 from app.utils.logging_service import log_error, log_audit
 from app.utils import session
+
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_MINUTES = 5
 
 _PBKDF2_ITERATIONS = 100_000
 
@@ -101,8 +105,29 @@ def authenticate(username: str, password: str) -> dict:
         cur.execute("SELECT * FROM users WHERE LOWER(username) = LOWER(?) ORDER BY user_id", (str(username).strip(),))
         user = cur.fetchone()
 
+        if user is not None and user["locked_until"]:
+            remaining = datetime.fromisoformat(user["locked_until"]) - datetime.now()
+            if remaining.total_seconds() > 0:
+                minutes = int(remaining.total_seconds() // 60) + 1
+                raise ValidationError(f"Too many failed attempts. Try again in {minutes} minute(s).")
+
         if user is None or not _verify_password(password, user["password_hash"]):
+            if user is not None:
+                failures = user["failed_attempts"] + 1
+                locked_until = None
+                if failures >= MAX_FAILED_ATTEMPTS:
+                    locked_until = (datetime.now() + timedelta(minutes=LOCKOUT_MINUTES)).isoformat(timespec="seconds")
+                    failures = 0
+                    log_audit("Auth", "Lockout", str(user["user_id"]), "Failure",
+                               f"'{user['username']}' locked for {LOCKOUT_MINUTES} minutes after repeated failed logins.")
+                cur.execute("UPDATE users SET failed_attempts = ?, locked_until = ? WHERE user_id = ?",
+                            (failures, locked_until, user["user_id"]))
+                conn.commit()
             raise ValidationError("Invalid username or password.")
+        if user["failed_attempts"] or user["locked_until"]:
+            cur.execute("UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE user_id = ?",
+                        (user["user_id"],))
+            conn.commit()
         if user["status"] != "Active":
             raise ValidationError("Your account is waiting for an administrator to approve it.")
 
