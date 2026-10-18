@@ -211,6 +211,14 @@ BUGS = [
         "corrective_action": "Count failed logins per account; after 5 in a row lock the account for 5 minutes (stored in the database, so a restart does not reset it), log the lockout, and reset the count on success.",
         "test_case": "tests/test_bug_fixes.py::test_bug_025_*",
     },
+    {
+        "module": "UI", "category": "Functional", "severity": "High", "priority": "High",
+        "title": "Errors inside button/timer callbacks are never logged or shown",
+        "description": "An exception raised in a Tk callback was only printed to the console: nothing reached error_logs.csv and the user saw no message, although main.run() claims to catch everything.",
+        "root_cause": "Tkinter does not let callback exceptions escape mainloop, so run()'s try/except never sees them, and no report_callback_exception handler was installed.",
+        "corrective_action": "Add report_tk_callback_exception to the exception handler and install it on the main window, so these errors are logged (module Application) and shown with the usual friendly message.",
+        "test_case": "tests/test_callback_errors_ui.py::test_bug_026_*",
+    },
 ]
 
 
