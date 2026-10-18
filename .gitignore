@@ -7,4 +7,6 @@ __pycache__/
 .venv/
 venv/
 .env
+app/database/backups/  
+app/database/hostel.db
 "@ | Out-File -Encoding utf8 .gitignore 

@@ -109,3 +109,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T13:16:33,system_admin,Administrator,Bug,Create,30,Success,Logged bug 'Same registration number can be added twice in different letter case' (High/High).
 2026-10-18T13:16:33,system_admin,Administrator,Bug,StartProgress,30,Success,Moved to In Progress.
 2026-10-18T13:16:33,system_admin,Administrator,Bug,MarkFixed,30,Success,Fixed by Mayank. Root cause: Registration numbers were compared and stored exactly as typ
+2026-10-18T20:09:37,system_admin,Administrator,Bug,Create,31,Success,Logged bug 'No backup: a damaged database file loses every record' (Critical/High).
+2026-10-18T20:09:37,system_admin,Administrator,Bug,StartProgress,31,Success,Moved to In Progress.
+2026-10-18T20:09:37,system_admin,Administrator,Bug,MarkFixed,31,Success,Fixed by Mayank. Root cause: The application never made or offered a backup.
