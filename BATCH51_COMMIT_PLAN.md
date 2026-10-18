@@ -4,10 +4,10 @@ Small commits, in this order:
 
 ```
 git add app/database/backup.py
-git commit -m "feat: add daily verified database backup with pruning and restore"
+git commit -m "feat: add daily verified database backup with pruning and restore" 
 
 git add app/main.py
-git commit -m "fix: take a database backup at start-up and mention restore in the start-up error (BUG-031)"
+git commit -m "fix: take a database backup at start-up and mention restore in the start-up error (BUG-031)" 
 
 git add tests/test_backup.py tests/test_startup_errors.py
 git commit -m "test: cover backup, pruning, damaged-file handling and restore (BUG-031)" 
@@ -20,5 +20,4 @@ git commit -m "docs: write up BUG-031 (how found, root cause, fix, test)"
 
 git push
 ```
-
 
