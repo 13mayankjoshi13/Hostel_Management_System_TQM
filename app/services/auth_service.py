@@ -240,6 +240,36 @@ def change_password(user_id: int, new_password: str) -> None:
         conn.close()
 
 
+def change_own_password(current_password: str, new_password: str) -> None:
+    """Any logged-in account changes its own password; the current password must be given."""
+    if not session.is_logged_in():
+        raise ValidationError("Log in first.")
+    clean_password = validate_password(new_password)
+    if clean_password in KNOWN_DEFAULT_PASSWORDS:
+        raise ValidationError("Choose a password other than the default one.")
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT user_id, password_hash FROM users WHERE LOWER(username) = LOWER(?)",
+                    (session.get_user(),))
+        row = cur.fetchone()
+        if row is None or not current_password or not _verify_password(current_password, row["password_hash"]):
+            raise ValidationError("Your current password is not correct.")
+        if current_password == clean_password:
+            raise ValidationError("The new password must be different from the current one.")
+        cur.execute("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE user_id = ?",
+                    (_hash_password(clean_password), row["user_id"]))
+        conn.commit()
+        log_audit("User", "ChangePassword", str(row["user_id"]), "Success",
+                   f"'{session.get_user()}' changed their own password.")
+    except sqlite3.Error as exc:
+        log_error("User", "DatabaseError", "High", "change_own_password",
+                   status="Open", message_reference=str(exc))
+        raise ValidationError("Could not change the password due to a database error.")
+    finally:
+        conn.close()
+
+
 def flag_accounts_using_seed_password() -> int:
     """Make accounts that still use the shared demo password change it at next login. Returns how many."""
     conn = get_connection()
