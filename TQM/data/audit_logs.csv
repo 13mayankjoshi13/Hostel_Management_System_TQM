@@ -78,3 +78,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T11:42:15,system_admin,Administrator,Bug,Create,20,Success,Logged bug 'Evidence log CSVs run user text as a spreadsheet formula' (Medium/Medium).
 2026-10-18T11:42:15,system_admin,Administrator,Bug,StartProgress,20,Success,Moved to In Progress.
 2026-10-18T11:42:15,system_admin,Administrator,Bug,MarkFixed,20,Success,Fixed by Mayank. Root cause: Log rows were written without checking for text beginning wi
+2026-10-18T11:49:10,system_admin,Administrator,Bug,Create,21,Success,Logged bug 'Calendar accepts events dated year 9999 or 1900' (Low/Medium).
+2026-10-18T11:49:10,system_admin,Administrator,Bug,StartProgress,21,Success,Moved to In Progress.
+2026-10-18T11:49:10,system_admin,Administrator,Bug,MarkFixed,21,Success,"Fixed by Mayank. Root cause: validate_event_date only checked the YYYY-MM-DD format, not "
