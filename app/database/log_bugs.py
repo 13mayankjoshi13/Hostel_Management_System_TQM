@@ -187,6 +187,14 @@ BUGS = [
         "corrective_action": "Collapse whitespace in event titles and compare titles case-insensitively.",
         "test_case": "tests/test_bug_fixes.py::test_bug_022_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "High", "priority": "High",
+        "title": "Student session can call staff and admin services directly",
+        "description": "With a Student session, add_student, delete_student, delete/add_room, release_allocation, change_password and create_user (even an Administrator account) all succeeded; only the navigation hid the screens.",
+        "root_cause": "Role rules existed only in the UI navigation; most services never checked the caller's role.",
+        "corrective_action": "Add session.require_roles and call it in the staff services (student, room, allocation, complaint, bug) and the admin-only account services.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_023_*",
+    },
 ]
 
 
