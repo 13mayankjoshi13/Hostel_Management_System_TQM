@@ -47,3 +47,13 @@ def get_user() -> str:
 
 def get_role() -> str:
     return _role or _FALLBACK_ROLE
+
+
+STAFF_ROLES = ("Administrator", "Warden", "Staff")
+
+
+def require_roles(allowed, action: str) -> None:
+    """Service-layer permission check; raises ValidationError so screens show it like any other rule."""
+    if get_role() not in allowed:
+        from app.utils.validation import ValidationError
+        raise ValidationError(f"Your role is not allowed to {action}.")
