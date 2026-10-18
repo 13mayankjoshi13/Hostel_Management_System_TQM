@@ -100,3 +100,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T13:00:34,system_admin,Administrator,Bug,Create,27,Success,Logged bug 'App exits silently when the database cannot be opened' (High/High).
 2026-10-18T13:00:34,system_admin,Administrator,Bug,StartProgress,27,Success,Moved to In Progress.
 2026-10-18T13:00:34,system_admin,Administrator,Bug,MarkFixed,27,Success,Fixed by Mayank. Root cause: main.run() reported start-up failures only with print() to s
+2026-10-18T13:04:26,system_admin,Administrator,Bug,Create,28,Success,Logged bug 'Default admin / admin123 account is never forced to change its password' (High/High).
+2026-10-18T13:04:26,system_admin,Administrator,Bug,StartProgress,28,Success,Moved to In Progress.
+2026-10-18T13:04:26,system_admin,Administrator,Bug,MarkFixed,28,Success,Fixed by Mayank. Root cause: ensure_default_admin only created the account; there was no 
