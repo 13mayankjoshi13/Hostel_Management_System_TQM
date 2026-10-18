@@ -243,6 +243,14 @@ BUGS = [
         "corrective_action": "Create loaded accounts flagged to change the password at first login (reusing the BUG-028 prompt), block Welcome123 as a new password, and flag existing accounts that still use it when the loader runs.",
         "test_case": "tests/test_bug_fixes.py::test_bug_029_*",
     },
+    {
+        "module": "Student", "category": "Data Integrity", "severity": "High", "priority": "High",
+        "title": "Same registration number can be added twice in different letter case",
+        "description": "BT24A0007 and bt24a0007 were stored as two different students, and sign-up looked the number up exactly, so the wrong record (or none) could be linked to an account.",
+        "root_cause": "Registration numbers were compared and stored exactly as typed, while the database UNIQUE rule is case-sensitive.",
+        "corrective_action": "Store registration numbers in upper case, compare them case-insensitively in the duplicate checks and in sign-up, and add a case-insensitive unique index (skipped if the existing data already has such duplicates).",
+        "test_case": "tests/test_bug_fixes.py::test_bug_030_*",
+    },
 ]
 
 
