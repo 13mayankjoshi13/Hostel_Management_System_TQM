@@ -112,3 +112,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T20:09:37,system_admin,Administrator,Bug,Create,31,Success,Logged bug 'No backup: a damaged database file loses every record' (Critical/High).
 2026-10-18T20:09:37,system_admin,Administrator,Bug,StartProgress,31,Success,Moved to In Progress.
 2026-10-18T20:09:37,system_admin,Administrator,Bug,MarkFixed,31,Success,Fixed by Mayank. Root cause: The application never made or offered a backup.
+2026-10-18T20:17:32,system_admin,Administrator,Bug,Create,32,Success,Logged bug 'Users cannot change their own password' (High/High).
+2026-10-18T20:17:32,system_admin,Administrator,Bug,StartProgress,32,Success,Moved to In Progress.
+2026-10-18T20:17:33,system_admin,Administrator,Bug,MarkFixed,32,Success,Fixed by Mayank. Root cause: Only an admin-side change_password existed; there was no sel
