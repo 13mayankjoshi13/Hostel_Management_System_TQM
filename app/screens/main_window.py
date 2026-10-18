@@ -6,6 +6,7 @@ import tkinter as tk
 from datetime import datetime
 
 from app.config import APP_NAME
+from app.utils.exception_handler import report_tk_callback_exception
 from app.theme import COLORS, apply_theme, draw_icon, icon_tile, initials, _round_rect
 from app.services import auth_service
 from app.screens.splash_screen import SplashScreen
@@ -103,6 +104,7 @@ class NavItem(tk.Canvas):
 class MainWindow(tk.Tk):
     def __init__(self, show_splash: bool = True):
         super().__init__()
+        self.report_callback_exception = report_tk_callback_exception
         self.title(APP_NAME)
         height = min(800, max(self.winfo_screenheight() - 80, 640))
         self.geometry(f"1280x{height}")
