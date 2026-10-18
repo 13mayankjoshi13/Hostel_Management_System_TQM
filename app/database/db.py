@@ -133,6 +133,11 @@ def initialize_database(db_path: str = None) -> None:
     if "status" not in existing:
         cur.execute("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'Active'")
 
+    if "failed_attempts" not in existing:
+        cur.execute("ALTER TABLE users ADD COLUMN failed_attempts INTEGER NOT NULL DEFAULT 0")
+    if "locked_until" not in existing:
+        cur.execute("ALTER TABLE users ADD COLUMN locked_until TEXT")
+
     bug_columns = {row["name"] for row in cur.execute("PRAGMA table_info(bugs)")}
     for column in ("reported_by", "fixed_by"):
         if column not in bug_columns:
