@@ -227,6 +227,14 @@ BUGS = [
         "corrective_action": "Show the failure in a message window (with the error id and what to check) for database start-up errors and for a crash of the main window, besides logging it.",
         "test_case": "tests/test_startup_errors.py::test_bug_027_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "High", "priority": "High",
+        "title": "Default admin / admin123 account is never forced to change its password",
+        "description": "The first-run Administrator is created with a known password (printed in the audit log) and nothing ever asks for it to be changed, so a deployed system keeps a publicly known admin login.",
+        "root_cause": "ensure_default_admin only created the account; there was no must-change state and no first-login prompt.",
+        "corrective_action": "Flag the default admin (and an existing one still using admin123) to change its password: after login the app asks for a new one before showing anything and logs out if cancelled; the default password can no longer be set again.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_028_*",
+    },
 ]
 
 
