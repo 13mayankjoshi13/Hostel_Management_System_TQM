@@ -90,3 +90,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T12:16:18,system_admin,Administrator,Bug,Create,24,Success,Logged bug 'Simultaneous allocations can overfill a room' (High/High).
 2026-10-18T12:16:18,system_admin,Administrator,Bug,StartProgress,24,Success,Moved to In Progress.
 2026-10-18T12:16:18,system_admin,Administrator,Bug,MarkFixed,24,Success,Fixed by Mayank. Root cause: allocate_room read the room count and then inserted under SQ
+2026-10-18T12:33:03,system_admin,Administrator,Bug,Create,25,Success,Logged bug 'Login has no limit on wrong passwords' (High/High).
+2026-10-18T12:33:03,system_admin,Administrator,Bug,StartProgress,25,Success,Moved to In Progress.
+2026-10-18T12:33:03,system_admin,Administrator,Bug,MarkFixed,25,Success,Fixed by Mayank. Root cause: authenticate checked the password on every call and kept no 
