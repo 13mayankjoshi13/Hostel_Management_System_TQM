@@ -135,6 +135,8 @@ def initialize_database(db_path: str = None) -> None:
 
     if "failed_attempts" not in existing:
         cur.execute("ALTER TABLE users ADD COLUMN failed_attempts INTEGER NOT NULL DEFAULT 0")
+    if "must_change_password" not in existing:
+        cur.execute("ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0")
     if "locked_until" not in existing:
         cur.execute("ALTER TABLE users ADD COLUMN locked_until TEXT")
 
