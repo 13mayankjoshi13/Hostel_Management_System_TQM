@@ -42,7 +42,7 @@ def validate_registration_number(reg_no: str) -> str:
         raise ValidationError("Registration number must be letters and digits only (A-Z, 0-9).")
     if set(reg_no) == {"0"}:
         raise ValidationError("Registration number cannot be all zeros.")
-    return reg_no
+    return reg_no.upper()
 
 
 def validate_contact_number(contact: str) -> str:
