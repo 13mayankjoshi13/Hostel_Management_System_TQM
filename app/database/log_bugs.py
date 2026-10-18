@@ -235,6 +235,14 @@ BUGS = [
         "corrective_action": "Flag the default admin (and an existing one still using admin123) to change its password: after login the app asks for a new one before showing anything and logs out if cancelled; the default password can no longer be set again.",
         "test_case": "tests/test_bug_fixes.py::test_bug_028_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "High", "priority": "High",
+        "title": "All loaded student accounts share one known password",
+        "description": "The real-data loader created every student login with the same password (Welcome123) and usernames follow the student's name, so any student could sign in as another and see or change their room, complaints, leave and details.",
+        "root_cause": "Seeded accounts were created with a shared password and were never asked to change it.",
+        "corrective_action": "Create loaded accounts flagged to change the password at first login (reusing the BUG-028 prompt), block Welcome123 as a new password, and flag existing accounts that still use it when the loader runs.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_029_*",
+    },
 ]
 
 
