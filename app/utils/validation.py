@@ -161,7 +161,7 @@ def validate_event_date(value: str) -> str:
 def validate_event_title(title: str) -> str:
     if title is None or not str(title).strip():
         raise ValidationError("Event title cannot be empty.")
-    title = str(title).strip()
+    title = " ".join(str(title).split())
     if len(title) < 3:
         raise ValidationError("Event title must be at least 3 characters long.")
     if len(title) > 60:
