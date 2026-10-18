@@ -323,6 +323,37 @@ class TestBugFixes(unittest.TestCase):
         session.set_session("admin", "Administrator")
         self.assertIsInstance(auth.create_user("boss", "Secret123", "Warden"), int)
 
+    def test_bug_024_simultaneous_allocations_never_exceed_capacity(self):
+        import sqlite3
+        import threading
+        ids = [student_service.add_student(f"Kid {chr(65 + i)}", f"24103020{i:02d}", "9876500000")
+               for i in range(8)]
+        rid = room_service.add_room("A101", "Single", 1)
+        outcomes = []
+
+        def go(student_id):
+            try:
+                allocation_service.allocate_room(student_id, rid)
+                outcomes.append("ok")
+            except ValidationError:
+                outcomes.append("rejected")
+
+        threads = [threading.Thread(target=go, args=(i,)) for i in ids]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        self.assertEqual(outcomes.count("ok"), 1)
+        self.assertEqual(len(allocation_service.get_active_allocations()), 1)
+
+        conn = db_module.get_connection()
+        try:
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("INSERT INTO allocations (student_id, room_id, status) "
+                             "SELECT student_id, room_id, 'Active' FROM allocations")
+        finally:
+            conn.close()
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
