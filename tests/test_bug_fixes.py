@@ -3,7 +3,7 @@ import os
 import tempfile
 import unittest
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from app.database import db as db_module, log_bugs
 from app.database.db import initialize_database
@@ -353,6 +353,30 @@ class TestBugFixes(unittest.TestCase):
                              "SELECT student_id, room_id, 'Active' FROM allocations")
         finally:
             conn.close()
+
+    def test_bug_025_repeated_wrong_passwords_lock_the_account(self):
+        auth_service.create_user("victim", "Secret123", "Staff")
+        for _ in range(auth_service.MAX_FAILED_ATTEMPTS):
+            with self.assertRaises(ValidationError):
+                auth_service.authenticate("victim", "wrong-guess")
+        with self.assertRaises(ValidationError) as ctx:
+            auth_service.authenticate("victim", "Secret123")
+        self.assertIn("Too many failed attempts", str(ctx.exception))
+
+        conn = db_module.get_connection()
+        conn.execute("UPDATE users SET locked_until = ? WHERE username = 'victim'",
+                     ((datetime.now() - timedelta(minutes=1)).isoformat(timespec="seconds"),))
+        conn.commit()
+        conn.close()
+        self.assertEqual(auth_service.authenticate("victim", "Secret123")["username"], "victim")
+
+        for _ in range(auth_service.MAX_FAILED_ATTEMPTS - 1):
+            with self.assertRaises(ValidationError):
+                auth_service.authenticate("victim", "wrong-guess")
+        auth_service.authenticate("victim", "Secret123")
+        with self.assertRaises(ValidationError):
+            auth_service.authenticate("victim", "wrong-guess")
+        self.assertEqual(auth_service.authenticate("victim", "Secret123")["username"], "victim")
 
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
