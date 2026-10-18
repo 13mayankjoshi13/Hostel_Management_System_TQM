@@ -22,6 +22,8 @@ from app.utils.logging_service import log_error, log_audit
 from app.utils import session
 
 DEFAULT_ADMIN_PASSWORD = "admin123"
+SEED_PASSWORD = "Welcome123"
+KNOWN_DEFAULT_PASSWORDS = (DEFAULT_ADMIN_PASSWORD, SEED_PASSWORD)
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_MINUTES = 5
 
@@ -44,7 +46,8 @@ def _verify_password(password: str, stored: str) -> bool:
     return candidate.hex() == digest_hex
 
 
-def create_user(username: str, password: str, role: str, student_id: int = None) -> int:
+def create_user(username: str, password: str, role: str, student_id: int = None,
+                must_change_password: bool = False) -> int:
     """Validate and insert a new user account. Student accounts must link to a student record."""
     session.require_roles(("Administrator",), "create accounts")
     clean_username = validate_username(username)
@@ -70,8 +73,9 @@ def create_user(username: str, password: str, role: str, student_id: int = None)
                 raise ValidationError("This student already has an account.")
 
         cur.execute(
-            "INSERT INTO users (username, password_hash, role, student_id) VALUES (?, ?, ?, ?)",
-            (clean_username, _hash_password(clean_password), clean_role, student_id),
+            "INSERT INTO users (username, password_hash, role, student_id, must_change_password) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (clean_username, _hash_password(clean_password), clean_role, student_id, int(bool(must_change_password))),
         )
         conn.commit()
         user_id = cur.lastrowid
@@ -212,7 +216,7 @@ def change_password(user_id: int, new_password: str) -> None:
     session.require_roles(("Administrator",), "change passwords")
     user_id = validate_record_id(user_id, "Please select a valid user.")
     clean_password = validate_password(new_password)
-    if clean_password == DEFAULT_ADMIN_PASSWORD:
+    if clean_password in KNOWN_DEFAULT_PASSWORDS:
         raise ValidationError("Choose a password other than the default one.")
     conn = get_connection()
     try:
@@ -236,12 +240,26 @@ def change_password(user_id: int, new_password: str) -> None:
         conn.close()
 
 
+def flag_accounts_using_seed_password() -> int:
+    """Make accounts that still use the shared demo password change it at next login. Returns how many."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT user_id, password_hash FROM users WHERE must_change_password = 0 AND role = 'Student'")
+        ids = [r["user_id"] for r in cur.fetchall() if _verify_password(SEED_PASSWORD, r["password_hash"])]
+        cur.executemany("UPDATE users SET must_change_password = 1 WHERE user_id = ?", [(i,) for i in ids])
+        conn.commit()
+        return len(ids)
+    finally:
+        conn.close()
+
+
 def complete_forced_password_change(new_password: str) -> None:
     """The logged-in account replaces the default password it was forced to change."""
     if not session.is_logged_in():
         raise ValidationError("Log in first.")
     clean_password = validate_password(new_password)
-    if clean_password == DEFAULT_ADMIN_PASSWORD:
+    if clean_password in KNOWN_DEFAULT_PASSWORDS:
         raise ValidationError("Choose a password other than the default one.")
     conn = get_connection()
     try:
