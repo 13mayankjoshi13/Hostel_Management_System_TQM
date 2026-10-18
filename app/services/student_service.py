@@ -30,6 +30,7 @@ def add_student(name: str, registration_number: str, contact_number: str) -> int
     number included) — the UI is expected to catch this and show it
     directly to the user.
     """
+    session.require_roles(session.STAFF_ROLES, "add students")
     clean_name = validate_student_name(name)
     clean_reg_no = validate_registration_number(registration_number)
     clean_contact = validate_contact_number(contact_number)
@@ -79,6 +80,7 @@ SORT_OPTIONS = {
 
 
 def get_all_students(sort_by: str = "Newest first") -> list:
+    session.require_roles(session.STAFF_ROLES, "view the student list")
     if sort_by not in SORT_OPTIONS:
         sort_by = "Newest first"
     conn = get_connection()
@@ -141,6 +143,7 @@ def _update(student_id: int, name: str, registration_number: str, contact_number
 
 
 def delete_student(student_id: int) -> None:
+    session.require_roles(session.STAFF_ROLES, "delete students")
     student_id = validate_record_id(student_id, "Please select a valid student.")
     conn = get_connection()
     try:

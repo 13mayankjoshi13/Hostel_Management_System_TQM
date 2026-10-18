@@ -41,6 +41,7 @@ def _verify_password(password: str, stored: str) -> bool:
 
 def create_user(username: str, password: str, role: str, student_id: int = None) -> int:
     """Validate and insert a new user account. Student accounts must link to a student record."""
+    session.require_roles(("Administrator",), "create accounts")
     clean_username = validate_username(username)
     clean_password = validate_password(password)
     clean_role = validate_role(role)
@@ -157,6 +158,7 @@ def ensure_default_admin() -> None:
 
 
 def list_users() -> list:
+    session.require_roles(("Administrator",), "view accounts")
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -175,6 +177,7 @@ def list_users() -> list:
 
 
 def change_password(user_id: int, new_password: str) -> None:
+    session.require_roles(("Administrator",), "change passwords")
     user_id = validate_record_id(user_id, "Please select a valid user.")
     clean_password = validate_password(new_password)
     conn = get_connection()
@@ -200,6 +203,7 @@ def change_password(user_id: int, new_password: str) -> None:
 
 
 def delete_user(user_id: int) -> None:
+    session.require_roles(("Administrator",), "delete accounts")
     user_id = validate_record_id(user_id, "Please select a valid user.")
     conn = get_connection()
     try:

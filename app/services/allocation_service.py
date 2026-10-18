@@ -31,6 +31,7 @@ from datetime import datetime
 
 from app.database.db import get_connection
 from app.utils.validation import ValidationError, validate_record_id
+from app.utils import session
 from app.utils.logging_service import log_error, log_audit
 
 
@@ -83,6 +84,7 @@ def allocate_room(student_id: int, room_id: int) -> int:
     the allocation. Returns the new allocation_id.
     Raises ValidationError with a specific message on any failed check.
     """
+    session.require_roles(session.STAFF_ROLES, "allocate rooms")
     student_id = validate_record_id(student_id, "Please select a student and a room.")
     room_id = validate_record_id(room_id, "Please select a student and a room.")
 
@@ -122,6 +124,7 @@ def allocate_room(student_id: int, room_id: int) -> int:
 
 def release_allocation(allocation_id: int) -> None:
     """Mark an allocation as Released (frees the room, keeps history)."""
+    session.require_roles(session.STAFF_ROLES, "release rooms")
     allocation_id = validate_record_id(allocation_id, "Please select a valid allocation.")
     conn = get_connection()
     try:

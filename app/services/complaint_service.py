@@ -26,6 +26,7 @@ from app.utils.validation import (
     validate_resolution_notes,
     ValidationError,
 )
+from app.utils import session
 from app.utils.logging_service import log_error, log_audit
 
 _ASSIGNABLE_STATUSES = {"Open"}
@@ -77,6 +78,7 @@ def create_complaint(student_id: int, category: str, description: str) -> int:
 
 def assign_complaint(complaint_id: int, assigned_to: str) -> None:
     """Move a complaint from 'Open' to 'Assigned'. Rejects any other status."""
+    session.require_roles(session.STAFF_ROLES, "assign complaints")
     complaint_id = validate_record_id(complaint_id, "Please select a valid complaint.")
     clean_assigned_to = validate_assigned_to(assigned_to)
 
@@ -112,6 +114,7 @@ def assign_complaint(complaint_id: int, assigned_to: str) -> None:
 
 def resolve_complaint(complaint_id: int, resolution_notes: str) -> None:
     """Move a complaint from 'Open' or 'Assigned' to 'Resolved'."""
+    session.require_roles(session.STAFF_ROLES, "resolve complaints")
     complaint_id = validate_record_id(complaint_id, "Please select a valid complaint.")
     clean_notes = validate_resolution_notes(resolution_notes)
 

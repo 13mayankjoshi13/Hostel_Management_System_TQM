@@ -45,6 +45,7 @@ def _get_bug_or_raise(cur, bug_id: int) -> sqlite3.Row:
 def log_bug(module: str, category: str, title: str, description: str,
             severity: str, priority: str, reported_by: str = None) -> int:
     """Validate and insert a new bug with status 'Open'. Returns the new bug_id."""
+    session.require_roles(session.STAFF_ROLES, "log bugs")
     clean_module = validate_bug_module(module)
     clean_category = validate_bug_category(category)
     clean_title = validate_bug_title(title)
@@ -84,6 +85,7 @@ def log_bug(module: str, category: str, title: str, description: str,
 
 def start_progress(bug_id: int) -> None:
     """Move a bug from 'Open' to 'In Progress'."""
+    session.require_roles(session.STAFF_ROLES, "change bugs")
     bug_id = validate_record_id(bug_id, "Please select a valid bug.")
     conn = get_connection()
     try:
@@ -113,6 +115,7 @@ def start_progress(bug_id: int) -> None:
 def mark_fixed(bug_id: int, root_cause: str, corrective_action: str, test_case: str,
                fixed_by: str = None) -> None:
     """Move a bug from 'In Progress' to 'Fixed'. Requires full documentation."""
+    session.require_roles(session.STAFF_ROLES, "change bugs")
     clean_root_cause = validate_root_cause(root_cause)
     clean_corrective_action = validate_corrective_action(corrective_action)
     clean_test_case = validate_test_case(test_case)
@@ -151,6 +154,7 @@ def mark_fixed(bug_id: int, root_cause: str, corrective_action: str, test_case: 
 
 def close_bug(bug_id: int) -> None:
     """Move a bug from 'Fixed' to 'Closed' (verified and done)."""
+    session.require_roles(session.STAFF_ROLES, "change bugs")
     bug_id = validate_record_id(bug_id, "Please select a valid bug.")
     conn = get_connection()
     try:
