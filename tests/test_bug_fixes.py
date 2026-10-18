@@ -429,6 +429,27 @@ class TestBugFixes(unittest.TestCase):
         self.assertFalse(auth_service.authenticate("old_seeded", "MyOwn12345")["must_change_password"])
         self.assertEqual(auth_service.flag_accounts_using_seed_password(), 0)
 
+    def test_bug_030_registration_numbers_are_case_insensitive(self):
+        import sqlite3
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        first = student_service.add_student("Kid A", "bt24a0007", "9876500000")
+        self.assertEqual([s["registration_number"] for s in student_service.get_all_students()], ["BT24A0007"])
+        with self.assertRaises(ValidationError):
+            student_service.add_student("Kid B", "BT24a0007", "9876500001")
+        second = student_service.add_student("Kid B", "2410302098", "9876500001")
+        with self.assertRaises(ValidationError):
+            student_service.update_student(second, "Kid B", "bt24a0007", "9876500001")
+        self.assertIsInstance(auth_service.register_student("kida", "Secret123", "bt24a0007", "9876500000"), int)
+        conn = db_module.get_connection()
+        try:
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("INSERT INTO students (name, registration_number, contact_number) "
+                             "VALUES ('Raw Kid', 'bt24A0007', '9876500002')")
+        finally:
+            conn.close()
+        self.assertEqual(first, 1)
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
