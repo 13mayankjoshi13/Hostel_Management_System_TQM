@@ -267,6 +267,14 @@ BUGS = [
         "corrective_action": "Add change_own_password (current password required, new one must differ and not be a known default) and a 'Change password' link in the sidebar for every role.",
         "test_case": "tests/test_bug_fixes.py::test_bug_032_*",
     },
+    {
+        "module": "UI", "category": "Security", "severity": "High", "priority": "Medium",
+        "title": "Logged-in session never times out",
+        "description": "A warden or administrator who walked away from the hostel-office computer stayed logged in indefinitely, leaving every student record and the Users screen open to whoever sat down next.",
+        "root_cause": "The session had no inactivity limit.",
+        "corrective_action": "Track mouse and keyboard activity and log the user out after 15 minutes of inactivity (IDLE_TIMEOUT_MINUTES), recording an IdleLogout audit entry and returning to the login window.",
+        "test_case": "tests/test_idle.py::test_bug_033_*",
+    },
 ]
 
 
