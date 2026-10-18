@@ -171,6 +171,14 @@ BUGS = [
         "corrective_action": "Prefix such text with an apostrophe in the shared _append_row used by the error, audit and defect logs.",
         "test_case": "tests/test_bug_fixes.py::test_bug_020_*",
     },
+    {
+        "module": "Other", "category": "Validation", "severity": "Low", "priority": "Medium",
+        "title": "Calendar accepts events dated year 9999 or 1900",
+        "description": "add_event saved 9999-01-01 and 1900-01-01 without complaint, unlike leave dates which are limited to a window around today.",
+        "root_cause": "validate_event_date only checked the YYYY-MM-DD format, not whether the date was plausible.",
+        "corrective_action": "Reject event dates more than 5 years from today.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_021_*",
+    },
 ]
 
 
