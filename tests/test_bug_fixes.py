@@ -25,8 +25,12 @@ class TestBugFixes(unittest.TestCase):
         ls.AUDIT_LOG_CSV = os.path.join(self.tmp, "a.csv")
         ls.DEFECT_LOG_CSV = os.path.join(self.tmp, "d.csv")
         initialize_database(self.db)
+        from app.utils import session
+        session.clear_session()
 
     def tearDown(self):
+        from app.utils import session
+        session.clear_session()
         import app.config as config
         import app.utils.logging_service as ls
 
@@ -287,6 +291,37 @@ class TestBugFixes(unittest.TestCase):
         for dup in ("SPRING FEST", "spring  fest"):
             with self.assertRaises(ValidationError):
                 event_service.add_event(day, dup, "Exam")
+
+    def test_bug_023_services_enforce_roles(self):
+        from app.services import auth_service as auth, complaint_service
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        sid = student_service.add_student("Test Kid", "2410302099", "9876500000")
+        rid = room_service.add_room("A101", "Double", 2)
+        aid = allocation_service.allocate_room(sid, rid)
+        session.set_session("stu", "Student", sid)
+        blocked = [
+            lambda: student_service.add_student("Evil Kid", "2410302090", "9876500002"),
+            lambda: student_service.get_all_students(),
+            lambda: student_service.delete_student(sid),
+            lambda: room_service.add_room("B1", "Single", 1),
+            lambda: room_service.delete_room(rid),
+            lambda: allocation_service.release_allocation(aid),
+            lambda: auth.create_user("hax", "Secret123", "Administrator"),
+            lambda: auth.change_password(1, "Secret123"),
+            lambda: auth.list_users(),
+            lambda: complaint_service.resolve_complaint(1, "Done and dusted"),
+            lambda: bug_service.log_bug("Room", "Validation", "Student made bug", "A student logging a bug here", "Low", "Low"),
+        ]
+        for call in blocked:
+            with self.assertRaises(ValidationError):
+                call()
+        session.set_session("warden", "Warden")
+        self.assertEqual(len(student_service.get_all_students()), 1)
+        with self.assertRaises(ValidationError):
+            auth.create_user("hax", "Secret123", "Administrator")
+        session.set_session("admin", "Administrator")
+        self.assertIsInstance(auth.create_user("boss", "Secret123", "Warden"), int)
 
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
