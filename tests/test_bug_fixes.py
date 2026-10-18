@@ -378,6 +378,38 @@ class TestBugFixes(unittest.TestCase):
             auth_service.authenticate("victim", "wrong-guess")
         self.assertEqual(auth_service.authenticate("victim", "Secret123")["username"], "victim")
 
+    def test_bug_028_default_admin_must_replace_its_password(self):
+        from app.utils import session
+        auth_service.ensure_default_admin()
+        user = auth_service.authenticate("admin", "admin123")
+        self.assertTrue(user["must_change_password"])
+        for bad in ("admin123", "short", "nodigitshere"):
+            with self.assertRaises(ValidationError):
+                auth_service.complete_forced_password_change(bad)
+        auth_service.complete_forced_password_change("NewSecret9")
+        session.clear_session()
+        with self.assertRaises(ValidationError):
+            auth_service.authenticate("admin", "admin123")
+        self.assertFalse(auth_service.authenticate("admin", "NewSecret9")["must_change_password"])
+        with self.assertRaises(ValidationError):
+            auth_service.complete_forced_password_change("Another123")
+
+    def test_bug_028_existing_database_with_default_password_is_flagged(self):
+        auth_service.ensure_default_admin()
+        conn = db_module.get_connection()
+        conn.execute("UPDATE users SET must_change_password = 0")
+        conn.commit()
+        conn.close()
+        auth_service.ensure_default_admin()
+        self.assertTrue(auth_service.authenticate("admin", "admin123")["must_change_password"])
+
+    def test_bug_028_admin_reset_cannot_set_the_default_password(self):
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        uid = auth_service.create_user("someone", "Secret123", "Staff")
+        with self.assertRaises(ValidationError):
+            auth_service.change_password(uid, "admin123")
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
