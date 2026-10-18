@@ -41,7 +41,7 @@ def add_student(name: str, registration_number: str, contact_number: str) -> int
         # Explicit duplicate check first, so we can give a specific
         # message rather than a generic database integrity error.
         cur.execute(
-            "SELECT student_id FROM students WHERE registration_number = ?",
+            "SELECT student_id FROM students WHERE UPPER(registration_number) = UPPER(?)",
             (clean_reg_no,),
         )
         if cur.fetchone() is not None:
@@ -119,7 +119,7 @@ def _update(student_id: int, name: str, registration_number: str, contact_number
         old = cur.fetchone()
         if old is None:
             raise ValidationError("That student does not exist.")
-        cur.execute("SELECT student_id FROM students WHERE registration_number = ? AND student_id != ?",
+        cur.execute("SELECT student_id FROM students WHERE UPPER(registration_number) = UPPER(?) AND student_id != ?",
                     (clean_reg_no, student_id))
         if cur.fetchone() is not None:
             raise ValidationError(f"A student with registration number '{clean_reg_no}' already exists.")
