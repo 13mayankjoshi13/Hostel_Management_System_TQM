@@ -179,6 +179,14 @@ BUGS = [
         "corrective_action": "Reject event dates more than 5 years from today.",
         "test_case": "tests/test_bug_fixes.py::test_bug_021_*",
     },
+    {
+        "module": "Other", "category": "Data Integrity", "severity": "Low", "priority": "Low",
+        "title": "Calendar lets 'Fest' and 'FEST' (or 'Fest  Night') duplicate an event on one date",
+        "description": "The duplicate check compared titles exactly and extra spaces inside a title were kept, so near-identical events could be added twice on the same day.",
+        "root_cause": "Titles were only trimmed at the ends and the duplicate query was case-sensitive.",
+        "corrective_action": "Collapse whitespace in event titles and compare titles case-insensitively.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_022_*",
+    },
 ]
 
 
