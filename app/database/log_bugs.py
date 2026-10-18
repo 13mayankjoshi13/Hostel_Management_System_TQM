@@ -203,6 +203,14 @@ BUGS = [
         "corrective_action": "Start allocate_room with BEGIN IMMEDIATE so checks and insert hold the write lock, and add unique partial indexes: one active room per student, one open leave per student.",
         "test_case": "tests/test_bug_fixes.py::test_bug_024_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "High", "priority": "High",
+        "title": "Login has no limit on wrong passwords",
+        "description": "Any number of wrong passwords could be tried against an account, including the default admin account, so passwords could be guessed by repetition.",
+        "root_cause": "authenticate checked the password on every call and kept no record of failures.",
+        "corrective_action": "Count failed logins per account; after 5 in a row lock the account for 5 minutes (stored in the database, so a restart does not reset it), log the lockout, and reset the count on success.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_025_*",
+    },
 ]
 
 
