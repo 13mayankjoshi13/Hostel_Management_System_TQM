@@ -28,7 +28,8 @@ _ERROR_HEADER = ["timestamp", "error_id", "module", "error_type", "severity",
 _AUDIT_HEADER = ["timestamp", "user_id", "role", "module", "action",
                   "record_id", "result", "description"]
 _DEFECT_HEADER = ["defect_id", "date", "module", "category", "title", "description",
-                   "severity", "priority", "status", "root_cause", "corrective_action", "test_case"]
+                   "severity", "priority", "status", "root_cause", "corrective_action", "test_case",
+                   "reported_by", "fixed_by"]
 
 
 def _next_id(csv_path: str, id_column: str, prefix: str) -> str:
@@ -55,11 +56,29 @@ def _neutralise(value):
     return value
 
 
+def _upgrade_header(csv_path: str, header: list) -> None:
+    """If an older log has fewer columns, rewrite it with the current header (old rows get blanks) so new rows are not lost."""
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        existing = reader.fieldnames
+        if existing is None or list(existing) == header:
+            return
+        rows = list(reader)
+    temp = csv_path + ".tmp"
+    with open(temp, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=header, extrasaction="ignore", restval="")
+        writer.writeheader()
+        writer.writerows(rows)
+    os.replace(temp, csv_path)
+
+
 def _append_row(csv_path: str, header: list, row: dict) -> None:
     """Append a row to a CSV, creating the file with a header if missing."""
     with _lock:
         file_exists = os.path.exists(csv_path)
         os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+        if file_exists and os.path.getsize(csv_path) > 0:
+            _upgrade_header(csv_path, header)
         write_header = not file_exists or os.path.getsize(csv_path) == 0
         with open(csv_path, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=header)
@@ -119,7 +138,8 @@ def log_audit(module: str, action: str, record_id: str, result: str,
 
 def log_defect(defect_id: str, date: str, module: str, category: str, title: str,
                description: str, severity: str, priority: str, status: str,
-               root_cause: str = "", corrective_action: str = "", test_case: str = "") -> str:
+               root_cause: str = "", corrective_action: str = "", test_case: str = "",
+               reported_by: str = "", fixed_by: str = "") -> str:
     """
     Record a bug in TQM/data/defect_log.csv (Q09 feature #4: Bug Tracker).
 
@@ -144,8 +164,12 @@ def log_defect(defect_id: str, date: str, module: str, category: str, title: str
             "root_cause": root_cause,
             "corrective_action": corrective_action,
             "test_case": test_case,
+            "reported_by": reported_by or "",
+            "fixed_by": fixed_by or "",
         }
         _append_row(DEFECT_LOG_CSV, _DEFECT_HEADER, row)
         return "logged"
-    except Exception:
+    except Exception as exc:
+        log_error("Bug", type(exc).__name__, "High", "log_defect", status="Open",
+                   message_reference=f"Defect {defect_id} could not be written to the defect log: {exc}")
         return "unlogged"
