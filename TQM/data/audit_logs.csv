@@ -84,3 +84,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T11:54:32,system_admin,Administrator,Bug,Create,22,Success,Logged bug 'Calendar lets 'Fest' and 'FEST' (or 'Fest  Night') duplicate an event on one date' (Low/Low).
 2026-10-18T11:54:32,system_admin,Administrator,Bug,StartProgress,22,Success,Moved to In Progress.
 2026-10-18T11:54:32,system_admin,Administrator,Bug,MarkFixed,22,Success,Fixed by Mayank. Root cause: Titles were only trimmed at the ends and the duplicate query
+2026-10-18T11:59:57,system_admin,Administrator,Bug,Create,23,Success,Logged bug 'Student session can call staff and admin services directly' (High/High).
+2026-10-18T11:59:57,system_admin,Administrator,Bug,StartProgress,23,Success,Moved to In Progress.
+2026-10-18T11:59:57,system_admin,Administrator,Bug,MarkFixed,23,Success,Fixed by Mayank. Root cause: Role rules existed only in the UI navigation; most services 
