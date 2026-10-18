@@ -69,3 +69,9 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-17T14:45:35,system_admin,Administrator,Bug,Create,17,Success,"Logged bug 'Complaint, leave and allocation accept True or 1.9 as a student/room ID' (Medium/Medium)."
 2026-10-17T14:45:35,system_admin,Administrator,Bug,StartProgress,17,Success,Moved to In Progress.
 2026-10-17T14:45:35,system_admin,Administrator,Bug,MarkFixed,17,Success,"Fixed by Mayank. Root cause: IDs were converted with int(), which truncates floats and ac"
+2026-10-18T11:28:44,system_admin,Administrator,Bug,Create,18,Success,Logged bug 'Student stays 'On Leave' after their room allocation is released' (Medium/Medium).
+2026-10-18T11:28:44,system_admin,Administrator,Bug,StartProgress,18,Success,Moved to In Progress.
+2026-10-18T11:28:44,system_admin,Administrator,Bug,MarkFixed,18,Success,Fixed by Mayank. Root cause: release_allocation only updated the allocation and never tou
+2026-10-18T11:33:35,system_admin,Administrator,Bug,Create,19,Success,Logged bug 'Assign/resolve/release/delete actions accept True or 1.9 as a record ID' (Low/Medium).
+2026-10-18T11:33:35,system_admin,Administrator,Bug,StartProgress,19,Success,Moved to In Progress.
+2026-10-18T11:33:35,system_admin,Administrator,Bug,MarkFixed,19,Success,Fixed by Mayank. Root cause: BUG-017 fixed only the create paths; the other ID-taking ser
