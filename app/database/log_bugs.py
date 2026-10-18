@@ -283,6 +283,14 @@ BUGS = [
         "corrective_action": "Add a read-only data check (python -m app.database.check_data) covering duplicate registration numbers, over-full rooms, double allocations, orphan rows, stranded leaves, unlinked accounts and values today's rules reject; run it at start-up and write each finding to the error log.",
         "test_case": "tests/test_check_data.py::test_bug_034_*",
     },
+    {
+        "module": "Other", "category": "Data Integrity", "severity": "High", "priority": "Medium",
+        "title": "Defect log CSV has no reporter or fixer, and write failures are silent",
+        "description": "defect_log.csv, the evidence file for the Bug Tracker, left out who reported and who fixed each bug (shown in the app since Batch 29), and any failure to write a row was swallowed without a trace.",
+        "root_cause": "The CSV columns were fixed before reporter/fixer existed, and log_defect ignored its own errors. Simply adding columns would have made old log files reject every new row.",
+        "corrective_action": "Add reported_by and fixed_by to the defect log, upgrade older log files in place (old rows keep blanks), and record a failed defect write in the error log.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_035_*",
+    },
 ]
 
 
