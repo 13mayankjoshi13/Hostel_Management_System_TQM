@@ -251,6 +251,14 @@ BUGS = [
         "corrective_action": "Store registration numbers in upper case, compare them case-insensitively in the duplicate checks and in sign-up, and add a case-insensitive unique index (skipped if the existing data already has such duplicates).",
         "test_case": "tests/test_bug_fixes.py::test_bug_030_*",
     },
+    {
+        "module": "Database", "category": "Data Integrity", "severity": "Critical", "priority": "High",
+        "title": "No backup: a damaged database file loses every record",
+        "description": "All students, rooms, allocations, complaints and accounts live in one SQLite file with no copy anywhere. A damaged or deleted file (see BUG-027) meant losing everything.",
+        "root_cause": "The application never made or offered a backup.",
+        "corrective_action": "Take a verified backup once a day at start-up (kept 7 days, in app/database/backups), never back up a file that fails its integrity check, and add restore (python -m app.database.backup restore FILE) that keeps the old file as *.before_restore.",
+        "test_case": "tests/test_backup.py::test_bug_031_*",
+    },
 ]
 
 
