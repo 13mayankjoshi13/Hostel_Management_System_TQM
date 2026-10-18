@@ -471,6 +471,30 @@ class TestBugFixes(unittest.TestCase):
             auth_service.authenticate("kid", "Secret123")
         self.assertEqual(auth_service.authenticate("kid", "Another123")["username"], "kid")
 
+    def test_bug_035_defect_log_records_people_and_upgrades_old_files(self):
+        import csv
+        import app.utils.logging_service as ls
+        old_header = ["defect_id", "date", "module", "category", "title", "description", "severity",
+                      "priority", "status", "root_cause", "corrective_action", "test_case"]
+        with open(ls.DEFECT_LOG_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(old_header)
+            writer.writerow(["BUG-0001", "2026-01-01", "Room", "Validation", "Old bug", "old description",
+                             "Low", "Low", "Open", "", "", ""])
+        bug_id = bug_service.log_bug("Room", "Validation", "New bug here", "A new bug description", "Low", "Low",
+                                     reported_by="Mayank")
+        bug_service.start_progress(bug_id)
+        bug_service.mark_fixed(bug_id, "Root cause text", "Corrective action text", "tests/test_x.py", "Mayank")
+        bug_service.close_bug(bug_id)
+        with open(ls.DEFECT_LOG_CSV, newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+        self.assertEqual(len(rows), 5)
+        self.assertEqual(rows[0]["title"], "Old bug")
+        self.assertEqual((rows[0]["reported_by"], rows[0]["fixed_by"]), ("", ""))
+        self.assertEqual([r["status"] for r in rows[1:]], ["Open", "In Progress", "Fixed", "Closed"])
+        self.assertEqual([r["reported_by"] for r in rows[1:]], ["Mayank"] * 4)
+        self.assertEqual([r["fixed_by"] for r in rows[1:]], ["", "", "Mayank", "Mayank"])
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
