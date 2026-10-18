@@ -75,3 +75,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T11:33:35,system_admin,Administrator,Bug,Create,19,Success,Logged bug 'Assign/resolve/release/delete actions accept True or 1.9 as a record ID' (Low/Medium).
 2026-10-18T11:33:35,system_admin,Administrator,Bug,StartProgress,19,Success,Moved to In Progress.
 2026-10-18T11:33:35,system_admin,Administrator,Bug,MarkFixed,19,Success,Fixed by Mayank. Root cause: BUG-017 fixed only the create paths; the other ID-taking ser
+2026-10-18T11:42:15,system_admin,Administrator,Bug,Create,20,Success,Logged bug 'Evidence log CSVs run user text as a spreadsheet formula' (Medium/Medium).
+2026-10-18T11:42:15,system_admin,Administrator,Bug,StartProgress,20,Success,Moved to In Progress.
+2026-10-18T11:42:15,system_admin,Administrator,Bug,MarkFixed,20,Success,Fixed by Mayank. Root cause: Log rows were written without checking for text beginning wi
