@@ -410,6 +410,25 @@ class TestBugFixes(unittest.TestCase):
         with self.assertRaises(ValidationError):
             auth_service.change_password(uid, "admin123")
 
+    def test_bug_029_shared_demo_password_must_be_replaced(self):
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        sid = student_service.add_student("Test Kid", "2410302099", "9876500000")
+        sid2 = student_service.add_student("Other Kid", "2410302098", "9876500001")
+        auth_service.create_user("old_seeded", auth_service.SEED_PASSWORD, "Student", sid)
+        auth_service.create_user("new_seeded", auth_service.SEED_PASSWORD, "Student", sid2,
+                                 must_change_password=True)
+        self.assertTrue(auth_service.authenticate("new_seeded", auth_service.SEED_PASSWORD)["must_change_password"])
+        self.assertFalse(auth_service.authenticate("old_seeded", auth_service.SEED_PASSWORD)["must_change_password"])
+        self.assertEqual(auth_service.flag_accounts_using_seed_password(), 1)
+        self.assertTrue(auth_service.authenticate("old_seeded", auth_service.SEED_PASSWORD)["must_change_password"])
+        with self.assertRaises(ValidationError):
+            auth_service.complete_forced_password_change(auth_service.SEED_PASSWORD)
+        auth_service.complete_forced_password_change("MyOwn12345")
+        session.clear_session()
+        self.assertFalse(auth_service.authenticate("old_seeded", "MyOwn12345")["must_change_password"])
+        self.assertEqual(auth_service.flag_accounts_using_seed_password(), 0)
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
