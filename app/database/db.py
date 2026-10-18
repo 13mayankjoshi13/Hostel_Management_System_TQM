@@ -148,12 +148,14 @@ def initialize_database(db_path: str = None) -> None:
     for index_sql in (
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_one_active_room_per_student "
         "ON allocations(student_id) WHERE status = 'Active'",
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_registration_number_nocase "
+        "ON students(UPPER(registration_number))",
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_one_open_leave_per_student "
         "ON leaves(student_id) WHERE status = 'On Leave'",
     ):
         try:
             cur.execute(index_sql)
-        except sqlite3.IntegrityError:
+        except sqlite3.Error:
             pass
 
     conn.commit()
