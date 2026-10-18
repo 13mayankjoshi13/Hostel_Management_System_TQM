@@ -21,6 +21,7 @@ from app.utils.validation import (
 from app.utils.logging_service import log_error, log_audit
 from app.utils import session
 
+DEFAULT_ADMIN_PASSWORD = "admin123"
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_MINUTES = 5
 
@@ -135,7 +136,8 @@ def authenticate(username: str, password: str) -> dict:
         log_audit("Auth", "Login", str(user["user_id"]), "Success",
                    f"'{user['username']}' logged in.")
         return {"user_id": user["user_id"], "username": user["username"],
-                "role": user["role"], "student_id": user["student_id"]}
+                "role": user["role"], "student_id": user["student_id"],
+                "must_change_password": bool(user["must_change_password"])}
 
     except ValidationError:
         raise
@@ -166,10 +168,15 @@ def ensure_default_admin() -> None:
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) AS n FROM users")
         if cur.fetchone()["n"] > 0:
+            cur.execute("SELECT user_id, password_hash FROM users WHERE username = 'admin' AND must_change_password = 0")
+            row = cur.fetchone()
+            if row is not None and _verify_password(DEFAULT_ADMIN_PASSWORD, row["password_hash"]):
+                cur.execute("UPDATE users SET must_change_password = 1 WHERE user_id = ?", (row["user_id"],))
+                conn.commit()
             return
         cur.execute(
-            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-            ("admin", _hash_password("admin123"), "Administrator"),
+            "INSERT INTO users (username, password_hash, role, must_change_password) VALUES (?, ?, ?, 1)",
+            ("admin", _hash_password(DEFAULT_ADMIN_PASSWORD), "Administrator"),
         )
         conn.commit()
         log_audit("User", "Create", "bootstrap", "Success",
@@ -205,6 +212,8 @@ def change_password(user_id: int, new_password: str) -> None:
     session.require_roles(("Administrator",), "change passwords")
     user_id = validate_record_id(user_id, "Please select a valid user.")
     clean_password = validate_password(new_password)
+    if clean_password == DEFAULT_ADMIN_PASSWORD:
+        raise ValidationError("Choose a password other than the default one.")
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -212,7 +221,7 @@ def change_password(user_id: int, new_password: str) -> None:
         row = cur.fetchone()
         if row is None:
             raise ValidationError("That user account does not exist.")
-        cur.execute("UPDATE users SET password_hash = ? WHERE user_id = ?",
+        cur.execute("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE user_id = ?",
                     (_hash_password(clean_password), user_id))
         conn.commit()
         log_audit("User", "ChangePassword", str(user_id), "Success",
@@ -221,6 +230,34 @@ def change_password(user_id: int, new_password: str) -> None:
         raise
     except sqlite3.Error as exc:
         log_error("User", "DatabaseError", "High", "change_password",
+                   status="Open", message_reference=str(exc))
+        raise ValidationError("Could not change the password due to a database error.")
+    finally:
+        conn.close()
+
+
+def complete_forced_password_change(new_password: str) -> None:
+    """The logged-in account replaces the default password it was forced to change."""
+    if not session.is_logged_in():
+        raise ValidationError("Log in first.")
+    clean_password = validate_password(new_password)
+    if clean_password == DEFAULT_ADMIN_PASSWORD:
+        raise ValidationError("Choose a password other than the default one.")
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT user_id, must_change_password FROM users WHERE LOWER(username) = LOWER(?)",
+                    (session.get_user(),))
+        row = cur.fetchone()
+        if row is None or not row["must_change_password"]:
+            raise ValidationError("This account is not waiting for a password change.")
+        cur.execute("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE user_id = ?",
+                    (_hash_password(clean_password), row["user_id"]))
+        conn.commit()
+        log_audit("User", "ChangePassword", str(row["user_id"]), "Success",
+                   f"'{session.get_user()}' replaced the default password.")
+    except sqlite3.Error as exc:
+        log_error("User", "DatabaseError", "High", "complete_forced_password_change",
                    status="Open", message_reference=str(exc))
         raise ValidationError("Could not change the password due to a database error.")
     finally:
