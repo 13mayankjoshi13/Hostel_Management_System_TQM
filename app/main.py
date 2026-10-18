@@ -32,6 +32,13 @@ def show_fatal(title: str, message: str) -> None:
 
 def run():
     try:
+        from app.database.backup import create_backup
+        create_backup()
+    except Exception as exc:
+        log_error("Database", type(exc).__name__, "High", "create_backup",
+                   status="Open", message_reference=str(exc))
+
+    try:
         initialize_database()
     except Exception as exc:
         error_id = log_error("Database", type(exc).__name__, "Critical",
@@ -39,7 +46,8 @@ def run():
         show_fatal("Hostel Management System",
                    f"The database could not be opened, so the application cannot start.\n\n"
                    f"{exc}\n\nLogged as {error_id}. Check that the file is not locked by another program "
-                   f"or damaged, then start the application again.")
+                   f"or damaged. If it is damaged, restore the latest copy from app/database/backups with "
+                   f"python -m app.database.backup restore <file>.")
         return
 
     try:
