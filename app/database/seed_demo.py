@@ -48,7 +48,7 @@ STUDENTS = [
 
 KNOWN_ROLL = {"Mayank Joshi": 37}
 REG_PREFIX = "24103020"
-DEFAULT_PASSWORD = "Welcome123"
+DEFAULT_PASSWORD = auth_service.SEED_PASSWORD
 EXTRA_EMPTY_ROOMS = {"A": "A201", "B": "B201"}
 
 SAMPLE_COMPLAINTS = [
@@ -160,8 +160,10 @@ def run_seed(db_path: str = None, include_samples: bool = True) -> dict:
             if name not in new_students:
                 continue
             username = _username(name, taken_usernames)
-            auth_service.create_user(username, DEFAULT_PASSWORD, "Student", ids[name])
+            auth_service.create_user(username, DEFAULT_PASSWORD, "Student", ids[name], must_change_password=True)
             summary["accounts"] += 1
+
+        auth_service.flag_accounts_using_seed_password()
 
         for name, category, text, assignee, notes in (SAMPLE_COMPLAINTS if include_samples else []):
             if name not in new_students:
