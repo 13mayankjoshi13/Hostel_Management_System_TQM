@@ -122,6 +122,7 @@ def allocate_room(student_id: int, room_id: int) -> int:
 
 def release_allocation(allocation_id: int) -> None:
     """Mark an allocation as Released (frees the room, keeps history)."""
+    allocation_id = validate_record_id(allocation_id, "Please select a valid allocation.")
     conn = get_connection()
     try:
         cur = conn.cursor()

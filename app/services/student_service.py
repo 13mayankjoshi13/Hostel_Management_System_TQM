@@ -13,6 +13,7 @@ import sqlite3
 
 from app.database.db import get_connection
 from app.utils.validation import (
+    validate_record_id,
     validate_student_name,
     validate_registration_number,
     validate_contact_number,
@@ -98,6 +99,7 @@ def get_all_students(sort_by: str = "Newest first") -> list:
 
 def update_student(student_id: int, name: str, registration_number: str, contact_number: str) -> None:
     """Edit a student's details. Staff roles only; students use student_portal_service."""
+    student_id = validate_record_id(student_id, "Please select a valid student.")
     if session.get_role() == "Student":
         raise ValidationError("Students can only edit their own details from My Details.")
     _update(student_id, name, registration_number, contact_number)
@@ -139,6 +141,7 @@ def _update(student_id: int, name: str, registration_number: str, contact_number
 
 
 def delete_student(student_id: int) -> None:
+    student_id = validate_record_id(student_id, "Please select a valid student.")
     conn = get_connection()
     try:
         cur = conn.cursor()

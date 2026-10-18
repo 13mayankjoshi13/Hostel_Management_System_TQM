@@ -50,6 +50,7 @@ def record_leave(student_id: int, from_date: str, to_date: str, reason: str) -> 
 
 
 def mark_returned(leave_id: int) -> None:
+    leave_id = validate_record_id(leave_id, "Please select a valid leave.")
     conn = get_connection()
     try:
         cur = conn.cursor()

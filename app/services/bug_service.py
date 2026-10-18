@@ -22,6 +22,7 @@ from datetime import date as date_cls
 from app.database.db import get_connection
 from app.utils import session
 from app.utils.validation import (
+    validate_record_id,
     validate_bug_module, validate_bug_category, validate_bug_title,
     validate_bug_description, validate_severity, validate_priority,
     validate_root_cause, validate_corrective_action, validate_test_case,
@@ -83,6 +84,7 @@ def log_bug(module: str, category: str, title: str, description: str,
 
 def start_progress(bug_id: int) -> None:
     """Move a bug from 'Open' to 'In Progress'."""
+    bug_id = validate_record_id(bug_id, "Please select a valid bug.")
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -149,6 +151,7 @@ def mark_fixed(bug_id: int, root_cause: str, corrective_action: str, test_case: 
 
 def close_bug(bug_id: int) -> None:
     """Move a bug from 'Fixed' to 'Closed' (verified and done)."""
+    bug_id = validate_record_id(bug_id, "Please select a valid bug.")
     conn = get_connection()
     try:
         cur = conn.cursor()

@@ -14,7 +14,8 @@ import os
 import sqlite3
 
 from app.database.db import get_connection
-from app.utils.validation import (validate_username, validate_password, validate_role,
+from app.utils.validation import (
+    validate_record_id,validate_username, validate_password, validate_role,
                                     validate_registration_number, validate_contact_number, ValidationError)
 from app.utils.logging_service import log_error, log_audit
 from app.utils import session
@@ -174,6 +175,7 @@ def list_users() -> list:
 
 
 def change_password(user_id: int, new_password: str) -> None:
+    user_id = validate_record_id(user_id, "Please select a valid user.")
     clean_password = validate_password(new_password)
     conn = get_connection()
     try:
@@ -198,6 +200,7 @@ def change_password(user_id: int, new_password: str) -> None:
 
 
 def delete_user(user_id: int) -> None:
+    user_id = validate_record_id(user_id, "Please select a valid user.")
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -269,6 +272,7 @@ def register_student(username: str, password: str, registration_number: str, con
 
 
 def approve_user(user_id: int) -> None:
+    user_id = validate_record_id(user_id, "Please select a valid user.")
     if session.get_role() != "Administrator":
         raise ValidationError("Only an Administrator can approve accounts.")
     conn = get_connection()

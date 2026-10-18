@@ -5,6 +5,7 @@ import sqlite3
 
 from app.database.db import get_connection
 from app.utils.validation import (
+    validate_record_id,
     validate_room_number,
     validate_room_type,
     validate_capacity,
@@ -62,6 +63,7 @@ def get_all_rooms() -> list:
 
 
 def delete_room(room_id: int) -> None:
+    room_id = validate_record_id(room_id, "Please select a valid room.")
     conn = get_connection()
     try:
         cur = conn.cursor()

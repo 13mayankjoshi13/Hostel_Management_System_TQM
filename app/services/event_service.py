@@ -11,7 +11,8 @@ import sqlite3
 from app.database.db import get_connection
 from app.utils import session
 from app.utils.logging_service import log_error, log_audit
-from app.utils.validation import (validate_event_date, validate_event_title,
+from app.utils.validation import (
+    validate_record_id,validate_event_date, validate_event_title,
                                     validate_event_kind, ValidationError)
 
 _EDITOR_ROLES = {"Administrator", "Warden"}
@@ -64,6 +65,7 @@ def add_event(event_date: str, title: str, kind: str) -> int:
 
 
 def delete_event(event_id: int) -> None:
+    event_id = validate_record_id(event_id, "Please select a valid event.")
     _require_editor()
     conn = get_connection()
     try:
