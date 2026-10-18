@@ -34,3 +34,14 @@ def handle_unexpected_error(module: str, action: str, exc: Exception) -> str:
         "Please contact the system administrator if the problem continues.",
     )
     return error_id
+
+
+def report_tk_callback_exception(exc_type, exc, tb) -> str:
+    """
+    Tkinter swallows exceptions raised inside event callbacks (button clicks,
+    timers, key bindings): they never reach run()'s try/except and, by default,
+    only print a traceback to the console. Install this as
+    root.report_callback_exception so they are logged and shown like any other
+    unexpected error.
+    """
+    return handle_unexpected_error("Application", "ui_callback", exc)
