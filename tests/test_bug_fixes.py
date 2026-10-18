@@ -277,6 +277,17 @@ class TestBugFixes(unittest.TestCase):
         near = date(date.today().year + 1, 3, 3).isoformat()
         self.assertIsInstance(event_service.add_event(near, "Spring Fest", "Hostel Event"), int)
 
+    def test_bug_022_event_titles_normalised_and_duplicates_ignore_case(self):
+        from app.services import event_service
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        day = date(date.today().year + 1, 3, 3).isoformat()
+        event_service.add_event(day, "  Spring   Fest ", "Hostel Event")
+        self.assertEqual(event_service.get_all_events()[-1]["title"], "Spring Fest")
+        for dup in ("SPRING FEST", "spring  fest"):
+            with self.assertRaises(ValidationError):
+                event_service.add_event(day, dup, "Exam")
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
