@@ -91,6 +91,7 @@ def allocate_room(student_id: int, room_id: int) -> int:
     conn = get_connection()
     try:
         cur = conn.cursor()
+        cur.execute("BEGIN IMMEDIATE")
 
         student = _check_student_exists(cur, student_id)
         room = _check_room_exists(cur, room_id)
