@@ -21,6 +21,9 @@ AUDIT_LOG_CSV = os.path.join(TQM_DATA_DIR, "audit_logs.csv")
 DEFECT_LOG_CSV = os.path.join(TQM_DATA_DIR, "defect_log.csv")
 
 APP_NAME = "Hostel Management System"
+
+# A logged-in session with no mouse or keyboard activity is closed after this long.
+IDLE_TIMEOUT_MINUTES = 15
 # Fallback values only — used by app.utils.session when nobody is
 # logged in (e.g. a service called directly from a script or test).
 # The actual logged-in user/role during normal app use comes from
