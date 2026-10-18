@@ -163,6 +163,14 @@ BUGS = [
         "corrective_action": "Apply validate_record_id at the start of every service function that takes a record ID.",
         "test_case": "tests/test_bug_fixes.py::test_bug_019_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "Medium", "priority": "Medium",
+        "title": "Evidence log CSVs run user text as a spreadsheet formula",
+        "description": "A bug titled =HYPERLINK(...) was written to defect_log.csv verbatim, so opening the log in Excel would evaluate it (CSV formula injection).",
+        "root_cause": "Log rows were written without checking for text beginning with =, +, - or @.",
+        "corrective_action": "Prefix such text with an apostrophe in the shared _append_row used by the error, audit and defect logs.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_020_*",
+    },
 ]
 
 
