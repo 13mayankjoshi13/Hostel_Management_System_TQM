@@ -72,6 +72,7 @@ class TestSeedDemo(unittest.TestCase):
         self.assertEqual(len(names), len(set(names)))
         result = auth_service.authenticate("mayank_joshi", seed_demo.DEFAULT_PASSWORD)
         self.assertEqual(result["role"], "Student")
+        self.assertTrue(result["must_change_password"])
         auth_service.logout()
 
     def test_real_audit_log_not_touched(self):
