@@ -96,3 +96,7 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T12:36:20,system_admin,Administrator,Bug,Create,26,Success,Logged bug 'Errors inside button/timer callbacks are never logged or shown' (High/High).
 2026-10-18T12:36:20,system_admin,Administrator,Bug,StartProgress,26,Success,Moved to In Progress.
 2026-10-18T12:36:20,system_admin,Administrator,Bug,MarkFixed,26,Success,"Fixed by Mayank. Root cause: Tkinter does not let callback exceptions escape mainloop, so"
+2026-10-18T12:45:08,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-18T13:00:34,system_admin,Administrator,Bug,Create,27,Success,Logged bug 'App exits silently when the database cannot be opened' (High/High).
+2026-10-18T13:00:34,system_admin,Administrator,Bug,StartProgress,27,Success,Moved to In Progress.
+2026-10-18T13:00:34,system_admin,Administrator,Bug,MarkFixed,27,Success,Fixed by Mayank. Root cause: main.run() reported start-up failures only with print() to s
