@@ -15,13 +15,31 @@ from app.database.db import initialize_database
 from app.utils.logging_service import log_error
 
 
+def show_fatal(title: str, message: str) -> None:
+    """Tell the user in a window: the app is normally started without a console, so stderr is never seen."""
+    print(f"{title}: {message}", file=sys.stderr)
+    try:
+        import tkinter as tk
+        from tkinter import messagebox
+
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror(title, message)
+        root.destroy()
+    except Exception:
+        pass
+
+
 def run():
     try:
         initialize_database()
     except Exception as exc:
-        log_error("Database", type(exc).__name__, "Critical",
-                   "initialize_database", status="Open", message_reference=str(exc))
-        print(f"Fatal error initializing the database: {exc}", file=sys.stderr)
+        error_id = log_error("Database", type(exc).__name__, "Critical",
+                              "initialize_database", status="Open", message_reference=str(exc))
+        show_fatal("Hostel Management System",
+                   f"The database could not be opened, so the application cannot start.\n\n"
+                   f"{exc}\n\nLogged as {error_id}. Check that the file is not locked by another program "
+                   f"or damaged, then start the application again.")
         return
 
     try:
@@ -43,7 +61,8 @@ def run():
         app = MainWindow()
         app.mainloop()
     except Exception as exc:
-        log_error("Application", type(exc).__name__, "Critical",
-                   "run", status="Open", message_reference=str(exc))
-        print("An unexpected error occurred:", file=sys.stderr)
+        error_id = log_error("Application", type(exc).__name__, "Critical",
+                              "run", status="Open", message_reference=str(exc))
         traceback.print_exc()
+        show_fatal("Hostel Management System",
+                   f"The application hit an unexpected error and has to close.\n\nLogged as {error_id}.")
