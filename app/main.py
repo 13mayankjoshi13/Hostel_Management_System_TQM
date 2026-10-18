@@ -51,6 +51,13 @@ def run():
         return
 
     try:
+        from app.database.check_data import run_checks, log_issues
+        log_issues(run_checks())
+    except Exception as exc:
+        log_error("Database", type(exc).__name__, "Medium", "check_data",
+                   status="Open", message_reference=str(exc))
+
+    try:
         from app.services.auth_service import ensure_default_admin
         ensure_default_admin()
     except Exception as exc:
