@@ -236,6 +236,26 @@ class TestBugFixes(unittest.TestCase):
         allocation_service.release_allocation(aid)
         self.assertEqual([lv["status"] for lv in leave_service.get_all_leaves()], ["Returned"])
 
+    def test_bug_019_status_and_delete_actions_reject_bool_and_fraction_ids(self):
+        from app.services import complaint_service, leave_service
+        sid = student_service.add_student("Test Kid", "2410302099", "9876500000")
+        complaint_service.create_complaint(sid, "Maintenance", "Tap is leaking badly")
+        calls = [
+            lambda b: complaint_service.assign_complaint(b, "Ravi"),
+            lambda b: complaint_service.resolve_complaint(b, "Fixed the tap"),
+            lambda b: leave_service.mark_returned(b),
+            lambda b: allocation_service.release_allocation(b),
+            lambda b: room_service.delete_room(b),
+            lambda b: student_service.delete_student(b),
+            lambda b: student_service.update_student(b, "New Name", "2410302098", "9876500001"),
+            lambda b: bug_service.close_bug(b),
+        ]
+        for call in calls:
+            for bad in (True, 1.9):
+                with self.assertRaises(ValidationError):
+                    call(bad)
+        self.assertEqual(complaint_service.get_all_complaints()[0]["status"], "Open")
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
