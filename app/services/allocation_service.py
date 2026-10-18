@@ -27,6 +27,7 @@ not error correction after the fact.
 import csv
 import re
 import sqlite3
+from datetime import datetime
 
 from app.database.db import get_connection
 from app.utils.validation import ValidationError, validate_record_id
@@ -136,6 +137,11 @@ def release_allocation(allocation_id: int) -> None:
         cur.execute(
             "UPDATE allocations SET status = 'Released' WHERE allocation_id = ?",
             (allocation_id,),
+        )
+        cur.execute(
+            "UPDATE leaves SET status = 'Returned', returned_at = ? "
+            "WHERE student_id = ? AND status = 'On Leave'",
+            (datetime.now().isoformat(timespec="seconds"), allocation["student_id"]),
         )
         conn.commit()
         log_audit("Allocation", "Release", str(allocation_id), "Success",
