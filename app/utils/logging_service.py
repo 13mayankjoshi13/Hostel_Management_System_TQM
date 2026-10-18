@@ -45,6 +45,16 @@ def _next_id(csv_path: str, id_column: str, prefix: str) -> str:
     return f"{prefix}-{count + 1:04d}"
 
 
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _neutralise(value):
+    """Stop spreadsheet apps from running user text as a formula when a log is opened."""
+    if isinstance(value, str) and value.startswith(_FORMULA_PREFIXES):
+        return "'" + value
+    return value
+
+
 def _append_row(csv_path: str, header: list, row: dict) -> None:
     """Append a row to a CSV, creating the file with a header if missing."""
     with _lock:
@@ -55,7 +65,7 @@ def _append_row(csv_path: str, header: list, row: dict) -> None:
             writer = csv.DictWriter(f, fieldnames=header)
             if write_header:
                 writer.writeheader()
-            writer.writerow(row)
+            writer.writerow({key: _neutralise(val) for key, val in row.items()})
 
 
 def log_error(module: str, error_type: str, severity: str, action: str,
