@@ -28,6 +28,9 @@ from app.screens.my_complaints_screen import MyComplaintsScreen
 from app.screens.my_leave_screen import MyLeaveScreen
 from app.screens.my_details_screen import MyDetailsScreen
 from app.utils import session
+from app.utils.idle import IdleTracker
+from app.utils.logging_service import log_audit
+from app.config import IDLE_TIMEOUT_MINUTES
 
 # key, label, icon
 _NAV_ITEMS = [
@@ -129,6 +132,9 @@ class MainWindow(tk.Tk):
         self.content.pack(fill="both", expand=True)
 
         self._create_screens()
+        self._idle = IdleTracker(IDLE_TIMEOUT_MINUTES * 60)
+        for sequence in ("<Motion>", "<Key>", "<Button>", "<MouseWheel>"):
+            self.bind_all(sequence, lambda e: self._idle.touch(), add="+")
         self._tick()
 
         if show_splash:
@@ -138,6 +144,7 @@ class MainWindow(tk.Tk):
             self._show_login()
 
     def _show_login(self):
+        self._idle.touch()
         LoginScreen(self, self.fonts, on_success=self._enter_app)
 
     def _force_password_change(self) -> bool:
@@ -157,6 +164,7 @@ class MainWindow(tk.Tk):
         if user.get("must_change_password") and not self._force_password_change():
             self._handle_logout()
             return
+        self._idle.touch()
         self._update_account_info(user)
         allowed = _allowed_screens(user["role"])
         for item in self._nav_items.values():
@@ -261,11 +269,29 @@ class MainWindow(tk.Tk):
                                     font=self.fonts["small"])
         self.clock_date.pack(anchor="e")
 
+    def destroy(self):
+        job = getattr(self, "_tick_job", None)
+        if job:
+            try:
+                self.after_cancel(job)
+            except tk.TclError:
+                pass
+        super().destroy()
+
+    def _check_idle(self):
+        if session.is_logged_in() and self._idle.expired():
+            log_audit("Auth", "IdleLogout", session.get_user(), "Success",
+                       f"'{session.get_user()}' was logged out after {IDLE_TIMEOUT_MINUTES} minutes of inactivity.")
+            self._handle_logout()
+            messagebox.showinfo("Logged out", f"You were logged out after {IDLE_TIMEOUT_MINUTES} minutes of "
+                                              "inactivity. Please log in again.", parent=self)
+
     def _tick(self):
+        self._check_idle()
         now = datetime.now()
         self.clock_time.configure(text=now.strftime("%I:%M:%S %p"))
         self.clock_date.configure(text=now.strftime("%a, %d %b %Y"))
-        self.after(1000, self._tick)
+        self._tick_job = self.after(1000, self._tick)
 
     def _update_account_info(self, user: dict):
         self.account_name.configure(text=user["username"].replace("_", " ").title())
