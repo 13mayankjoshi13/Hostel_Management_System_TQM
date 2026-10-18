@@ -44,7 +44,7 @@ def add_event(event_date: str, title: str, kind: str) -> int:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT event_id FROM events WHERE event_date = ? AND title = ?", (clean_date, clean_title))
+        cur.execute("SELECT event_id FROM events WHERE event_date = ? AND LOWER(title) = LOWER(?)", (clean_date, clean_title))
         if cur.fetchone() is not None:
             raise ValidationError("That event already exists on this date.")
         cur.execute("INSERT INTO events (event_date, title, kind) VALUES (?, ?, ?)",
