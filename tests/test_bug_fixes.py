@@ -225,6 +225,17 @@ class TestBugFixes(unittest.TestCase):
         self.assertIsInstance(complaint_service.create_complaint(sid, "Maintenance", "Tap is leaking badly"), int)
         self.assertIsInstance(complaint_service.create_complaint(str(sid), "Maintenance", "Light is not working"), int)
 
+    def test_bug_018_releasing_a_room_closes_the_open_leave(self):
+        from app.services import leave_service
+        sid = student_service.add_student("Test Kid", "2410302099", "9876500000")
+        rid = room_service.add_room("A101", "Double", 2)
+        aid = allocation_service.allocate_room(sid, rid)
+        today = date.today()
+        leave_service.record_leave(sid, (today + timedelta(1)).isoformat(),
+                                   (today + timedelta(3)).isoformat(), "Family function")
+        allocation_service.release_allocation(aid)
+        self.assertEqual([lv["status"] for lv in leave_service.get_all_leaves()], ["Returned"])
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
