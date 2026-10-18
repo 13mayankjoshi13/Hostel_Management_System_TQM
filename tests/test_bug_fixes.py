@@ -256,6 +256,17 @@ class TestBugFixes(unittest.TestCase):
                     call(bad)
         self.assertEqual(complaint_service.get_all_complaints()[0]["status"], "Open")
 
+    def test_bug_020_log_csv_neutralises_formula_text(self):
+        import csv
+        import app.utils.logging_service as ls
+        bug_service.log_bug("Room", "Validation", '=HYPERLINK("http://x","a")',
+                            "+1 description long enough here", "Medium", "Medium")
+        with open(ls.DEFECT_LOG_CSV, newline="", encoding="utf-8") as f:
+            row = next(csv.DictReader(f))
+        self.assertEqual(row["title"], "'=HYPERLINK(\"http://x\",\"a\")")
+        self.assertEqual(row["description"], "'+1 description long enough here")
+        self.assertEqual(row["date"][:2], "20")
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
