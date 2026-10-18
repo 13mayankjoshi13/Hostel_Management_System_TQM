@@ -181,6 +181,7 @@ class TestPortalDetails(Base):
         details = portal.my_details()
         self.assertEqual((details["name"], details["contact_number"], details["registration_number"]),
                          ("Mayank J", "9123456789", "2410302037"))
+        session.clear_session()
         other = next(s for s in student_service.get_all_students() if s["student_id"] == self.s2)
         self.assertEqual(other["name"], "Test Student")
 
