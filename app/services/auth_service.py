@@ -20,6 +20,7 @@ from app.utils.validation import (
                                     validate_registration_number, validate_contact_number, ValidationError)
 from app.utils.logging_service import log_error, log_audit
 from app.utils import session
+from app.utils.timefmt import localise_rows
 
 DEFAULT_ADMIN_PASSWORD = "admin123"
 SEED_PASSWORD = "Welcome123"
@@ -126,12 +127,17 @@ def authenticate(username: str, password: str) -> dict:
         if user is not None and user["locked_until"]:
             if datetime.fromisoformat(user["locked_until"]) > datetime.now():
                 _verify_password(password, _dummy_hash())
+                log_audit("Auth", "LoginBlocked", str(user["user_id"]), "Failure",
+                           f"Login attempt on locked account '{user['username']}'.")
                 raise ValidationError(LOGIN_FAILED_MESSAGE)
 
         if user is None:
             _verify_password(password, _dummy_hash())
+            log_audit("Auth", "LoginFailed", "unknown", "Failure", "Login attempt with a username that does not exist.")
             raise ValidationError(LOGIN_FAILED_MESSAGE)
         if not _verify_password(password, user["password_hash"]):
+            log_audit("Auth", "LoginFailed", str(user["user_id"]), "Failure",
+                       f"Wrong password for '{user['username']}'.")
             if user is not None:
                 failures = user["failed_attempts"] + 1
                 locked_until = None
@@ -218,7 +224,7 @@ def list_users() -> list:
             FROM users u LEFT JOIN students s ON s.student_id = u.student_id
             ORDER BY u.user_id
         """)
-        return [dict(r) for r in cur.fetchall()]
+        return localise_rows([dict(r) for r in cur.fetchall()], "created_at")
     except sqlite3.Error as exc:
         log_error("User", "DatabaseError", "High", "list_users",
                    status="Open", message_reference=str(exc))
@@ -375,6 +381,7 @@ def register_student(username: str, password: str, registration_number: str, con
         attempts = cur.fetchone()
         if attempts is not None and attempts["locked_until"] and \
                 datetime.fromisoformat(attempts["locked_until"]) > datetime.now():
+            log_audit("User", "SignUpBlocked", clean_reg, "Failure", "Sign-up refused: too many failed attempts.")
             raise ValidationError("Too many unsuccessful sign-up attempts for this registration number. "
                                   f"Try again in {SIGNUP_LOCKOUT_MINUTES} minutes or ask the hostel office.")
         cur.execute("SELECT student_id, contact_number FROM students WHERE UPPER(registration_number) = UPPER(?)", (clean_reg,))
@@ -389,6 +396,7 @@ def register_student(username: str, password: str, registration_number: str, con
                         "ON CONFLICT(registration_number) DO UPDATE SET failures = excluded.failures, "
                         "locked_until = excluded.locked_until", (clean_reg, failures, locked_until))
             conn.commit()
+            log_audit("User", "SignUpFailed", clean_reg, "Failure", "Sign-up details did not match a hostel record.")
             raise ValidationError("Registration number and contact number do not match a hostel record. "
                                   "Ask the hostel office to add or correct your details.")
         cur.execute("SELECT user_id FROM users WHERE LOWER(username) = LOWER(?)", (clean_username,))
