@@ -299,6 +299,14 @@ BUGS = [
         "corrective_action": "Require a staff role in get_all_complaints, get_all_leaves, get_active_allocations, export_allocation_list and get_all_bugs.",
         "test_case": "tests/test_bug_fixes.py::test_bug_036_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "Medium", "priority": "High",
+        "title": "Login reveals which usernames exist (response time and lockout message)",
+        "description": "A wrong password for a real user took about 60 ms while an unknown name answered in under 1 ms, and a locked real account said 'Too many failed attempts' while an unknown name never did, so usernames could be listed and then guessed.",
+        "root_cause": "The password hash was only computed for existing accounts, and the lockout message was specific to them.",
+        "corrective_action": "Check a dummy hash for unknown and locked accounts so every failure takes the same time, and use one message for every failed login that also states the lockout rule.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_037_*",
+    },
 ]
 
 
