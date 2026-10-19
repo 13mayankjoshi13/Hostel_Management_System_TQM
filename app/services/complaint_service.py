@@ -151,6 +151,7 @@ def resolve_complaint(complaint_id: int, resolution_notes: str) -> None:
 
 def get_all_complaints() -> list:
     """All complaints joined with student name, newest first."""
+    session.require_roles(session.STAFF_ROLES, "view all complaints")
     conn = get_connection()
     try:
         cur = conn.cursor()
