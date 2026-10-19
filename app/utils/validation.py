@@ -27,8 +27,8 @@ def validate_student_name(name: str) -> str:
         raise ValidationError("Student name cannot exceed 100 characters.")
     if not all(ch.isalpha() or ch.isspace() or ch in ".'-" for ch in name):
         raise ValidationError("Student name contains invalid characters.")
-    if not any(ch.isalpha() for ch in name):
-        raise ValidationError("Student name must contain letters.")
+    if not name[0].isalpha():
+        raise ValidationError("Student name must start with a letter.")
     return name
 
 
