@@ -495,6 +495,28 @@ class TestBugFixes(unittest.TestCase):
         self.assertEqual([r["reported_by"] for r in rows[1:]], ["Mayank"] * 4)
         self.assertEqual([r["fixed_by"] for r in rows[1:]], ["", "", "Mayank", "Mayank"])
 
+    def test_bug_036_students_cannot_read_other_peoples_records(self):
+        from app.services import complaint_service, leave_service
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        a = student_service.add_student("Kid A", "2410302099", "9876500000")
+        b = student_service.add_student("Kid B", "2410302098", "9876500001")
+        rid = room_service.add_room("A101", "Double", 2)
+        allocation_service.allocate_room(a, rid)
+        allocation_service.allocate_room(b, rid)
+        complaint_service.create_complaint(b, "Maintenance", "Tap is leaking badly")
+        self.assertEqual(len(complaint_service.get_all_complaints()), 1)
+        self.assertEqual(len(allocation_service.get_active_allocations()), 2)
+        session.set_session("kida", "Student", a)
+        for call in (complaint_service.get_all_complaints, leave_service.get_all_leaves,
+                     allocation_service.get_active_allocations, bug_service.get_all_bugs,
+                     lambda: allocation_service.export_allocation_list(os.path.join(self.tmp, "x.csv"))):
+            with self.assertRaises(ValidationError):
+                call()
+        self.assertFalse(os.path.exists(os.path.join(self.tmp, "x.csv")))
+        session.set_session("warden", "Warden")
+        self.assertEqual(len(allocation_service.get_active_allocations()), 2)
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
