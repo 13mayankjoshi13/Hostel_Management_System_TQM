@@ -27,7 +27,7 @@ not error correction after the fact.
 import csv
 import re
 import sqlite3
-from datetime import datetime
+from app.utils.timefmt import utc_now, localise_rows
 
 from app.database.db import get_connection
 from app.utils.validation import ValidationError, validate_record_id
@@ -146,7 +146,7 @@ def release_allocation(allocation_id: int) -> None:
         cur.execute(
             "UPDATE leaves SET status = 'Returned', returned_at = ? "
             "WHERE student_id = ? AND status = 'On Leave'",
-            (datetime.now().isoformat(timespec="seconds"), allocation["student_id"]),
+            (utc_now(), allocation["student_id"]),
         )
         conn.commit()
         log_audit("Allocation", "Release", str(allocation_id), "Success",
@@ -177,7 +177,7 @@ def get_active_allocations() -> list:
             WHERE a.status = 'Active'
             ORDER BY a.allocation_id DESC
         """)
-        return [dict(row) for row in cur.fetchall()]
+        return localise_rows([dict(row) for row in cur.fetchall()], "allocated_at")
     except sqlite3.Error as exc:
         log_error("Allocation", "DatabaseError", "Medium", "get_active_allocations",
                    status="Open", message_reference=str(exc))
