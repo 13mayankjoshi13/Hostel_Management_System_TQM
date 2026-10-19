@@ -32,7 +32,7 @@ from app.utils.timefmt import utc_now, localise_rows
 from app.database.db import get_connection
 from app.utils.validation import ValidationError, validate_record_id
 from app.utils import session
-from app.utils.logging_service import log_error, log_audit
+from app.utils.logging_service import log_error, log_audit, _neutralise
 
 
 def _check_student_exists(cur, student_id: int) -> sqlite3.Row:
@@ -200,7 +200,7 @@ def export_allocation_list(path: str) -> int:
             writer = csv.writer(f)
             writer.writerow(["Room", "Type", "Student", "Allocated At"])
             for r in sorted(rows, key=lambda r: _room_order(r["room_number"])):
-                writer.writerow([r["room_number"], r["room_type"], r["student_name"], r["allocated_at"]])
+                writer.writerow([_neutralise(r[k]) for k in ("room_number", "room_type", "student_name", "allocated_at")])
     except OSError as exc:
         log_error("Allocation", "FileError", "Medium", "export_allocation_list",
                    status="Open", message_reference=str(exc))
