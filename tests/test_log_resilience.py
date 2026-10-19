@@ -50,5 +50,21 @@ class TestLogResilience(unittest.TestCase):
         self.assertFalse(os.path.exists(ls.AUDIT_LOG_CSV + ".pending"))
 
 
+    def test_bug_042_error_ids_never_repeat(self):
+        header = ",".join(ls._ERROR_HEADER)
+        with open(ls.ERROR_LOG_CSV, "wb") as f:
+            f.write((header + "\n").encode())
+            f.write("t,ERR-0001,Room,E,Low,u,a,Open,caf\xe9\n".encode("cp1252"))
+            f.write(b"t,ERR-0003,Room,E,Low,u,a,Open,row 2 was deleted by hand\n")
+        self.assertEqual(ls.log_error("Room", "E", "Low", "a"), "ERR-0004")
+        with self._locked(ls.ERROR_LOG_CSV):
+            self.assertEqual(ls.log_error("Room", "E", "Low", "a"), "ERR-0005")
+            self.assertEqual(ls.log_error("Room", "E", "Low", "a"), "ERR-0006")
+        self.assertEqual(ls.log_error("Room", "E", "Low", "a"), "ERR-0007")
+        self.assertNotIn(b"\xe9", open(ls.ERROR_LOG_CSV, "rb").read())
+        ids = [r["error_id"] for r in self._rows(ls.ERROR_LOG_CSV)]
+        self.assertEqual(ids, ["ERR-0001", "ERR-0003", "ERR-0004", "ERR-0005", "ERR-0006", "ERR-0007"])
+
+
 if __name__ == "__main__":
     unittest.main()
