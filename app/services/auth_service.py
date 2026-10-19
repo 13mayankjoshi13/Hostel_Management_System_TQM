@@ -26,6 +26,9 @@ SEED_PASSWORD = "Welcome123"
 KNOWN_DEFAULT_PASSWORDS = (DEFAULT_ADMIN_PASSWORD, SEED_PASSWORD)
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_MINUTES = 5
+LOGIN_FAILED_MESSAGE = (f"Invalid username or password. An account is locked for {LOCKOUT_MINUTES} minutes "
+                        f"after {MAX_FAILED_ATTEMPTS} failed attempts.")
+_DUMMY_HASH = None
 
 _PBKDF2_ITERATIONS = 100_000
 
@@ -34,6 +37,14 @@ def _hash_password(password: str) -> str:
     salt = os.urandom(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, _PBKDF2_ITERATIONS)
     return f"{salt.hex()}:{digest.hex()}"
+
+
+def _dummy_hash() -> str:
+    """Hash checked for unknown or locked accounts, so those attempts take as long as a real one."""
+    global _DUMMY_HASH
+    if _DUMMY_HASH is None:
+        _DUMMY_HASH = _hash_password("not-a-real-password-1")
+    return _DUMMY_HASH
 
 
 def _verify_password(password: str, stored: str) -> bool:
@@ -111,12 +122,14 @@ def authenticate(username: str, password: str) -> dict:
         user = cur.fetchone()
 
         if user is not None and user["locked_until"]:
-            remaining = datetime.fromisoformat(user["locked_until"]) - datetime.now()
-            if remaining.total_seconds() > 0:
-                minutes = int(remaining.total_seconds() // 60) + 1
-                raise ValidationError(f"Too many failed attempts. Try again in {minutes} minute(s).")
+            if datetime.fromisoformat(user["locked_until"]) > datetime.now():
+                _verify_password(password, _dummy_hash())
+                raise ValidationError(LOGIN_FAILED_MESSAGE)
 
-        if user is None or not _verify_password(password, user["password_hash"]):
+        if user is None:
+            _verify_password(password, _dummy_hash())
+            raise ValidationError(LOGIN_FAILED_MESSAGE)
+        if not _verify_password(password, user["password_hash"]):
             if user is not None:
                 failures = user["failed_attempts"] + 1
                 locked_until = None
@@ -128,7 +141,7 @@ def authenticate(username: str, password: str) -> dict:
                 cur.execute("UPDATE users SET failed_attempts = ?, locked_until = ? WHERE user_id = ?",
                             (failures, locked_until, user["user_id"]))
                 conn.commit()
-            raise ValidationError("Invalid username or password.")
+            raise ValidationError(LOGIN_FAILED_MESSAGE)
         if user["failed_attempts"] or user["locked_until"]:
             cur.execute("UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE user_id = ?",
                         (user["user_id"],))
