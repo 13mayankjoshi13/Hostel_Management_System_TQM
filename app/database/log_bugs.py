@@ -339,6 +339,14 @@ BUGS = [
         "corrective_action": "Closing the log-in window now quits the application; closing the main window logs the user out (audit entry) before exiting.",
         "test_case": "tests/test_close_ui.py::test_bug_040_*",
     },
+    {
+        "module": "Other", "category": "Data Integrity", "severity": "High", "priority": "High",
+        "title": "Log rows are lost while a log CSV is open in Excel",
+        "description": "On Windows a CSV open in Excel cannot be appended to. The logging code swallowed the error, so audit, error and defect entries made while someone was reviewing the file were silently dropped - the evidence the project is graded on.",
+        "root_cause": "_append_row raised on a locked file and the callers ignore logging errors, with no fallback.",
+        "corrective_action": "Queue rows that cannot be written in a '<log>.csv.pending' file and add them to the CSV, in order, the next time it is writable.",
+        "test_case": "tests/test_log_resilience.py::test_bug_041_*",
+    },
 ]
 
 
