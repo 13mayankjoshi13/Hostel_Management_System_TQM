@@ -55,6 +55,8 @@ class TestLogging(unittest.TestCase):
 
     def test_error_log_never_raises_when_unwritable(self):
         ls.ERROR_LOG_CSV = self.tmp  # a directory, cannot be opened as a file
+        os.makedirs(self.tmp + ".pending")  # the fallback queue is unwritable too
+        self.addCleanup(os.rmdir, self.tmp + ".pending")
         self.assertEqual(ls.log_error("A", "E", "Low", "x"), "ERR-UNLOGGED")
 
     def test_audit_log_has_all_required_fields(self):
@@ -75,6 +77,8 @@ class TestLogging(unittest.TestCase):
 
     def test_audit_log_never_raises_when_unwritable(self):
         ls.AUDIT_LOG_CSV = self.tmp
+        os.makedirs(self.tmp + ".pending")
+        self.addCleanup(os.rmdir, self.tmp + ".pending")
         self.assertEqual(ls.log_audit("A", "x", "1", "Success"), "unlogged")
 
 
