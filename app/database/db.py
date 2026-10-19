@@ -125,6 +125,14 @@ def initialize_database(db_path: str = None) -> None:
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS signup_attempts (
+            registration_number TEXT PRIMARY KEY,
+            failures INTEGER NOT NULL DEFAULT 0,
+            locked_until TEXT
+        )
+    """)
+
     # Migration: link a student-role account to its student record.
     existing = {row["name"] for row in cur.execute("PRAGMA table_info(users)")}
     if "student_id" not in existing:
