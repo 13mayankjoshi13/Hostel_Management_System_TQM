@@ -22,7 +22,7 @@ class LoginScreen(tk.Toplevel):
         self.title(f"{APP_NAME} — Log In")
         self.configure(bg=COLORS["surface"])
         self.resizable(False, False)
-        self.protocol("WM_DELETE_WINDOW", lambda: None)  # must log in to proceed
+        self.protocol("WM_DELETE_WINDOW", self.on_close_request)
 
         width, height = 780, 520
         self.update_idletasks()
@@ -83,6 +83,11 @@ class LoginScreen(tk.Toplevel):
         password_entry.bind("<Return>", lambda e: self.on_login())
         self.grab_set()
         username_entry.focus_set()
+
+    def on_close_request(self):
+        """Closing the log-in window with the X button quits the application (it cannot run without a login)."""
+        self.grab_release()
+        self.master.destroy()
 
     def on_login(self):
         try:
