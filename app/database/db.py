@@ -17,6 +17,23 @@ def get_connection(db_path: str = None) -> sqlite3.Connection:
     return conn
 
 
+def _convert_legacy_local_timestamps(cur) -> None:
+    """Resolved/returned times used to be saved as local ISO text ('...T...'); store them in UTC like every other timestamp."""
+    from app.utils.timefmt import local_iso_to_utc
+
+    for table, key, column in (("complaints", "complaint_id", "resolved_at"), ("leaves", "leave_id", "returned_at")):
+        try:
+            rows = cur.execute(f"SELECT {key}, {column} FROM {table} WHERE {column} LIKE '%T%'").fetchall()
+        except sqlite3.Error:
+            continue
+        for row in rows:
+            try:
+                converted = local_iso_to_utc(row[column])
+            except ValueError:
+                continue
+            cur.execute(f"UPDATE {table} SET {column} = ? WHERE {key} = ?", (converted, row[key]))
+
+
 def initialize_database(db_path: str = None) -> None:
     conn = get_connection(db_path)
     cur = conn.cursor()
@@ -152,6 +169,8 @@ def initialize_database(db_path: str = None) -> None:
     for column in ("reported_by", "fixed_by"):
         if column not in bug_columns:
             cur.execute(f"ALTER TABLE bugs ADD COLUMN {column} TEXT")
+
+    _convert_legacy_local_timestamps(cur)
 
     for index_sql in (
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_one_active_room_per_student "
