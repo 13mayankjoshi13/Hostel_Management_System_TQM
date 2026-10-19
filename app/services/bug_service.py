@@ -186,6 +186,7 @@ def close_bug(bug_id: int) -> None:
 
 
 def get_all_bugs() -> list:
+    session.require_roles(session.STAFF_ROLES, "view bugs")
     conn = get_connection()
     try:
         cur = conn.cursor()
