@@ -355,6 +355,14 @@ BUGS = [
         "corrective_action": "Use the highest existing number + 1, read the file leniently, count rows waiting in the pending queue, and convert a Windows-encoded log back to UTF-8 so logging keeps working.",
         "test_case": "tests/test_log_resilience.py::test_bug_042_*",
     },
+    {
+        "module": "Database", "category": "Data Integrity", "severity": "High", "priority": "High",
+        "title": "Restore accepts any SQLite file; a failed backup leaves a partial file",
+        "description": "restore_backup only checked that the file passed SQLite's integrity check, so a healthy but unrelated database could replace the hostel database. A backup that failed halfway (disk full) left a partial .db file behind that counted as today's backup.",
+        "root_cause": "No check that the file contains the hostel tables; no cleanup when the copy raised.",
+        "corrective_action": "Require the students, rooms, allocations, complaints, leaves and users tables before restoring; delete the partial file when a backup fails.",
+        "test_case": "tests/test_backup.py::test_bug_043_*",
+    },
 ]
 
 
