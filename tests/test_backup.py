@@ -70,6 +70,39 @@ class TestBackup(unittest.TestCase):
         with self.assertRaises(ValueError):
             backup.restore_backup(os.path.join(self.tmp, "bad.db"), self.db)
 
+    def test_bug_043_foreign_sqlite_file_is_not_restored_and_failed_backup_leaves_nothing(self):
+        other = os.path.join(self.tmp, "other.db")
+        conn = sqlite3.connect(other)
+        conn.execute("CREATE TABLE notes (x)")
+        conn.commit()
+        conn.close()
+        with self.assertRaises(ValueError):
+            backup.restore_backup(other, self.db)
+        self.assertEqual(self._count(self.db), 1)
+
+        original = sqlite3.connect
+
+        class Boom:
+            def __init__(self, real):
+                self.real = real
+            def backup(self, dest):
+                raise sqlite3.OperationalError("disk full")
+            def close(self):
+                self.real.close()
+
+        calls = []
+        def fake(path, *a, **k):
+            conn = original(path, *a, **k)
+            calls.append(path)
+            return Boom(conn) if path == self.db and len(calls) == 2 else conn
+        backup.sqlite3.connect = fake
+        try:
+            with self.assertRaises(sqlite3.OperationalError):
+                backup.create_backup(self.db)
+        finally:
+            backup.sqlite3.connect = original
+        self.assertEqual(backup.list_backups(self.db), [])
+
 
 if __name__ == "__main__":
     unittest.main()
