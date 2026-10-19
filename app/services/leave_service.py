@@ -6,7 +6,7 @@ recorded for a student who currently has an Active room allocation, and
 a student cannot have two open leaves at once.
 """
 import sqlite3
-from datetime import datetime
+from app.utils.timefmt import utc_now
 
 from app.database.db import get_connection
 from app.utils.validation import validate_leave_dates, validate_leave_reason, validate_record_id, ValidationError
@@ -62,7 +62,7 @@ def mark_returned(leave_id: int) -> None:
         if leave["status"] != "On Leave":
             raise ValidationError("This student is already marked as returned.")
         cur.execute("UPDATE leaves SET status = 'Returned', returned_at = ? WHERE leave_id = ?",
-                    (datetime.now().isoformat(timespec="seconds"), leave_id))
+                    (utc_now(), leave_id))
         conn.commit()
         log_audit("Leave", "Return", str(leave_id), "Success", "Student marked as returned.")
     except ValidationError:
