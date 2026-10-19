@@ -133,3 +133,9 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-19T12:52:39,system_admin,Administrator,Bug,Create,38,Success,Logged bug 'Sign-up can be used to guess a classmate's contact number' (High/High).
 2026-10-19T12:52:40,system_admin,Administrator,Bug,StartProgress,38,Success,Moved to In Progress.
 2026-10-19T12:52:40,system_admin,Administrator,Bug,MarkFixed,38,Success,Fixed by Mayank. Root cause: Failed sign-up attempts were not counted; only the login had
+2026-10-19T12:58:09,system_admin,Administrator,Bug,Create,39,Success,"Logged bug 'Failed logins, blocked sign-ups and denied actions leave no audit trail' (High/Medium)."
+2026-10-19T12:58:09,system_admin,Administrator,Bug,StartProgress,39,Success,Moved to In Progress.
+2026-10-19T12:58:10,system_admin,Administrator,Bug,MarkFixed,39,Success,Fixed by Mayank. Root cause: Audit entries were written only on success paths.
+2026-10-19T12:58:10,system_admin,Administrator,Bug,Create,40,Success,"Logged bug 'Times shown in the app are UTC, and resolved/returned times used a different clock' (High/High)."
+2026-10-19T12:58:10,system_admin,Administrator,Bug,StartProgress,40,Success,Moved to In Progress.
+2026-10-19T12:58:10,system_admin,Administrator,Bug,MarkFixed,40,Success,Fixed by Mayank. Root cause: SQLite's default timestamp is UTC but screens and exports di
