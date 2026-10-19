@@ -36,6 +36,21 @@ def _is_healthy(path: str) -> bool:
         return False
 
 
+_REQUIRED_TABLES = {"students", "rooms", "allocations", "complaints", "leaves", "users"}
+
+
+def _is_hostel_database(path: str) -> bool:
+    try:
+        conn = sqlite3.connect(path)
+        try:
+            names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return False
+    return _REQUIRED_TABLES <= names
+
+
 def create_backup(db_path: str = None, keep: int = KEEP_BACKUPS):
     """One backup per calendar day. A damaged database is never backed up, so it cannot push out good copies."""
     db_path = db_path or db_module.DATABASE_PATH
@@ -58,6 +73,10 @@ def create_backup(db_path: str = None, keep: int = KEEP_BACKUPS):
             source.backup(dest)
         finally:
             dest.close()
+    except Exception:
+        if os.path.exists(target):
+            os.remove(target)
+        raise
     finally:
         source.close()
     for old in list_backups(db_path)[:-keep]:
@@ -71,6 +90,8 @@ def restore_backup(backup_path: str, db_path: str = None) -> str:
     db_path = db_path or db_module.DATABASE_PATH
     if not os.path.isfile(backup_path) or not _is_healthy(backup_path):
         raise ValueError("That backup file is missing or damaged.")
+    if not _is_hostel_database(backup_path):
+        raise ValueError("That file is not a Hostel Management System backup.")
     saved = None
     if os.path.exists(db_path):
         saved = db_path + ".before_restore"
