@@ -14,6 +14,7 @@ Design notes:
   the application.
 """
 import csv
+import json
 import os
 import threading
 from datetime import datetime
@@ -72,19 +73,51 @@ def _upgrade_header(csv_path: str, header: list) -> None:
     os.replace(temp, csv_path)
 
 
-def _append_row(csv_path: str, header: list, row: dict) -> None:
-    """Append a row to a CSV, creating the file with a header if missing."""
-    with _lock:
-        file_exists = os.path.exists(csv_path)
-        os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-        if file_exists and os.path.getsize(csv_path) > 0:
-            _upgrade_header(csv_path, header)
-        write_header = not file_exists or os.path.getsize(csv_path) == 0
-        with open(csv_path, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=header)
-            if write_header:
-                writer.writeheader()
+def _write_rows(csv_path: str, header: list, rows: list) -> None:
+    file_exists = os.path.exists(csv_path)
+    if file_exists and os.path.getsize(csv_path) > 0:
+        _upgrade_header(csv_path, header)
+    write_header = not file_exists or os.path.getsize(csv_path) == 0
+    with open(csv_path, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=header)
+        if write_header:
+            writer.writeheader()
+        for row in rows:
             writer.writerow({key: _neutralise(val) for key, val in row.items()})
+
+
+def _pending_path(csv_path: str) -> str:
+    return csv_path + ".pending"
+
+
+def _read_pending(csv_path: str) -> list:
+    path = _pending_path(csv_path)
+    if not os.path.exists(path):
+        return []
+    rows = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                rows.append(json.loads(line))
+    return rows
+
+
+def _append_row(csv_path: str, header: list, row: dict) -> None:
+    """
+    Append a row to a CSV, creating the file with a header if missing. If the CSV cannot be written
+    (on Windows, while it is open in Excel), the row is queued in '<name>.pending' and added the next
+    time the CSV is writable, so evidence is delayed rather than lost.
+    """
+    with _lock:
+        os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+        try:
+            queued = _read_pending(csv_path)
+            _write_rows(csv_path, header, queued + [row])
+            if queued:
+                os.remove(_pending_path(csv_path))
+        except OSError:
+            with open(_pending_path(csv_path), "a", encoding="utf-8") as f:
+                f.write(json.dumps(row) + "\n")
 
 
 def log_error(module: str, error_type: str, severity: str, action: str,
