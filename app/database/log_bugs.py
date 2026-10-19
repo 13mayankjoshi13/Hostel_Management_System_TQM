@@ -363,6 +363,14 @@ BUGS = [
         "corrective_action": "Require the students, rooms, allocations, complaints, leaves and users tables before restoring; delete the partial file when a backup fails.",
         "test_case": "tests/test_backup.py::test_bug_043_*",
     },
+    {
+        "module": "Student", "category": "Validation", "severity": "Medium", "priority": "Medium",
+        "title": "Names can start with '-', and the allotment CSV export runs such text as a formula in Excel",
+        "description": "A student name such as '-cmd Kumar' passed validation (hyphen is allowed anywhere) and was written unchanged to room_allotment_list.csv, where Excel treats a leading '-' as a formula.",
+        "root_cause": "Names were not required to start with a letter, and the export (unlike the evidence logs, BUG-020) did not neutralise formula prefixes.",
+        "corrective_action": "Names must start with a letter; the export neutralises formula prefixes in every cell, which also covers names saved before the rule.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_044_*",
+    },
 ]
 
 
