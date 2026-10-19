@@ -10,6 +10,7 @@ from datetime import datetime
 
 from app.database.db import get_connection
 from app.utils.validation import validate_leave_dates, validate_leave_reason, validate_record_id, ValidationError
+from app.utils import session
 from app.utils.logging_service import log_error, log_audit
 
 
@@ -75,6 +76,7 @@ def mark_returned(leave_id: int) -> None:
 
 
 def get_all_leaves() -> list:
+    session.require_roles(session.STAFF_ROLES, "view all leaves")
     conn = get_connection()
     try:
         cur = conn.cursor()
