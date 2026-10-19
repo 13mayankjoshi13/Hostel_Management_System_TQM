@@ -127,3 +127,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-19T12:39:02,system_admin,Administrator,Bug,Create,36,Success,"Logged bug 'A student session can read every student's complaints, allocations and the allotment export' (High/High)."
 2026-10-19T12:39:02,system_admin,Administrator,Bug,StartProgress,36,Success,Moved to In Progress.
 2026-10-19T12:39:02,system_admin,Administrator,Bug,MarkFixed,36,Success,Fixed by Mayank. Root cause: The read functions had no role check; privacy rules lived on
+2026-10-19T12:47:52,system_admin,Administrator,Bug,Create,37,Success,Logged bug 'Login reveals which usernames exist (response time and lockout message)' (Medium/High).
+2026-10-19T12:47:52,system_admin,Administrator,Bug,StartProgress,37,Success,Moved to In Progress.
+2026-10-19T12:47:52,system_admin,Administrator,Bug,MarkFixed,37,Success,"Fixed by Mayank. Root cause: The password hash was only computed for existing accounts, a"
