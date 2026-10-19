@@ -124,3 +124,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-18T20:30:59,system_admin,Administrator,Bug,Create,35,Success,"Logged bug 'Defect log CSV has no reporter or fixer, and write failures are silent' (High/Medium)."
 2026-10-18T20:30:59,system_admin,Administrator,Bug,StartProgress,35,Success,Moved to In Progress.
 2026-10-18T20:30:59,system_admin,Administrator,Bug,MarkFixed,35,Success,"Fixed by Mayank. Root cause: The CSV columns were fixed before reporter/fixer existed, an"
+2026-10-19T12:39:02,system_admin,Administrator,Bug,Create,36,Success,"Logged bug 'A student session can read every student's complaints, allocations and the allotment export' (High/High)."
+2026-10-19T12:39:02,system_admin,Administrator,Bug,StartProgress,36,Success,Moved to In Progress.
+2026-10-19T12:39:02,system_admin,Administrator,Bug,MarkFixed,36,Success,Fixed by Mayank. Root cause: The read functions had no role check; privacy rules lived on
