@@ -307,6 +307,14 @@ BUGS = [
         "corrective_action": "Check a dummy hash for unknown and locked accounts so every failure takes the same time, and use one message for every failed login that also states the lockout rule.",
         "test_case": "tests/test_bug_fixes.py::test_bug_037_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "High", "priority": "High",
+        "title": "Sign-up can be used to guess a classmate's contact number",
+        "description": "The sign-up form proves identity with registration number plus contact number but allowed unlimited tries, so anyone could keep guessing a classmate's phone number until the pair matched and then ask for an account in their name.",
+        "root_cause": "Failed sign-up attempts were not counted; only the login had a lockout.",
+        "corrective_action": "Count failed sign-ups per registration number (known or not, so nothing is revealed); after 5 in a row block that number for 15 minutes; clear the count on success. Stored in a new signup_attempts table.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_038_*",
+    },
 ]
 
 
