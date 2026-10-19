@@ -130,3 +130,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-19T12:47:52,system_admin,Administrator,Bug,Create,37,Success,Logged bug 'Login reveals which usernames exist (response time and lockout message)' (Medium/High).
 2026-10-19T12:47:52,system_admin,Administrator,Bug,StartProgress,37,Success,Moved to In Progress.
 2026-10-19T12:47:52,system_admin,Administrator,Bug,MarkFixed,37,Success,"Fixed by Mayank. Root cause: The password hash was only computed for existing accounts, a"
+2026-10-19T12:52:39,system_admin,Administrator,Bug,Create,38,Success,Logged bug 'Sign-up can be used to guess a classmate's contact number' (High/High).
+2026-10-19T12:52:40,system_admin,Administrator,Bug,StartProgress,38,Success,Moved to In Progress.
+2026-10-19T12:52:40,system_admin,Administrator,Bug,MarkFixed,38,Success,Fixed by Mayank. Root cause: Failed sign-up attempts were not counted; only the login had
