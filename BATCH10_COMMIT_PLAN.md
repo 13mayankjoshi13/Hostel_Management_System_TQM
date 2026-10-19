@@ -2,7 +2,7 @@
 
 ```bash
 git add app/services/auth_service.py
-git commit -m "feat: add list_users, change_password and delete_user with last-admin and self-delete guards" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" -m "Claude-Session: https://claude.ai/code/session_01Y8eJDduXY7659fzRYpFPgg"
+git commit -m "feat: add list_users, change_password and delete_user with last-admin and self-delete guards" 
 git push
 
 git add app/screens/user_screen.py
