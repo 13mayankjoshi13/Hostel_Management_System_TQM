@@ -538,6 +538,34 @@ class TestBugFixes(unittest.TestCase):
             auth_service.authenticate("realuser", "Secret123")
         self.assertEqual(str(ctx.exception), unknown_message)
 
+    def test_bug_038_signup_guessing_is_throttled(self):
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        student_service.add_student("Test Kid", "2410302099", "9876500000")
+        for guess in range(auth_service.MAX_SIGNUP_FAILURES):
+            with self.assertRaisesRegex(ValidationError, "do not match"):
+                auth_service.register_student("kid", "Secret123", "2410302099", f"98765001{guess:02d}")
+        with self.assertRaisesRegex(ValidationError, "Too many unsuccessful"):
+            auth_service.register_student("kid", "Secret123", "2410302099", "9876500000")
+        with self.assertRaisesRegex(ValidationError, "Too many unsuccessful"):
+            auth_service.register_student("kid", "Secret123", "2410302099", "9876500123")
+        conn = db_module.get_connection()
+        conn.execute("UPDATE signup_attempts SET locked_until = ?",
+                     ((datetime.now() - timedelta(minutes=1)).isoformat(timespec="seconds"),))
+        conn.commit()
+        conn.close()
+        self.assertIsInstance(auth_service.register_student("kid", "Secret123", "2410302099", "9876500000"), int)
+        conn = db_module.get_connection()
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM signup_attempts").fetchone()[0], 0)
+        conn.close()
+
+    def test_bug_038_unknown_registration_numbers_are_throttled_too(self):
+        for _ in range(auth_service.MAX_SIGNUP_FAILURES):
+            with self.assertRaisesRegex(ValidationError, "do not match"):
+                auth_service.register_student("ghost", "Secret123", "ZZ99999", "9876500000")
+        with self.assertRaisesRegex(ValidationError, "Too many unsuccessful"):
+            auth_service.register_student("ghost", "Secret123", "ZZ99999", "9876500000")
+
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
         self.assertEqual(log_bugs.run(), 0)
