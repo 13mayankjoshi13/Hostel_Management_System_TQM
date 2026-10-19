@@ -142,3 +142,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-19T13:01:18,system_admin,Administrator,Bug,Create,41,Success,"Logged bug 'The log-in window cannot be closed, so the application cannot be quit from it' (High/High)."
 2026-10-19T13:01:18,system_admin,Administrator,Bug,StartProgress,41,Success,Moved to In Progress.
 2026-10-19T13:01:18,system_admin,Administrator,Bug,MarkFixed,41,Success,Fixed by Mayank. Root cause: The log-in window ignored its close request (WM_DELETE_WINDO
+2026-10-19T13:04:23,system_admin,Administrator,Bug,Create,42,Success,Logged bug 'Log rows are lost while a log CSV is open in Excel' (High/High).
+2026-10-19T13:04:23,system_admin,Administrator,Bug,StartProgress,42,Success,Moved to In Progress.
+2026-10-19T13:04:23,system_admin,Administrator,Bug,MarkFixed,42,Success,Fixed by Mayank. Root cause: _append_row raised on a locked file and the callers ignore l
