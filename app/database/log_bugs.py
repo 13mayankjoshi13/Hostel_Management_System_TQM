@@ -331,6 +331,14 @@ BUGS = [
         "corrective_action": "Store every timestamp in UTC, convert to the computer's local time when data leaves a service for a screen or export, and convert older locally-stored resolved/returned times to UTC once at start-up.",
         "test_case": "tests/test_timestamps.py::test_bug_039_*",
     },
+    {
+        "module": "UI", "category": "Functional", "severity": "High", "priority": "High",
+        "title": "The log-in window cannot be closed, so the application cannot be quit from it",
+        "description": "The X button on the log-in window did nothing. Without logging in there was no way to exit (and after an idle log-out or Log out the same window returns); the only way out was to kill the process. Closing the main window also left no log-out in the audit log.",
+        "root_cause": "The log-in window ignored its close request (WM_DELETE_WINDOW bound to a no-op) and the main window had no close handler.",
+        "corrective_action": "Closing the log-in window now quits the application; closing the main window logs the user out (audit entry) before exiting.",
+        "test_case": "tests/test_close_ui.py::test_bug_040_*",
+    },
 ]
 
 
