@@ -139,3 +139,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-19T12:58:10,system_admin,Administrator,Bug,Create,40,Success,"Logged bug 'Times shown in the app are UTC, and resolved/returned times used a different clock' (High/High)."
 2026-10-19T12:58:10,system_admin,Administrator,Bug,StartProgress,40,Success,Moved to In Progress.
 2026-10-19T12:58:10,system_admin,Administrator,Bug,MarkFixed,40,Success,Fixed by Mayank. Root cause: SQLite's default timestamp is UTC but screens and exports di
+2026-10-19T13:01:18,system_admin,Administrator,Bug,Create,41,Success,"Logged bug 'The log-in window cannot be closed, so the application cannot be quit from it' (High/High)."
+2026-10-19T13:01:18,system_admin,Administrator,Bug,StartProgress,41,Success,Moved to In Progress.
+2026-10-19T13:01:18,system_admin,Administrator,Bug,MarkFixed,41,Success,Fixed by Mayank. Root cause: The log-in window ignored its close request (WM_DELETE_WINDO
