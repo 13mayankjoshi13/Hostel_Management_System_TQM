@@ -361,7 +361,7 @@ class TestBugFixes(unittest.TestCase):
                 auth_service.authenticate("victim", "wrong-guess")
         with self.assertRaises(ValidationError) as ctx:
             auth_service.authenticate("victim", "Secret123")
-        self.assertIn("Too many failed attempts", str(ctx.exception))
+        self.assertIn("locked for", str(ctx.exception))
 
         conn = db_module.get_connection()
         conn.execute("UPDATE users SET locked_until = ? WHERE username = 'victim'",
@@ -516,6 +516,27 @@ class TestBugFixes(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(self.tmp, "x.csv")))
         session.set_session("warden", "Warden")
         self.assertEqual(len(allocation_service.get_active_allocations()), 2)
+
+    def test_bug_037_login_does_not_reveal_which_usernames_exist(self):
+        import time
+        auth_service.create_user("realuser", "Secret123", "Staff")
+
+        def attempt(name):
+            started = time.perf_counter()
+            with self.assertRaises(ValidationError) as ctx:
+                auth_service.authenticate(name, "wrongpass1")
+            return time.perf_counter() - started, str(ctx.exception)
+
+        known_time, known_message = attempt("realuser")
+        unknown_time, unknown_message = attempt("nobody")
+        self.assertEqual(known_message, unknown_message)
+        self.assertGreater(unknown_time, known_time * 0.3)
+        for _ in range(auth_service.MAX_FAILED_ATTEMPTS):
+            attempt("realuser")
+        self.assertEqual(attempt("realuser")[1], unknown_message)
+        with self.assertRaises(ValidationError) as ctx:
+            auth_service.authenticate("realuser", "Secret123")
+        self.assertEqual(str(ctx.exception), unknown_message)
 
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
