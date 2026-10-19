@@ -9,6 +9,7 @@ from app.database.db import get_connection
 from app.services import complaint_service, leave_service, student_service
 from app.utils import session
 from app.utils.logging_service import log_error
+from app.utils.timefmt import localise_rows
 from app.utils.validation import ValidationError
 
 
@@ -40,15 +41,15 @@ def my_room():
         FROM allocations a JOIN rooms r ON r.room_id = a.room_id
         WHERE a.student_id = ? AND a.status = 'Active'
     """, (sid,), "my_room")
-    return rows[0] if rows else None
+    return localise_rows(rows, "allocated_at")[0] if rows else None
 
 
 def my_complaints() -> list:
     sid = _current_student_id()
-    return _query("""
+    return localise_rows(_query("""
         SELECT complaint_id, category, description, status, assigned_to, created_at, resolution_notes
         FROM complaints WHERE student_id = ? ORDER BY complaint_id DESC
-    """, (sid,), "my_complaints")
+    """, (sid,), "my_complaints"), "created_at")
 
 
 def file_complaint(category: str, description: str) -> int:
