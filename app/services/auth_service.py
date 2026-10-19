@@ -26,6 +26,8 @@ SEED_PASSWORD = "Welcome123"
 KNOWN_DEFAULT_PASSWORDS = (DEFAULT_ADMIN_PASSWORD, SEED_PASSWORD)
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_MINUTES = 5
+MAX_SIGNUP_FAILURES = 5
+SIGNUP_LOCKOUT_MINUTES = 15
 LOGIN_FAILED_MESSAGE = (f"Invalid username or password. An account is locked for {LOCKOUT_MINUTES} minutes "
                         f"after {MAX_FAILED_ATTEMPTS} failed attempts.")
 _DUMMY_HASH = None
@@ -369,9 +371,24 @@ def register_student(username: str, password: str, registration_number: str, con
     conn = get_connection()
     try:
         cur = conn.cursor()
+        cur.execute("SELECT failures, locked_until FROM signup_attempts WHERE registration_number = ?", (clean_reg,))
+        attempts = cur.fetchone()
+        if attempts is not None and attempts["locked_until"] and \
+                datetime.fromisoformat(attempts["locked_until"]) > datetime.now():
+            raise ValidationError("Too many unsuccessful sign-up attempts for this registration number. "
+                                  f"Try again in {SIGNUP_LOCKOUT_MINUTES} minutes or ask the hostel office.")
         cur.execute("SELECT student_id, contact_number FROM students WHERE UPPER(registration_number) = UPPER(?)", (clean_reg,))
         student = cur.fetchone()
         if student is None or student["contact_number"] != clean_contact:
+            failures = (attempts["failures"] if attempts is not None else 0) + 1
+            locked_until = None
+            if failures >= MAX_SIGNUP_FAILURES:
+                locked_until = (datetime.now() + timedelta(minutes=SIGNUP_LOCKOUT_MINUTES)).isoformat(timespec="seconds")
+                failures = 0
+            cur.execute("INSERT INTO signup_attempts (registration_number, failures, locked_until) VALUES (?, ?, ?) "
+                        "ON CONFLICT(registration_number) DO UPDATE SET failures = excluded.failures, "
+                        "locked_until = excluded.locked_until", (clean_reg, failures, locked_until))
+            conn.commit()
             raise ValidationError("Registration number and contact number do not match a hostel record. "
                                   "Ask the hostel office to add or correct your details.")
         cur.execute("SELECT user_id FROM users WHERE LOWER(username) = LOWER(?)", (clean_username,))
@@ -383,6 +400,7 @@ def register_student(username: str, password: str, registration_number: str, con
         cur.execute("INSERT INTO users (username, password_hash, role, student_id, status) "
                     "VALUES (?, ?, 'Student', ?, 'Pending')",
                     (clean_username, _hash_password(clean_password), student["student_id"]))
+        cur.execute("DELETE FROM signup_attempts WHERE registration_number = ?", (clean_reg,))
         conn.commit()
         user_id = cur.lastrowid
         log_audit("User", "SignUp", str(user_id), "Success",
