@@ -315,6 +315,22 @@ BUGS = [
         "corrective_action": "Count failed sign-ups per registration number (known or not, so nothing is revealed); after 5 in a row block that number for 15 minutes; clear the count on success. Stored in a new signup_attempts table.",
         "test_case": "tests/test_bug_fixes.py::test_bug_038_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "High", "priority": "Medium",
+        "title": "Failed logins, blocked sign-ups and denied actions leave no audit trail",
+        "description": "The audit log recorded successful operations and lockouts but not wrong-password attempts, refused sign-ups or a role being refused an action, so a guessing attack or a student probing staff functions could not be seen afterwards.",
+        "root_cause": "Audit entries were written only on success paths.",
+        "corrective_action": "Audit LoginFailed, LoginBlocked, SignUpFailed, SignUpBlocked and AccessDenied (Security) with result Failure. Unknown usernames are logged without the typed text, since people often paste a password into the username box.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_039_*",
+    },
+    {
+        "module": "Other", "category": "Data Integrity", "severity": "High", "priority": "High",
+        "title": "Times shown in the app are UTC, and resolved/returned times used a different clock",
+        "description": "Created, allotted and registered times came from the database in UTC (5.5 hours behind India) and were shown unchanged, while resolved and returned times were saved in local time, so a complaint could look resolved before it was logged.",
+        "root_cause": "SQLite's default timestamp is UTC but screens and exports displayed it as-is, and Python-written times used datetime.now().",
+        "corrective_action": "Store every timestamp in UTC, convert to the computer's local time when data leaves a service for a screen or export, and convert older locally-stored resolved/returned times to UTC once at start-up.",
+        "test_case": "tests/test_timestamps.py::test_bug_039_*",
+    },
 ]
 
 
