@@ -15,7 +15,7 @@ assigned or resolved again — every transition is checked before any
 write, same prevention-at-source pattern as the other services.
 """
 import sqlite3
-from datetime import datetime
+from app.utils.timefmt import utc_now, localise_rows
 
 from app.database.db import get_connection
 from app.utils.validation import (
@@ -129,7 +129,7 @@ def resolve_complaint(complaint_id: int, resolution_notes: str) -> None:
                 f"It may already be resolved."
             )
 
-        resolved_at = datetime.now().isoformat(timespec="seconds")
+        resolved_at = utc_now()
         cur.execute(
             "UPDATE complaints SET status = 'Resolved', resolved_at = ?, "
             "resolution_notes = ? WHERE complaint_id = ?",
@@ -163,7 +163,7 @@ def get_all_complaints() -> list:
             JOIN students s ON s.student_id = c.student_id
             ORDER BY c.complaint_id DESC
         """)
-        return [dict(row) for row in cur.fetchall()]
+        return localise_rows([dict(row) for row in cur.fetchall()], "created_at", "resolved_at")
     except sqlite3.Error as exc:
         log_error("Complaint", "DatabaseError", "Medium", "get_all_complaints",
                    status="Open", message_reference=str(exc))
