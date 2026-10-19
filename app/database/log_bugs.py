@@ -291,6 +291,14 @@ BUGS = [
         "corrective_action": "Add reported_by and fixed_by to the defect log, upgrade older log files in place (old rows keep blanks), and record a failed defect write in the error log.",
         "test_case": "tests/test_bug_fixes.py::test_bug_035_*",
     },
+    {
+        "module": "Allocation", "category": "Security", "severity": "High", "priority": "High",
+        "title": "A student session can read every student's complaints, allocations and the allotment export",
+        "description": "With a Student session, get_all_complaints, get_active_allocations and export_allocation_list returned all students' names, rooms and complaint text; only the screens were hidden. BUG-023 protected writes but not these reads.",
+        "root_cause": "The read functions had no role check; privacy rules lived only in the navigation.",
+        "corrective_action": "Require a staff role in get_all_complaints, get_all_leaves, get_active_allocations, export_allocation_list and get_all_bugs.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_036_*",
+    },
 ]
 
 
