@@ -34,17 +34,28 @@ _DEFECT_HEADER = ["defect_id", "date", "module", "category", "title", "descripti
 
 
 def _next_id(csv_path: str, id_column: str, prefix: str) -> str:
-    """Compute the next sequential ID (e.g. ERR-0007) from an existing CSV."""
-    count = 0
+    """
+    Next sequential ID (e.g. ERR-0007): one more than the highest number already used, counting rows
+    waiting in the .pending queue. The file is read leniently, so a log re-saved by Excel in another
+    encoding, or with rows deleted by hand, can never make an old ID repeat.
+    """
+    highest = 0
+    numbers = []
     if os.path.exists(csv_path):
         try:
-            with open(csv_path, "r", newline="", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for _ in reader:
-                    count += 1
-        except Exception:
-            count = 0
-    return f"{prefix}-{count + 1:04d}"
+            with open(csv_path, "r", newline="", encoding="utf-8", errors="replace") as f:
+                numbers += [row.get(id_column) or "" for row in csv.DictReader(f)]
+        except (OSError, csv.Error):
+            pass
+    try:
+        numbers += [row.get(id_column) or "" for row in _read_pending(csv_path)]
+    except (OSError, ValueError):
+        pass
+    for value in numbers:
+        head, _, tail = str(value).rpartition("-")
+        if head == prefix and tail.isdigit():
+            highest = max(highest, int(tail))
+    return f"{prefix}-{highest + 1:04d}"
 
 
 _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
@@ -59,7 +70,7 @@ def _neutralise(value):
 
 def _upgrade_header(csv_path: str, header: list) -> None:
     """If an older log has fewer columns, rewrite it with the current header (old rows get blanks) so new rows are not lost."""
-    with open(csv_path, newline="", encoding="utf-8") as f:
+    with open(csv_path, newline="", encoding="utf-8", errors="replace") as f:
         reader = csv.DictReader(f)
         existing = reader.fieldnames
         if existing is None or list(existing) == header:
@@ -73,9 +84,22 @@ def _upgrade_header(csv_path: str, header: list) -> None:
     os.replace(temp, csv_path)
 
 
+def _repair_encoding(csv_path: str) -> None:
+    """A log re-saved by Excel in Windows encoding is not valid UTF-8; rewrite it so appends keep working."""
+    with open(csv_path, "rb") as f:
+        raw = f.read()
+    try:
+        raw.decode("utf-8")
+    except UnicodeDecodeError:
+        text = raw.decode("cp1252", errors="replace")
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            f.write(text)
+
+
 def _write_rows(csv_path: str, header: list, rows: list) -> None:
     file_exists = os.path.exists(csv_path)
     if file_exists and os.path.getsize(csv_path) > 0:
+        _repair_encoding(csv_path)
         _upgrade_header(csv_path, header)
     write_header = not file_exists or os.path.getsize(csv_path) == 0
     with open(csv_path, "a", newline="", encoding="utf-8") as f:
