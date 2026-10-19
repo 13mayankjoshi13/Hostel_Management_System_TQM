@@ -163,6 +163,7 @@ def release_allocation(allocation_id: int) -> None:
 
 def get_active_allocations() -> list:
     """Active allocations joined with student name and room number, for display."""
+    session.require_roles(session.STAFF_ROLES, "view allocations")
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -192,6 +193,7 @@ def _room_order(room_number: str) -> tuple:
 
 def export_allocation_list(path: str) -> int:
     """Write the active room allotment list to a CSV file. Returns the row count."""
+    session.require_roles(session.STAFF_ROLES, "export the allotment list")
     rows = get_active_allocations()
     try:
         with open(path, "w", newline="", encoding="utf-8") as f:
