@@ -347,6 +347,14 @@ BUGS = [
         "corrective_action": "Queue rows that cannot be written in a '<log>.csv.pending' file and add them to the CSV, in order, the next time it is writable.",
         "test_case": "tests/test_log_resilience.py::test_bug_041_*",
     },
+    {
+        "module": "Other", "category": "Data Integrity", "severity": "High", "priority": "High",
+        "title": "Error log breaks after Excel re-save (Windows encoding); error IDs can repeat",
+        "description": "Error ids were the row count + 1 and any read problem (for example the file re-saved by Excel in Windows encoding) restarted at ERR-0001. The id shown to the user in 'logged as ERR-xxxx' could then point at a different, older entry.",
+        "root_cause": "_next_id counted rows and treated any read error as an empty file.",
+        "corrective_action": "Use the highest existing number + 1, read the file leniently, count rows waiting in the pending queue, and convert a Windows-encoded log back to UTF-8 so logging keeps working.",
+        "test_case": "tests/test_log_resilience.py::test_bug_042_*",
+    },
 ]
 
 
