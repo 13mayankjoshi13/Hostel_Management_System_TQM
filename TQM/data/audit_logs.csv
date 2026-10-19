@@ -151,3 +151,9 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-19T13:17:05,system_admin,Administrator,Database,Backup,hostel_20261019_131705.db,Success,Daily database backup created.
 2026-10-19T13:17:33,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
 2026-10-19T13:17:46,admin,Administrator,Auth,Logout,admin,Success,'admin' logged out.
+2026-10-19T20:24:18,system_admin,Administrator,Bug,Create,44,Success,Logged bug 'Restore accepts any SQLite file; a failed backup leaves a partial file' (High/High).
+2026-10-19T20:24:19,system_admin,Administrator,Bug,StartProgress,44,Success,Moved to In Progress.
+2026-10-19T20:24:19,system_admin,Administrator,Bug,MarkFixed,44,Success,Fixed by Mayank. Root cause: No check that the file contains the hostel tables; no cleanu
+2026-10-19T20:34:40,system_admin,Administrator,Bug,Create,45,Success,"Logged bug 'Names can start with '-', and the allotment CSV export runs such text as a formula in Excel' (Medium/Medium)."
+2026-10-19T20:34:41,system_admin,Administrator,Bug,StartProgress,45,Success,Moved to In Progress.
+2026-10-19T20:34:41,system_admin,Administrator,Bug,MarkFixed,45,Success,"Fixed by Mayank. Root cause: Names were not required to start with a letter, and the expo"
