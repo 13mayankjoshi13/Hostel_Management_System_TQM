@@ -517,6 +517,22 @@ class TestBugFixes(unittest.TestCase):
         session.set_session("warden", "Warden")
         self.assertEqual(len(allocation_service.get_active_allocations()), 2)
 
+    def test_bug_044_names_start_with_a_letter_and_export_neutralises_formulas(self):
+        import csv
+        for bad in ("-Ravi Kumar", "'Ravi", ".Ravi", "- -"):
+            with self.assertRaises(ValidationError):
+                student_service.add_student(bad, "AB1234", "9876543210")
+        sid = student_service.add_student("Ravi Kumar", "AB1234", "9876543210")
+        allocation_service.allocate_room(sid, room_service.add_room("A1", "Single", 1))
+        conn = db_module.get_connection()
+        conn.execute("UPDATE students SET name = '-cmd Kumar' WHERE student_id = ?", (sid,))
+        conn.commit()
+        conn.close()
+        path = os.path.join(self.tmp, "x.csv")
+        allocation_service.export_allocation_list(path)
+        with open(path, newline="") as f:
+            self.assertEqual(list(csv.reader(f))[1][2], "'-cmd Kumar")
+
     def test_bug_037_login_does_not_reveal_which_usernames_exist(self):
         import time
         auth_service.create_user("realuser", "Secret123", "Staff")
@@ -565,6 +581,37 @@ class TestBugFixes(unittest.TestCase):
                 auth_service.register_student("ghost", "Secret123", "ZZ99999", "9876500000")
         with self.assertRaisesRegex(ValidationError, "Too many unsuccessful"):
             auth_service.register_student("ghost", "Secret123", "ZZ99999", "9876500000")
+
+    def test_bug_039_security_failures_reach_the_audit_log(self):
+        import csv
+        import app.utils.logging_service as ls
+        from app.utils import session
+        session.set_session("admin", "Administrator")
+        sid = student_service.add_student("Test Kid", "2410302099", "9876500000")
+        auth_service.create_user("kid", "Secret123", "Student", sid)
+        session.clear_session()
+        for name, password in (("kid", "wrong-one1"), ("nobody", "wrong-one1")):
+            with self.assertRaises(ValidationError):
+                auth_service.authenticate(name, password)
+        for _ in range(auth_service.MAX_FAILED_ATTEMPTS):
+            with self.assertRaises(ValidationError):
+                auth_service.authenticate("kid", "wrong-one1")
+        with self.assertRaises(ValidationError):
+            auth_service.authenticate("kid", "Secret123")
+        with self.assertRaises(ValidationError):
+            auth_service.register_student("kid2", "Secret123", "2410302099", "9876500123")
+        session.set_session("kid", "Student", sid)
+        with self.assertRaises(ValidationError):
+            student_service.delete_student(sid)
+        with open(ls.AUDIT_LOG_CSV, newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+        actions = [(r["module"], r["action"]) for r in rows if r["result"] == "Failure"]
+        for expected in (("Auth", "LoginFailed"), ("Auth", "Lockout"), ("Auth", "LoginBlocked"),
+                         ("User", "SignUpFailed"), ("Security", "AccessDenied")):
+            self.assertIn(expected, actions)
+        unknown = [r for r in rows if r["action"] == "LoginFailed" and r["record_id"] == "unknown"]
+        self.assertEqual(len(unknown), 1)
+        self.assertNotIn("nobody", unknown[0]["description"])
 
     def test_bug_log_loader_is_idempotent_and_ends_fixed(self):
         self.assertEqual(log_bugs.run(), len(log_bugs.BUGS))
