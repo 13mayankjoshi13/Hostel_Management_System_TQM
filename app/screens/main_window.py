@@ -110,6 +110,7 @@ class MainWindow(tk.Tk):
     def __init__(self, show_splash: bool = True):
         super().__init__()
         self.report_callback_exception = report_tk_callback_exception
+        self.protocol("WM_DELETE_WINDOW", self.exit_app)
         self.title(APP_NAME)
         height = min(800, max(self.winfo_screenheight() - 80, 640))
         self.geometry(f"1280x{height}")
@@ -268,6 +269,11 @@ class MainWindow(tk.Tk):
         self.clock_date = tk.Label(clock, text="", bg=COLORS["background"], fg=COLORS["text_tertiary"],
                                     font=self.fonts["small"])
         self.clock_date.pack(anchor="e")
+
+    def exit_app(self):
+        """Closing the window ends the session cleanly, so the audit log shows the log-out."""
+        auth_service.logout()
+        self.destroy()
 
     def destroy(self):
         job = getattr(self, "_tick_job", None)
