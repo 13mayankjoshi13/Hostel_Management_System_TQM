@@ -148,3 +148,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-19T13:06:38,system_admin,Administrator,Bug,Create,43,Success,Logged bug 'Error log breaks after Excel re-save (Windows encoding); error IDs can repeat' (High/High).
 2026-10-19T13:06:38,system_admin,Administrator,Bug,StartProgress,43,Success,Moved to In Progress.
 2026-10-19T13:06:38,system_admin,Administrator,Bug,MarkFixed,43,Success,Fixed by Mayank. Root cause: _next_id counted rows and treated any read error as an empty
+2026-10-19T13:17:05,system_admin,Administrator,Database,Backup,hostel_20261019_131705.db,Success,Daily database backup created.
+2026-10-19T13:17:33,admin,Administrator,Auth,Login,1,Success,'admin' logged in.
+2026-10-19T13:17:46,admin,Administrator,Auth,Logout,admin,Success,'admin' logged out.
