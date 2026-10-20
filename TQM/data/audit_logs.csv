@@ -157,3 +157,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-19T20:34:40,system_admin,Administrator,Bug,Create,45,Success,"Logged bug 'Names can start with '-', and the allotment CSV export runs such text as a formula in Excel' (Medium/Medium)."
 2026-10-19T20:34:41,system_admin,Administrator,Bug,StartProgress,45,Success,Moved to In Progress.
 2026-10-19T20:34:41,system_admin,Administrator,Bug,MarkFixed,45,Success,"Fixed by Mayank. Root cause: Names were not required to start with a letter, and the expo"
+2026-10-20T13:31:46,system_admin,Administrator,Bug,Create,46,Success,"Logged bug 'A student session can record leave, mark returned and file complaints for other students' (High/High)."
+2026-10-20T13:31:46,system_admin,Administrator,Bug,StartProgress,46,Success,Moved to In Progress.
+2026-10-20T13:31:46,system_admin,Administrator,Bug,MarkFixed,46,Success,Fixed by Mayank. Root cause: Ownership was enforced in one portal function instead of in 
