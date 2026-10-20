@@ -103,7 +103,7 @@ class TestLeave(unittest.TestCase):
         self._allocate()
         path = os.path.join(self.tmp_dir, "list.csv")
         self.assertEqual(allocation_service.export_allocation_list(path), 1)
-        with open(path, newline="", encoding="utf-8") as f:
+        with open(path, newline="", encoding="utf-8-sig") as f:
             rows = list(csv.reader(f))
         self.assertEqual(rows[0], ["Room", "Type", "Student", "Allocated At"])
         self.assertEqual(rows[1][:3], ["A101", "Single", "Mayank Joshi"])
