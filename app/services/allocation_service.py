@@ -196,7 +196,7 @@ def export_allocation_list(path: str) -> int:
     session.require_roles(session.STAFF_ROLES, "export the allotment list")
     rows = get_active_allocations()
     try:
-        with open(path, "w", newline="", encoding="utf-8") as f:
+        with open(path, "w", newline="", encoding="utf-8-sig") as f:
             writer = csv.writer(f)
             writer.writerow(["Room", "Type", "Student", "Allocated At"])
             for r in sorted(rows, key=lambda r: _room_order(r["room_number"])):
