@@ -387,6 +387,14 @@ BUGS = [
         "corrective_action": "Reset clears failed_attempts and locked_until, and sets must_change_password for every account except the administrator's own.",
         "test_case": "tests/test_bug_fixes.py::test_bug_046_*",
     },
+    {
+        "module": "Database", "category": "Data Integrity", "severity": "High", "priority": "High",
+        "title": "Backups live on the same disk as the database, so one disk failure loses both",
+        "description": "The daily backups (BUG-031) were written next to hostel.db. A failed or lost disk, or deleting the project folder, destroyed the database and every backup together.",
+        "root_cause": "Backup location was fixed to the database folder.",
+        "corrective_action": "Optional environment variable HOSTEL_EXTRA_BACKUP_DIR: each daily backup is also copied there (same 7-day retention). A failed copy is written to the error log and never stops start-up.",
+        "test_case": "tests/test_backup.py::test_bug_047_*",
+    },
 ]
 
 
