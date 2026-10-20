@@ -9,6 +9,7 @@ the cleaned value on success, so callers can do:
 
 instead of checking booleans everywhere.
 """
+import unicodedata
 from datetime import date, datetime, timedelta
 
 
@@ -20,12 +21,12 @@ class ValidationError(Exception):
 def validate_student_name(name: str) -> str:
     if name is None or not str(name).strip():
         raise ValidationError("Student name cannot be empty.")
-    name = " ".join(str(name).split())
+    name = unicodedata.normalize("NFC", " ".join(str(name).split()))
     if len(name) < 2:
         raise ValidationError("Student name must be at least 2 characters long.")
     if len(name) > 100:
         raise ValidationError("Student name cannot exceed 100 characters.")
-    if not all(ch.isalpha() or ch.isspace() or ch in ".'-" for ch in name):
+    if not all(ch.isalpha() or ch.isspace() or ch in ".'-" or unicodedata.category(ch).startswith("M") for ch in name):
         raise ValidationError("Student name contains invalid characters.")
     if not name[0].isalpha():
         raise ValidationError("Student name must start with a letter.")
