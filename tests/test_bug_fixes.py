@@ -556,6 +556,17 @@ class TestBugFixes(unittest.TestCase):
         session.set_session("warden", "Warden")
         leave_service.mark_returned(leave_id)
 
+    def test_bug_046_admin_reset_unlocks_the_account_and_forces_a_new_password(self):
+        uid = auth_service.create_user("warden1", "Secret123", "Warden")
+        for _ in range(5):
+            with self.assertRaises(ValidationError):
+                auth_service.authenticate("warden1", "wrong-password")
+        with self.assertRaises(ValidationError):
+            auth_service.authenticate("warden1", "Secret123")
+        auth_service.change_password(uid, "Newpass456")
+        user = auth_service.authenticate("warden1", "Newpass456")
+        self.assertTrue(user["must_change_password"])
+
     def test_bug_037_login_does_not_reveal_which_usernames_exist(self):
         import time
         auth_service.create_user("realuser", "Secret123", "Staff")
