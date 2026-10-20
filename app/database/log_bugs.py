@@ -403,6 +403,14 @@ BUGS = [
         "corrective_action": "Accept Unicode combining marks after a letter and normalise names to NFC; write the export as UTF-8 with BOM (utf-8-sig).",
         "test_case": "tests/test_bug_fixes.py::test_bug_048_*",
     },
+    {
+        "module": "Student", "category": "Validation", "severity": "Medium", "priority": "Medium",
+        "title": "Contact numbers written as +91 98765 43210 or 098765 43210 are rejected",
+        "description": "The contact field only accepted exactly ten plain digits. Numbers copied from a phone, form or WhatsApp (with +91, a leading 0, spaces or hyphens) failed with 'digits only' or 'exactly 10 digits', blocking student registration and sign-up for ordinary input.",
+        "root_cause": "Validation checked the raw text instead of normalising the usual Indian number formats first.",
+        "corrective_action": "Strip spaces, hyphens and brackets and a +91 / 0091 / 91 / 0 prefix, then apply the same ten-digit rule (starts with 6-9). The stored value is always the plain ten digits.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_049_*",
+    },
 ]
 
 
