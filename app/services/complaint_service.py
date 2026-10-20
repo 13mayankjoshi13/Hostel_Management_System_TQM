@@ -44,6 +44,7 @@ def _get_complaint_or_raise(cur, complaint_id: int) -> sqlite3.Row:
 def create_complaint(student_id: int, category: str, description: str) -> int:
     """Validate and insert a new complaint with status 'Open'."""
     student_id = validate_record_id(student_id, "Please select a student.")
+    session.require_own_or_staff(student_id, "file a complaint for another student")
 
     clean_category = validate_complaint_category(category)
     clean_description = validate_complaint_description(description)
