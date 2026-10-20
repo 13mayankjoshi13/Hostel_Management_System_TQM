@@ -49,7 +49,15 @@ def validate_registration_number(reg_no: str) -> str:
 def validate_contact_number(contact: str) -> str:
     if contact is None or not str(contact).strip():
         raise ValidationError("Contact number cannot be empty.")
-    contact = str(contact).strip()
+    contact = "".join(ch for ch in str(contact) if ch not in " -()").strip()
+    if contact.startswith("+91"):
+        contact = contact[3:]
+    elif contact.startswith("0091"):
+        contact = contact[4:]
+    elif len(contact) == 12 and contact.startswith("91"):
+        contact = contact[2:]
+    elif len(contact) == 11 and contact.startswith("0"):
+        contact = contact[1:]
     if not (contact.isascii() and contact.isdigit()):
         raise ValidationError("Contact number must contain digits only.")
     if len(contact) != 10:
