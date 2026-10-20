@@ -16,6 +16,7 @@ from app.utils.logging_service import log_error, log_audit
 
 def record_leave(student_id: int, from_date: str, to_date: str, reason: str) -> int:
     student_id = validate_record_id(student_id, "Please select a student.")
+    session.require_own_or_staff(student_id, "record a leave for another student")
     start, end = validate_leave_dates(from_date, to_date)
     clean_reason = validate_leave_reason(reason)
 
@@ -55,10 +56,11 @@ def mark_returned(leave_id: int) -> None:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT status FROM leaves WHERE leave_id = ?", (leave_id,))
+        cur.execute("SELECT status, student_id FROM leaves WHERE leave_id = ?", (leave_id,))
         leave = cur.fetchone()
         if leave is None:
             raise ValidationError(f"No leave found with ID {leave_id}.")
+        session.require_own_or_staff(leave["student_id"], "mark another student's leave as returned")
         if leave["status"] != "On Leave":
             raise ValidationError("This student is already marked as returned.")
         cur.execute("UPDATE leaves SET status = 'Returned', returned_at = ? WHERE leave_id = ?",
