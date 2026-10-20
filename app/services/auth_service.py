@@ -246,8 +246,10 @@ def change_password(user_id: int, new_password: str) -> None:
         row = cur.fetchone()
         if row is None:
             raise ValidationError("That user account does not exist.")
-        cur.execute("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE user_id = ?",
-                    (_hash_password(clean_password), user_id))
+        own_account = session.is_logged_in() and row["username"] == session.get_user()
+        cur.execute("UPDATE users SET password_hash = ?, must_change_password = ?, "
+                    "failed_attempts = 0, locked_until = NULL WHERE user_id = ?",
+                    (_hash_password(clean_password), 0 if own_account else 1, user_id))
         conn.commit()
         log_audit("User", "ChangePassword", str(user_id), "Success",
                    f"Password changed for '{row['username']}'.")
