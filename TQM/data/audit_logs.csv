@@ -169,3 +169,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-20T15:47:13,system_admin,Administrator,Bug,Create,49,Success,"Logged bug 'Devanagari (Hindi) student names are rejected, and the allotment CSV shows garbled text in Excel' (High/High)."
 2026-10-20T15:47:13,system_admin,Administrator,Bug,StartProgress,49,Success,Moved to In Progress.
 2026-10-20T15:47:13,system_admin,Administrator,Bug,MarkFixed,49,Success,Fixed by Mayank. Root cause: validate_student_name only accepted alphabetic characters; e
+2026-10-20T15:53:04,system_admin,Administrator,Bug,Create,50,Success,Logged bug 'Contact numbers written as +91 98765 43210 or 098765 43210 are rejected' (Medium/Medium).
+2026-10-20T15:53:04,system_admin,Administrator,Bug,StartProgress,50,Success,Moved to In Progress.
+2026-10-20T15:53:04,system_admin,Administrator,Bug,MarkFixed,50,Success,Fixed by Mayank. Root cause: Validation checked the raw text instead of normalising the u

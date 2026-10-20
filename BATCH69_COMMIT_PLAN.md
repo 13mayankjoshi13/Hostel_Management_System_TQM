@@ -13,4 +13,4 @@ git commit -m "docs: log and write up BUG-049"
 git push
 ```
 
-After pulling: `python -m app.database.log_bugs`, then append `BATCH69_HANDOFF_APPEND.md` to `AI_CONTEXT_HANDOFF.md`.
+After pulling: `python -m app.database.log_bugs`
