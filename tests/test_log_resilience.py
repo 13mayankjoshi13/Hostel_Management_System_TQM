@@ -61,7 +61,8 @@ class TestLogResilience(unittest.TestCase):
             self.assertEqual(ls.log_error("Room", "E", "Low", "a"), "ERR-0005")
             self.assertEqual(ls.log_error("Room", "E", "Low", "a"), "ERR-0006")
         self.assertEqual(ls.log_error("Room", "E", "Low", "a"), "ERR-0007")
-        self.assertNotIn(b"\xe9", open(ls.ERROR_LOG_CSV, "rb").read())
+        with open(ls.ERROR_LOG_CSV, "rb") as f:
+            self.assertNotIn(b"\xe9", f.read())
         ids = [r["error_id"] for r in self._rows(ls.ERROR_LOG_CSV)]
         self.assertEqual(ids, ["ERR-0001", "ERR-0003", "ERR-0004", "ERR-0005", "ERR-0006", "ERR-0007"])
 
