@@ -1,13 +1,11 @@
-@"
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.db
 .venv/
 venv/
 .env
-app/database/backups/  
-app/database/hostel.db
+*.db
+*.db.before_restore
+app/database/backups/
 TQM/data/*.pending
-"@ | Out-File -Encoding utf8 .gitignore 
