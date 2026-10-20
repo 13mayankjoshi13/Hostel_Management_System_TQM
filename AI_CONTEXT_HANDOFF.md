@@ -565,3 +565,4 @@ Total: 46 bugs. Suite: 257 tests (18 UI tests skip without a display).
 
 Total: 47 bugs. Suite: 258 tests (18 UI tests skip without a display).
 Known gap closed: "backups sit on the same disk" (only if the variable is set on the machine).
+
