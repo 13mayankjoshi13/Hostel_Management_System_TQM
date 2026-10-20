@@ -533,6 +533,29 @@ class TestBugFixes(unittest.TestCase):
         with open(path, newline="") as f:
             self.assertEqual(list(csv.reader(f))[1][2], "'-cmd Kumar")
 
+    def test_bug_045_student_cannot_act_on_another_students_leave_or_complaint(self):
+        from datetime import date, timedelta
+        from app.services import complaint_service, leave_service
+        from app.utils import session
+        d1, d2 = [(date.today() + timedelta(days=n)).isoformat() for n in (10, 12)]
+        a = student_service.add_student("Ravi Kumar", "AB1234", "9876543210")
+        b = student_service.add_student("Sita Devi", "AB5678", "9876543211")
+        allocation_service.allocate_room(a, room_service.add_room("A1", "Single", 1))
+        allocation_service.allocate_room(b, room_service.add_room("A2", "Single", 1))
+        leave_id = leave_service.record_leave(a, d1, d2, "family function")
+        session.set_session("sita", "Student", b)
+        with self.assertRaises(ValidationError):
+            leave_service.record_leave(a, d1, d2, "family function")
+        with self.assertRaises(ValidationError):
+            leave_service.mark_returned(leave_id)
+        with self.assertRaises(ValidationError):
+            complaint_service.create_complaint(a, "Maintenance", "Water is leaking from the bathroom tap")
+        own = leave_service.record_leave(b, d1, d2, "family function")
+        leave_service.mark_returned(own)
+        complaint_service.create_complaint(b, "Maintenance", "Water is leaking from the bathroom tap")
+        session.set_session("warden", "Warden")
+        leave_service.mark_returned(leave_id)
+
     def test_bug_037_login_does_not_reveal_which_usernames_exist(self):
         import time
         auth_service.create_user("realuser", "Secret123", "Staff")
