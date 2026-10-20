@@ -55,5 +55,16 @@ STAFF_ROLES = ("Administrator", "Warden", "Staff")
 def require_roles(allowed, action: str) -> None:
     """Service-layer permission check; raises ValidationError so screens show it like any other rule."""
     if get_role() not in allowed:
+        from app.utils.logging_service import log_audit
         from app.utils.validation import ValidationError
+        log_audit("Security", "AccessDenied", get_user(), "Failure", f"Role '{get_role()}' tried to {action}.")
         raise ValidationError(f"Your role is not allowed to {action}.")
+
+
+def require_own_or_staff(student_id, action: str) -> None:
+    """Staff may act for any student; a Student session only for its own record."""
+    if get_role() in STAFF_ROLES:
+        return
+    if get_role() == "Student" and get_student_id() == student_id:
+        return
+    require_roles((), action)
