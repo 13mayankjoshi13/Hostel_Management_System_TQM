@@ -371,6 +371,14 @@ BUGS = [
         "corrective_action": "Names must start with a letter; the export neutralises formula prefixes in every cell, which also covers names saved before the rule.",
         "test_case": "tests/test_bug_fixes.py::test_bug_044_*",
     },
+    {
+        "module": "Allocation", "category": "Security", "severity": "High", "priority": "High",
+        "title": "A student session can record leave, mark returned and file complaints for other students",
+        "description": "record_leave, mark_returned and create_complaint had no permission check. The student portal checked ownership only for 'return', and only in its own wrapper, so the services accepted any student id from a student session.",
+        "root_cause": "Ownership was enforced in one portal function instead of in the shared services (the gap BUG-023 closed for staff-only functions).",
+        "corrective_action": "New session.require_own_or_staff: staff may act for anyone, a Student session only on its own student record. Applied in the three services.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_045_*",
+    },
 ]
 
 
