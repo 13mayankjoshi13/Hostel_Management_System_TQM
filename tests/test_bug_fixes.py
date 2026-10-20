@@ -567,6 +567,20 @@ class TestBugFixes(unittest.TestCase):
         user = auth_service.authenticate("warden1", "Newpass456")
         self.assertTrue(user["must_change_password"])
 
+    def test_bug_048_devanagari_names_are_accepted_and_the_export_opens_correctly_in_excel(self):
+        import csv
+        sid = student_service.add_student("मयंक जोशी", "AB1234", "9876543210")
+        allocation_service.allocate_room(sid, room_service.add_room("A1", "Single", 1))
+        for bad in ("ा रवि", "रवि 123"):
+            with self.assertRaises(ValidationError):
+                student_service.add_student(bad, "AB5678", "9876543211")
+        path = os.path.join(self.tmp, "x.csv")
+        allocation_service.export_allocation_list(path)
+        with open(path, "rb") as f:
+            self.assertTrue(f.read().startswith(b"\xef\xbb\xbf"))
+        with open(path, newline="", encoding="utf-8-sig") as f:
+            self.assertEqual(list(csv.reader(f))[1][2], "मयंक जोशी")
+
     def test_bug_037_login_does_not_reveal_which_usernames_exist(self):
         import time
         auth_service.create_user("realuser", "Secret123", "Staff")
