@@ -103,6 +103,24 @@ class TestBackup(unittest.TestCase):
             backup.sqlite3.connect = original
         self.assertEqual(backup.list_backups(self.db), [])
 
+    def test_bug_047_backup_is_also_copied_to_the_extra_folder_and_failure_is_logged(self):
+        extra = os.path.join(self.tmp, "usb")
+        os.environ[backup.EXTRA_DIR_ENV] = extra
+        try:
+            made = backup.create_backup(self.db)
+            self.assertEqual(os.listdir(extra), [os.path.basename(made)])
+            self.assertEqual(self._count(os.path.join(extra, os.path.basename(made))), 1)
+
+            os.remove(made)
+            blocker = os.path.join(self.tmp, "file.txt")
+            open(blocker, "w").close()
+            os.environ[backup.EXTRA_DIR_ENV] = os.path.join(blocker, "sub")
+            self.assertIsNotNone(backup.create_backup(self.db))
+            with open(ls.ERROR_LOG_CSV, newline="") as f:
+                self.assertIn("BackupCopyError", f.read())
+        finally:
+            os.environ.pop(backup.EXTRA_DIR_ENV, None)
+
 
 if __name__ == "__main__":
     unittest.main()
