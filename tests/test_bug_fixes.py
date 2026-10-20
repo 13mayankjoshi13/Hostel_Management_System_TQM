@@ -581,6 +581,17 @@ class TestBugFixes(unittest.TestCase):
         with open(path, newline="", encoding="utf-8-sig") as f:
             self.assertEqual(list(csv.reader(f))[1][2], "मयंक जोशी")
 
+    def test_bug_049_contact_numbers_are_accepted_in_common_written_forms(self):
+        from app.utils.validation import validate_contact_number
+        for written in ("9876543210", "+91 98765 43210", "+919876543210", "91-9876543210",
+                        "0 98765 43210", "098765-43210", "(98765) 43210", "00919876543210"):
+            self.assertEqual(validate_contact_number(written), "9876543210")
+        for bad in ("12345 67890", "+91 12345 67890", "98765 4321", "+44 9876543210", "98765x43210", "+91"):
+            with self.assertRaises(ValidationError):
+                validate_contact_number(bad)
+        sid = student_service.add_student("Ravi Kumar", "AB1234", "+91 98765 43210")
+        self.assertEqual(student_service.get_all_students()[0]["contact_number"], "9876543210")
+
     def test_bug_037_login_does_not_reveal_which_usernames_exist(self):
         import time
         auth_service.create_user("realuser", "Secret123", "Staff")
