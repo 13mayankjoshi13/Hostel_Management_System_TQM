@@ -379,6 +379,14 @@ BUGS = [
         "corrective_action": "New session.require_own_or_staff: staff may act for anyone, a Student session only on its own student record. Applied in the three services.",
         "test_case": "tests/test_bug_fixes.py::test_bug_045_*",
     },
+    {
+        "module": "Other", "category": "Security", "severity": "Medium", "priority": "Medium",
+        "title": "Administrator password reset leaves the account locked and the new password never has to be changed",
+        "description": "change_password (admin resets another user's password) cleared the must-change flag and did not clear the login lockout, so a locked-out user stayed locked after the reset, and the password known to the administrator stayed valid indefinitely.",
+        "root_cause": "The reset path was written before the lockout (BUG-025) and forced-change (BUG-028) features and never updated.",
+        "corrective_action": "Reset clears failed_attempts and locked_until, and sets must_change_password for every account except the administrator's own.",
+        "test_case": "tests/test_bug_fixes.py::test_bug_046_*",
+    },
 ]
 
 
