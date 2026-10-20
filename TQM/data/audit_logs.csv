@@ -160,3 +160,6 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-20T13:31:46,system_admin,Administrator,Bug,Create,46,Success,"Logged bug 'A student session can record leave, mark returned and file complaints for other students' (High/High)."
 2026-10-20T13:31:46,system_admin,Administrator,Bug,StartProgress,46,Success,Moved to In Progress.
 2026-10-20T13:31:46,system_admin,Administrator,Bug,MarkFixed,46,Success,Fixed by Mayank. Root cause: Ownership was enforced in one portal function instead of in 
+2026-10-20T13:36:36,system_admin,Administrator,Bug,Create,47,Success,Logged bug 'Administrator password reset leaves the account locked and the new password never has to be changed' (Medium/Medium).
+2026-10-20T13:36:37,system_admin,Administrator,Bug,StartProgress,47,Success,Moved to In Progress.
+2026-10-20T13:36:37,system_admin,Administrator,Bug,MarkFixed,47,Success,Fixed by Mayank. Root cause: The reset path was written before the lockout (BUG-025) and 
