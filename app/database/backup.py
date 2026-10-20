@@ -9,6 +9,7 @@ from app.database import db as db_module
 from app.utils.logging_service import log_audit, log_error
 
 KEEP_BACKUPS = 7
+EXTRA_DIR_ENV = "HOSTEL_EXTRA_BACKUP_DIR"
 _PREFIX = "hostel_"
 
 
@@ -51,6 +52,22 @@ def _is_hostel_database(path: str) -> bool:
     return _REQUIRED_TABLES <= names
 
 
+def _copy_elsewhere(target: str, keep: int) -> None:
+    """If HOSTEL_EXTRA_BACKUP_DIR names a folder (another drive, USB stick, synced folder), keep a copy there too."""
+    extra = os.environ.get(EXTRA_DIR_ENV, "").strip()
+    if not extra:
+        return
+    try:
+        os.makedirs(extra, exist_ok=True)
+        shutil.copy2(target, os.path.join(extra, os.path.basename(target)))
+        copies = sorted(n for n in os.listdir(extra) if n.startswith(_PREFIX) and n.endswith(".db"))
+        for old in copies[:-keep]:
+            os.remove(os.path.join(extra, old))
+    except OSError as exc:
+        log_error("Database", "BackupCopyError", "High", "create_backup",
+                   status="Open", message_reference=f"Could not copy the backup to {extra}: {exc}")
+
+
 def create_backup(db_path: str = None, keep: int = KEEP_BACKUPS):
     """One backup per calendar day. A damaged database is never backed up, so it cannot push out good copies."""
     db_path = db_path or db_module.DATABASE_PATH
@@ -81,6 +98,7 @@ def create_backup(db_path: str = None, keep: int = KEEP_BACKUPS):
         source.close()
     for old in list_backups(db_path)[:-keep]:
         os.remove(old)
+    _copy_elsewhere(target, keep)
     log_audit("Database", "Backup", os.path.basename(target), "Success", "Daily database backup created.")
     return target
 
