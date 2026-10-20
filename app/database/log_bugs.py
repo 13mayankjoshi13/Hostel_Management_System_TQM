@@ -395,6 +395,14 @@ BUGS = [
         "corrective_action": "Optional environment variable HOSTEL_EXTRA_BACKUP_DIR: each daily backup is also copied there (same 7-day retention). A failed copy is written to the error log and never stops start-up.",
         "test_case": "tests/test_backup.py::test_bug_047_*",
     },
+    {
+        "module": "Student", "category": "Validation", "severity": "High", "priority": "High",
+        "title": "Devanagari (Hindi) student names are rejected, and the allotment CSV shows garbled text in Excel",
+        "description": "Names such as 'मयंक जोशी' failed validation because vowel signs are combining marks, which str.isalpha() rejects. Separately, the allotment CSV was written as plain UTF-8 without a byte-order mark, so Excel on Windows shows non-English names as garbage.",
+        "root_cause": "validate_student_name only accepted alphabetic characters; export used encoding utf-8.",
+        "corrective_action": "Accept Unicode combining marks after a letter and normalise names to NFC; write the export as UTF-8 with BOM (utf-8-sig).",
+        "test_case": "tests/test_bug_fixes.py::test_bug_048_*",
+    },
 ]
 
 
