@@ -1,0 +1,41 @@
+name: Build and release Windows EXE
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -t .
+
+      - name: Build executable
+        run: |
+          python -m pip install --upgrade pip pyinstaller
+          pyinstaller --noconfirm --onefile --windowed --name HostelManagementSystem run.py
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HostelManagementSystem
+          path: dist/HostelManagementSystem.exe
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/HostelManagementSystem.exe
+          generate_release_notes: true
