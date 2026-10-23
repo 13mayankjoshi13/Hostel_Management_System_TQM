@@ -411,6 +411,14 @@ BUGS = [
         "corrective_action": "Strip spaces, hyphens and brackets and a +91 / 0091 / 91 / 0 prefix, then apply the same ten-digit rule (starts with 6-9). The stored value is always the plain ten digits.",
         "test_case": "tests/test_bug_fixes.py::test_bug_049_*",
     },
+    {
+        "module": "Database", "category": "Data Integrity", "severity": "Critical", "priority": "High",
+        "title": "Packaged .exe would lose the database, backups and logs on every exit",
+        "description": "Paths were built from the location of the source files. A PyInstaller one-file .exe unpacks to a temporary folder that is deleted when the program closes, so students, rooms, allocations, backups and the evidence logs would all be written there and vanish.",
+        "root_cause": "config.py assumed the program folder is permanent and writable.",
+        "corrective_action": "When the program runs frozen, data goes to %LOCALAPPDATA%\\HostelManagementSystem (database) and its logs subfolder; running from source is unchanged.",
+        "test_case": "tests/test_packaged_paths.py::test_bug_050_*",
+    },
 ]
 
 
