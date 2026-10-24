@@ -593,3 +593,11 @@ Total: 49 bugs. Suite: 260 tests (18 UI tests skip without a display).
 Release: `.github/workflows/release-exe.yml` (tag `v*` → tests → PyInstaller one-file → GitHub Release). Replaces the misnamed `android-release.yml`.
 There is no Android/APK build: the app is Tkinter and cannot run on Android.
 Total: 51 bug entries. Suite: 262 tests (18 UI tests skip without a display).
+
+## Update – BUG-051 (append; do not replace the file)
+
+| Bug | Severity | Summary |
+|---|---|---|
+| 051 | Medium | `initialize_database` closes its connection in `finally` (a failed open left the file locked on Windows) |
+
+CI runs the suite on windows-latest before building the exe. `test_timestamps` skips where `time.tzset` is missing. Total: 52 bug entries. Suite: 263 tests.
