@@ -53,6 +53,33 @@ class TestStartupErrors(unittest.TestCase):
         finally:
             db_module.DATABASE_PATH = original
         self.assertTrue(shown.called)
+        os.remove(bad)
+
+    def test_bug_051_failed_schema_setup_does_not_leave_the_database_file_open(self):
+        import sqlite3
+
+        import app.database.db as db_module
+
+        bad = os.path.join(self.tmp, "bad.db")
+        with open(bad, "wb") as f:
+            f.write(b"this is not a sqlite database" * 50)
+        closed = []
+
+        class Tracked(sqlite3.Connection):
+            def close(self):
+                closed.append(True)
+                super().close()
+
+        def tracked(path=None):
+            conn = sqlite3.connect(path, factory=Tracked)
+            conn.row_factory = sqlite3.Row
+            return conn
+
+        with mock.patch.object(db_module, "get_connection", tracked):
+            with self.assertRaises(sqlite3.DatabaseError):
+                db_module.initialize_database(bad)
+        self.assertEqual(closed, [True])
+        os.remove(bad)
 
 
 if __name__ == "__main__":
