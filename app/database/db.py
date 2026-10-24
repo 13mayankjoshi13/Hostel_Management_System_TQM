@@ -5,13 +5,18 @@ get_connection() returns a connection with foreign keys enabled.
 initialize_database() creates all tables if they do not already exist
 (idempotent — safe to call every time the app starts).
 """
+import os
 import sqlite3
 
 from app.config import DATABASE_PATH
 
 
 def get_connection(db_path: str = None) -> sqlite3.Connection:
-    conn = sqlite3.connect(db_path or DATABASE_PATH)
+    path = db_path or DATABASE_PATH
+    folder = os.path.dirname(os.path.abspath(path))
+    if not os.path.isdir(folder):
+        os.makedirs(folder, exist_ok=True)
+    conn = sqlite3.connect(path)
     conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
@@ -36,6 +41,13 @@ def _convert_legacy_local_timestamps(cur) -> None:
 
 def initialize_database(db_path: str = None) -> None:
     conn = get_connection(db_path)
+    try:
+        _create_schema(conn)
+    finally:
+        conn.close()
+
+
+def _create_schema(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
 
     cur.execute("""
@@ -186,4 +198,3 @@ def initialize_database(db_path: str = None) -> None:
             pass
 
     conn.commit()
-    conn.close()
