@@ -16,6 +16,8 @@ import app.utils.logging_service as ls
 class TestTimestamps(unittest.TestCase):
 
     def setUp(self):
+        if not hasattr(time, "tzset"):
+            self.skipTest("time zone switching is not available on this platform")
         self._tz = os.environ.get("TZ")
         os.environ["TZ"] = "Asia/Kolkata"
         time.tzset()
