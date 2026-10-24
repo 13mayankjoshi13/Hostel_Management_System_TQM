@@ -419,6 +419,14 @@ BUGS = [
         "corrective_action": "When the program runs frozen, data goes to %LOCALAPPDATA%\\HostelManagementSystem (database) and its logs subfolder; running from source is unchanged.",
         "test_case": "tests/test_packaged_paths.py::test_bug_050_*",
     },
+    {
+        "module": "Database", "category": "Data Integrity", "severity": "Medium", "priority": "Medium",
+        "title": "A database that fails to open leaves its file locked until the program exits",
+        "description": "initialize_database did not close its connection when a statement failed (for example a corrupt or unreadable file). On Windows the file then stays locked, so the start-up error window appears but the damaged file cannot be moved, replaced or restored from backup until the program is closed.",
+        "root_cause": "conn.close() ran only on the success path.",
+        "corrective_action": "The schema setup runs inside try/finally so the connection is always closed.",
+        "test_case": "tests/test_startup_errors.py::test_bug_051_*",
+    },
 ]
 
 
