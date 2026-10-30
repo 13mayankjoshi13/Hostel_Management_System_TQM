@@ -65,6 +65,13 @@ STATUS_FG = {
     "On Leave": "#E58A00",
     "Returned": "#16A34A",
     "Pending": "#E58A00",
+    "Unpaid": "#E58A00",
+    "Paid": "#16A34A",
+    "Waived": "#71717A",
+    "Present": "#16A34A",
+    "Absent": "#DC2626",
+    "Not marked": "#71717A",
+    "Inactive": "#71717A",
 }
 
 
