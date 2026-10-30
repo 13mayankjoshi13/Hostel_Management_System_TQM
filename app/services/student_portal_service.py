@@ -6,7 +6,7 @@ the caller, so one student can never read or change another's data.
 import sqlite3
 
 from app.database.db import get_connection
-from app.services import complaint_service, leave_service, student_service
+from app.services import complaint_service, fine_service, leave_service, student_service
 from app.utils import session
 from app.utils.logging_service import log_error
 from app.utils.timefmt import localise_rows
@@ -91,3 +91,7 @@ def update_my_details(name: str, contact_number: str) -> None:
     sid = _current_student_id()
     current = my_details()
     student_service._update(sid, name, current["registration_number"], contact_number)
+
+
+def my_fines() -> list:
+    return fine_service.get_fines_for_student(_current_student_id())
