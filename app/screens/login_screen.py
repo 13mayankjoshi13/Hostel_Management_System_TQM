@@ -12,6 +12,12 @@ from app.config import APP_NAME
 from app.services import auth_service
 from app.utils.validation import ValidationError
 
+_PANEL_TEXT = {
+    "Student": ("Student login", "Sign in to see your room, fines, leave and complaints."),
+    "Staff": ("Staff login", "Wardens and staff: sign in to manage the hostel."),
+    "Administrator": ("Administrator login", "Super admin access: accounts, quality tools and everything else."),
+}
+
 
 class LoginScreen(tk.Toplevel):
     def __init__(self, master, fonts, on_success):
@@ -45,10 +51,22 @@ class LoginScreen(tk.Toplevel):
         wrapper = tk.Frame(self, bg=COLORS["surface"])
         wrapper.pack(side="left", fill="both", expand=True, padx=44, pady=44)
 
-        tk.Label(wrapper, text="Welcome back", bg=COLORS["surface"], fg=COLORS["text_primary"],
-                  font=fonts["header"]).pack(anchor="w")
-        tk.Label(wrapper, text="Sign in to continue.", bg=COLORS["surface"],
-                  fg=COLORS["text_secondary"], font=fonts["subheader"]).pack(anchor="w", pady=(2, 22))
+        self.panel = "Student"
+        tabs = tk.Frame(wrapper, bg=COLORS["surface"])
+        tabs.pack(fill="x", pady=(0, 16))
+        self._tab_labels = {}
+        for name in _PANEL_TEXT:
+            tab = tk.Label(tabs, text=name, font=fonts["label"], cursor="hand2", padx=12, pady=6)
+            tab.pack(side="left", padx=(0, 6))
+            tab.bind("<Button-1>", lambda e, n=name: self.select_panel(n))
+            self._tab_labels[name] = tab
+
+        self.title_label = tk.Label(wrapper, text="", bg=COLORS["surface"], fg=COLORS["text_primary"],
+                                     font=fonts["header"])
+        self.title_label.pack(anchor="w")
+        self.subtitle_label = tk.Label(wrapper, text="", bg=COLORS["surface"], fg=COLORS["text_secondary"],
+                                         font=fonts["subheader"], wraplength=340, justify="left")
+        self.subtitle_label.pack(anchor="w", pady=(2, 18))
 
         self.username_var = tk.StringVar()
         self.password_var = tk.StringVar()
@@ -70,19 +88,36 @@ class LoginScreen(tk.Toplevel):
         ttk.Button(wrapper, text="Log In", style="Primary.TButton",
                     command=self.on_login).pack(fill="x", pady=(4, 0))
 
-        signup = tk.Label(wrapper, text="New student? Create an account", bg=COLORS["surface"],
-                           fg=COLORS["accent"], font=fonts["label"], cursor="hand2")
-        signup.pack(anchor="w", pady=(14, 0))
-        signup.bind("<Button-1>", lambda e: SignupDialog(self, self.fonts))
+        self.signup_label = tk.Label(wrapper, text="New student? Create an account", bg=COLORS["surface"],
+                                      fg=COLORS["accent"], font=fonts["label"], cursor="hand2")
+        self.signup_label.bind("<Button-1>", lambda e: SignupDialog(self, self.fonts))
 
-        tk.Label(wrapper, text="First run default: admin / admin123",
-                  bg=COLORS["surface"], fg=COLORS["text_tertiary"], font=fonts["label"]).pack(
-            anchor="w", pady=(10, 0))
+        self.hint_label = tk.Label(wrapper, text="First run default: admin / admin123",
+                                    bg=COLORS["surface"], fg=COLORS["text_tertiary"], font=fonts["label"])
 
         username_entry.bind("<Return>", lambda e: password_entry.focus_set())
         password_entry.bind("<Return>", lambda e: self.on_login())
+        self.select_panel("Student")
         self.grab_set()
         username_entry.focus_set()
+
+    def select_panel(self, name: str):
+        self.panel = name
+        title, subtitle = _PANEL_TEXT[name]
+        self.title_label.configure(text=title)
+        self.subtitle_label.configure(text=subtitle)
+        for tab_name, tab in self._tab_labels.items():
+            active = tab_name == name
+            tab.configure(bg=COLORS["accent"] if active else COLORS["background"],
+                          fg="#FFFFFF" if active else COLORS["text_secondary"])
+        self.signup_label.pack_forget()
+        self.hint_label.pack_forget()
+        if name == "Student":
+            self.signup_label.pack(anchor="w", pady=(14, 0))
+        elif name == "Administrator":
+            self.hint_label.pack(anchor="w", pady=(14, 0))
+        self.error_label.configure(text="")
+        self.password_var.set("")
 
     def on_close_request(self):
         """Closing the log-in window with the X button quits the application (it cannot run without a login)."""
@@ -91,7 +126,7 @@ class LoginScreen(tk.Toplevel):
 
     def on_login(self):
         try:
-            user = auth_service.authenticate(self.username_var.get(), self.password_var.get())
+            user = auth_service.authenticate(self.username_var.get(), self.password_var.get(), self.panel)
             self.grab_release()
             self.destroy()
             self._on_success(user)
