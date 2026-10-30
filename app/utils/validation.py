@@ -190,12 +190,58 @@ def validate_event_kind(kind: str) -> str:
 def validate_assigned_to(name: str) -> str:
     if name is None or not str(name).strip():
         raise ValidationError("Assigned staff name cannot be empty.")
-    name = str(name).strip()
+    name = unicodedata.normalize("NFC", str(name).strip())
     if len(name) < 2 or len(name) > 50:
         raise ValidationError("Assigned staff name must be between 2 and 50 characters.")
-    if not all(ch.isalpha() or ch.isspace() or ch in ".'-" for ch in name):
+    if not all(ch.isalpha() or ch.isspace() or ch in ".'-" or unicodedata.category(ch).startswith("M") for ch in name):
         raise ValidationError("Assigned staff name contains invalid characters.")
     return name
+
+
+WORKER_TRADES = ("Cleaner", "Electrician", "Plumber", "Carpenter", "Security", "Cook", "Gardener", "Other")
+
+
+def validate_worker_name(name: str) -> str:
+    try:
+        return validate_assigned_to(name)
+    except ValidationError as exc:
+        raise ValidationError(str(exc).replace("Assigned staff name", "Worker name"))
+
+
+def validate_worker_trade(trade: str) -> str:
+    if trade not in WORKER_TRADES:
+        raise ValidationError(f"Worker role must be one of: {', '.join(WORKER_TRADES)}.")
+    return trade
+
+
+def validate_fine_reason(reason: str) -> str:
+    if reason is None or not str(reason).strip():
+        raise ValidationError("Fine reason cannot be empty.")
+    reason = " ".join(str(reason).split())
+    if len(reason) < 3 or len(reason) > 200:
+        raise ValidationError("Fine reason must be between 3 and 200 characters.")
+    return reason
+
+
+MAX_FINE_RUPEES = 50000
+
+
+def validate_fine_amount(amount) -> int:
+    """Rupees as typed (e.g. '250' or '250.50') -> whole paise. At most two decimals, 1 to 50,000 rupees."""
+    from decimal import Decimal, InvalidOperation
+
+    if isinstance(amount, bool) or amount is None:
+        raise ValidationError("Enter the fine amount in rupees.")
+    text = str(amount).strip().replace(",", "").lstrip("₹").strip()
+    try:
+        value = Decimal(text)
+    except InvalidOperation:
+        raise ValidationError("Enter the fine amount in rupees, for example 250 or 250.50.")
+    if not value.is_finite() or value != value.quantize(Decimal("0.01")):
+        raise ValidationError("The fine amount can have at most two decimal places.")
+    if value < 1 or value > MAX_FINE_RUPEES:
+        raise ValidationError(f"The fine amount must be between 1 and {MAX_FINE_RUPEES:,} rupees.")
+    return int(value * 100)
 
 
 def validate_resolution_notes(notes: str) -> str:
