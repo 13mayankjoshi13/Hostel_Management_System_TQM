@@ -5,7 +5,7 @@ complaint_service — this screen only calls it and shows the result.
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 
-from app.services import student_service, complaint_service
+from app.services import student_service, complaint_service, worker_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import keep_selection, COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, status_tag, form_card, split_layout
@@ -102,11 +102,34 @@ class ComplaintScreen(tk.Frame):
             return None
         return self._complaint_rows.get(selected[0])
 
+    def _pick_worker(self, names: list):
+        """Small modal list of active workers; returns the chosen name or None."""
+        dialog = tk.Toplevel(self)
+        dialog.title("Assign Complaint")
+        dialog.transient(self.winfo_toplevel())
+        dialog.resizable(False, False)
+        tk.Label(dialog, text="Assign to worker:", font=self.fonts["body"]).pack(padx=16, pady=(14, 6), anchor="w")
+        var = tk.StringVar(value=names[0])
+        ttk.Combobox(dialog, textvariable=var, values=names, state="readonly", width=32).pack(padx=16)
+        chosen = []
+        row = tk.Frame(dialog)
+        row.pack(pady=14)
+        ttk.Button(row, text="Assign", style="Primary.TButton",
+                    command=lambda: (chosen.append(var.get()), dialog.destroy())).pack(side="left", padx=4)
+        ttk.Button(row, text="Cancel", command=dialog.destroy).pack(side="left", padx=4)
+        dialog.grab_set()
+        self.wait_window(dialog)
+        return chosen[0] if chosen else None
+
     def on_assign(self):
         complaint = self._get_selected_complaint()
         if complaint is None:
             return
-        assigned_to = simpledialog.askstring("Assign Complaint", "Assign to (staff name):", parent=self)
+        workers = [w["name"] for w in worker_service.get_workers(active_only=True)]
+        if workers:
+            assigned_to = self._pick_worker(workers)
+        else:
+            assigned_to = simpledialog.askstring("Assign Complaint", "Assign to (staff name):", parent=self)
         if assigned_to is None:
             return
         try:
