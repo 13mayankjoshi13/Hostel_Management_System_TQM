@@ -107,7 +107,18 @@ def create_user(username: str, password: str, role: str, student_id: int = None,
         conn.close()
 
 
-def authenticate(username: str, password: str) -> dict:
+LOGIN_PANELS = {
+    "Student": ("Student",),
+    "Staff": ("Warden", "Staff"),
+    "Administrator": ("Administrator",),
+}
+
+
+def panel_for_role(role: str) -> str:
+    return next((panel for panel, roles in LOGIN_PANELS.items() if role in roles), "Administrator")
+
+
+def authenticate(username: str, password: str, panel: str = None) -> dict:
     """
     Verify credentials and, on success, start the session (so the
     audit log entry for this very login already shows the right user).
@@ -117,6 +128,8 @@ def authenticate(username: str, password: str) -> dict:
     """
     if not username or not password:
         raise ValidationError("Enter both a username and a password.")
+    if panel is not None and panel not in LOGIN_PANELS:
+        raise ValidationError("Unknown login panel.")
 
     conn = get_connection()
     try:
@@ -156,6 +169,12 @@ def authenticate(username: str, password: str) -> dict:
             conn.commit()
         if user["status"] != "Active":
             raise ValidationError("Your account is waiting for an administrator to approve it.")
+
+        if panel is not None and user["role"] not in LOGIN_PANELS[panel]:
+            log_audit("Auth", "LoginWrongPanel", str(user["user_id"]), "Failure",
+                       f"'{user['username']}' ({user['role']}) tried the {panel} login.")
+            raise ValidationError(f"This account signs in on the {panel_for_role(user['role'])} login. "
+                                  "Pick that tab and try again.")
 
         session.set_session(user["username"], user["role"], user["student_id"])
         log_audit("Auth", "Login", str(user["user_id"]), "Success",
