@@ -184,6 +184,45 @@ def _create_schema(conn: sqlite3.Connection) -> None:
 
     _convert_legacy_local_timestamps(cur)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS fines (
+            fine_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            amount_paise INTEGER NOT NULL CHECK (amount_paise > 0),
+            reason TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Unpaid',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            paid_at TEXT,
+            payment_method TEXT,
+            razorpay_link_id TEXT,
+            razorpay_link_url TEXT,
+            razorpay_payment_id TEXT UNIQUE,
+            receipt_number TEXT UNIQUE,
+            FOREIGN KEY (student_id) REFERENCES students(student_id)
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS workers (
+            worker_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            trade TEXT NOT NULL,
+            contact_number TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Active',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS worker_attendance (
+            worker_id INTEGER NOT NULL,
+            work_date TEXT NOT NULL,
+            status TEXT NOT NULL,
+            PRIMARY KEY (worker_id, work_date),
+            FOREIGN KEY (worker_id) REFERENCES workers(worker_id)
+        )
+    """)
+
     for index_sql in (
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_one_active_room_per_student "
         "ON allocations(student_id) WHERE status = 'Active'",
