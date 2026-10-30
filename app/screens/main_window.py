@@ -27,6 +27,9 @@ from app.screens.my_room_screen import MyRoomScreen
 from app.screens.my_complaints_screen import MyComplaintsScreen
 from app.screens.my_leave_screen import MyLeaveScreen
 from app.screens.my_details_screen import MyDetailsScreen
+from app.screens.fine_screen import FineScreen
+from app.screens.worker_screen import WorkerScreen
+from app.screens.my_fines_screen import MyFinesScreen
 from app.utils import session
 from app.utils.idle import IdleTracker
 from app.utils.logging_service import log_audit
@@ -41,17 +44,20 @@ _NAV_ITEMS = [
     ("Allocation", "Room Allocation", "key"),
     ("Complaints", "Complaints", "chat"),
     ("Leaves", "Leave Tracking", "plane"),
+    ("Fines", "Fines", "clipboard"),
+    ("Workers", "Workers", "users"),
     ("Bugs", "Bug Tracker", "bug"),
     ("Quality", "Quality Monitoring", "chart"),
     ("Users", "User Management", "users"),
     ("MyRoom", "My Room", "home"),
     ("MyComplaints", "My Complaints", "chat"),
     ("MyLeave", "My Leave", "plane"),
+    ("MyFines", "My Fines", "clipboard"),
     ("MyDetails", "My Details", "user"),
 ]
 
 _ADMIN_ONLY = {"Users"}
-_STUDENT_ONLY = {"MyRoom", "MyComplaints", "MyLeave", "MyDetails"}
+_STUDENT_ONLY = {"MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyDetails"}
 _EVERYONE = {"Calendar"}
 
 
@@ -322,6 +328,9 @@ class MainWindow(tk.Tk):
         self.screens["MyRoom"] = MyRoomScreen(self.content, self.fonts)
         self.screens["MyComplaints"] = MyComplaintsScreen(self.content, self.fonts)
         self.screens["MyLeave"] = MyLeaveScreen(self.content, self.fonts)
+        self.screens["MyFines"] = MyFinesScreen(self.content, self.fonts)
+        self.screens["Fines"] = FineScreen(self.content, self.fonts)
+        self.screens["Workers"] = WorkerScreen(self.content, self.fonts)
         self.screens["MyDetails"] = MyDetailsScreen(self.content, self.fonts)
         for screen in self.screens.values():
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
