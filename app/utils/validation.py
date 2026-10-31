@@ -279,13 +279,13 @@ def validate_password(password: str) -> str:
 
 
 def validate_role(role: str) -> str:
-    allowed = {"Administrator", "Warden", "Staff", "Student"}
+    allowed = ("Super Admin", "Administrator", "Warden", "Staff", "Student")
     if role is None or not str(role).strip():
         raise ValidationError("Role cannot be empty.")
-    role = str(role).strip().capitalize()
-    if role not in allowed:
-        raise ValidationError(f"Role must be one of: {', '.join(sorted(allowed))}.")
-    return role
+    match = {name.lower(): name for name in allowed}.get(" ".join(str(role).split()).lower())
+    if match is None:
+        raise ValidationError(f"Role must be one of: {', '.join(allowed)}.")
+    return match
 
 
 def validate_bug_module(module: str) -> str:
