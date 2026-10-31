@@ -30,7 +30,7 @@ def add_student(name: str, registration_number: str, contact_number: str) -> int
     number included) — the UI is expected to catch this and show it
     directly to the user.
     """
-    session.require_roles(session.STAFF_ROLES, "add students")
+    session.require_roles(session.WARDEN_ROLES, "add students")
     clean_name = validate_student_name(name)
     clean_reg_no = validate_registration_number(registration_number)
     clean_contact = validate_contact_number(contact_number)
@@ -104,6 +104,7 @@ def update_student(student_id: int, name: str, registration_number: str, contact
     student_id = validate_record_id(student_id, "Please select a valid student.")
     if session.get_role() == "Student":
         raise ValidationError("Students can only edit their own details from My Details.")
+    session.require_roles(session.WARDEN_ROLES, "edit student records")
     _update(student_id, name, registration_number, contact_number)
 
 
@@ -143,7 +144,7 @@ def _update(student_id: int, name: str, registration_number: str, contact_number
 
 
 def delete_student(student_id: int) -> None:
-    session.require_roles(session.STAFF_ROLES, "delete students")
+    session.require_roles(session.WARDEN_ROLES, "delete students")
     student_id = validate_record_id(student_id, "Please select a valid student.")
     conn = get_connection()
     try:
