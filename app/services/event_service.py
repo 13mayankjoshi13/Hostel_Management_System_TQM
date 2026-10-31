@@ -15,7 +15,7 @@ from app.utils.validation import (
     validate_record_id,validate_event_date, validate_event_title,
                                     validate_event_kind, ValidationError)
 
-_EDITOR_ROLES = {"Administrator", "Warden"}
+_EDITOR_ROLES = set(session.WARDEN_ROLES)
 
 DEFAULT_HOLIDAYS = [
     ("2026-01-14", "Makar Sankranti"), ("2026-01-23", "Parakram Divas"),
