@@ -63,10 +63,12 @@ def _verify_password(password: str, stored: str) -> bool:
 def create_user(username: str, password: str, role: str, student_id: int = None,
                 must_change_password: bool = False) -> int:
     """Validate and insert a new user account. Student accounts must link to a student record."""
-    session.require_roles(("Administrator",), "create accounts")
+    session.require_roles(session.ADMIN_ROLES, "create accounts")
     clean_username = validate_username(username)
     clean_password = validate_password(password)
     clean_role = validate_role(role)
+    if clean_role in session.ADMIN_ROLES:
+        session.require_roles(session.SUPER_ROLES, f"create {clean_role} accounts")
     if clean_role != "Student" and student_id is not None:
         raise ValidationError("Only Student accounts can be linked to a student record.")
     if clean_role == "Student" and student_id is None:
@@ -110,12 +112,13 @@ def create_user(username: str, password: str, role: str, student_id: int = None,
 LOGIN_PANELS = {
     "Student": ("Student",),
     "Staff": ("Warden", "Staff"),
-    "Administrator": ("Administrator",),
+    "Admin": ("Administrator",),
+    "Super Admin": ("Super Admin",),
 }
 
 
 def panel_for_role(role: str) -> str:
-    return next((panel for panel, roles in LOGIN_PANELS.items() if role in roles), "Administrator")
+    return next((panel for panel, roles in LOGIN_PANELS.items() if role in roles), "Admin")
 
 
 def authenticate(username: str, password: str, panel: str = None) -> dict:
@@ -212,6 +215,15 @@ def ensure_default_admin() -> None:
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) AS n FROM users")
         if cur.fetchone()["n"] > 0:
+            cur.execute("SELECT COUNT(*) AS n FROM users WHERE role = 'Super Admin'")
+            if cur.fetchone()["n"] == 0:
+                cur.execute("SELECT user_id, username FROM users WHERE role = 'Administrator' ORDER BY user_id LIMIT 1")
+                oldest = cur.fetchone()
+                if oldest is not None:
+                    cur.execute("UPDATE users SET role = 'Super Admin' WHERE user_id = ?", (oldest["user_id"],))
+                    conn.commit()
+                    log_audit("User", "Promote", str(oldest["user_id"]), "Success",
+                               f"'{oldest['username']}' became the Super Admin (first Administrator account).")
             cur.execute("SELECT user_id, password_hash FROM users WHERE username = 'admin' AND must_change_password = 0")
             row = cur.fetchone()
             if row is not None and _verify_password(DEFAULT_ADMIN_PASSWORD, row["password_hash"]):
@@ -220,11 +232,11 @@ def ensure_default_admin() -> None:
             return
         cur.execute(
             "INSERT INTO users (username, password_hash, role, must_change_password) VALUES (?, ?, ?, 1)",
-            ("admin", _hash_password(DEFAULT_ADMIN_PASSWORD), "Administrator"),
+            ("admin", _hash_password(DEFAULT_ADMIN_PASSWORD), "Super Admin"),
         )
         conn.commit()
         log_audit("User", "Create", "bootstrap", "Success",
-                   "Default administrator account created on first run "
+                   "Default Super Admin account created on first run "
                    "(username: admin, password: admin123 — change this).")
     except sqlite3.Error as exc:
         log_error("User", "DatabaseError", "Critical", "ensure_default_admin",
@@ -234,7 +246,7 @@ def ensure_default_admin() -> None:
 
 
 def list_users() -> list:
-    session.require_roles(("Administrator",), "view accounts")
+    session.require_roles(session.ADMIN_ROLES, "view accounts")
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -253,7 +265,7 @@ def list_users() -> list:
 
 
 def change_password(user_id: int, new_password: str) -> None:
-    session.require_roles(("Administrator",), "change passwords")
+    session.require_roles(session.ADMIN_ROLES, "change passwords")
     user_id = validate_record_id(user_id, "Please select a valid user.")
     clean_password = validate_password(new_password)
     if clean_password in KNOWN_DEFAULT_PASSWORDS:
@@ -261,10 +273,12 @@ def change_password(user_id: int, new_password: str) -> None:
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT username FROM users WHERE user_id = ?", (user_id,))
+        cur.execute("SELECT username, role FROM users WHERE user_id = ?", (user_id,))
         row = cur.fetchone()
         if row is None:
             raise ValidationError("That user account does not exist.")
+        if row["role"] in session.ADMIN_ROLES and row["username"] != session.get_user():
+            session.require_roles(session.SUPER_ROLES, f"reset the password of a {row['role']}")
         own_account = session.is_logged_in() and row["username"] == session.get_user()
         cur.execute("UPDATE users SET password_hash = ?, must_change_password = ?, "
                     "failed_attempts = 0, locked_until = NULL WHERE user_id = ?",
@@ -355,7 +369,7 @@ def complete_forced_password_change(new_password: str) -> None:
 
 
 def delete_user(user_id: int) -> None:
-    session.require_roles(("Administrator",), "delete accounts")
+    session.require_roles(session.ADMIN_ROLES, "delete accounts")
     user_id = validate_record_id(user_id, "Please select a valid user.")
     conn = get_connection()
     try:
@@ -366,10 +380,14 @@ def delete_user(user_id: int) -> None:
             raise ValidationError("That user account does not exist.")
         if row["username"] == session.get_user() and session.is_logged_in():
             raise ValidationError("You cannot delete the account you are logged in with.")
-        if row["role"] == "Administrator":
-            cur.execute("SELECT COUNT(*) AS n FROM users WHERE role = 'Administrator'")
+        if row["role"] in session.ADMIN_ROLES:
+            session.require_roles(session.SUPER_ROLES, f"delete a {row['role']} account")
+            cur.execute("SELECT COUNT(*) AS n FROM users WHERE role = ?", (row["role"],))
+            if row["role"] == "Super Admin" and cur.fetchone()["n"] <= 1:
+                raise ValidationError("Cannot delete the last remaining Super Admin.")
+            cur.execute("SELECT COUNT(*) AS n FROM users WHERE role IN ('Super Admin', 'Administrator')")
             if cur.fetchone()["n"] <= 1:
-                raise ValidationError("Cannot delete the last remaining Administrator.")
+                raise ValidationError("Cannot delete the last remaining administrator account.")
         cur.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
         conn.commit()
         log_audit("User", "Delete", str(user_id), "Success",
@@ -447,7 +465,7 @@ def register_student(username: str, password: str, registration_number: str, con
 
 def approve_user(user_id: int) -> None:
     user_id = validate_record_id(user_id, "Please select a valid user.")
-    if session.get_role() != "Administrator":
+    if session.get_role() not in session.ADMIN_ROLES:
         raise ValidationError("Only an Administrator can approve accounts.")
     conn = get_connection()
     try:
