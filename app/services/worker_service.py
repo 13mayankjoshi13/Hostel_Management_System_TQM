@@ -11,12 +11,12 @@ from app.utils.validation import (ValidationError, validate_contact_number, vali
 ATTENDANCE_STATUSES = ("Present", "Absent", "On Leave")
 
 
-def _staff(action: str) -> None:
-    session.require_roles(session.STAFF_ROLES, action)
+def _staff(action: str, roles=None) -> None:
+    session.require_roles(roles or session.STAFF_ROLES, action)
 
 
 def add_worker(name: str, trade: str, contact_number: str) -> int:
-    _staff("add workers")
+    _staff("add workers", session.ADMIN_ROLES)
     clean_name = validate_worker_name(name)
     clean_trade = validate_worker_trade(trade)
     clean_contact = validate_contact_number(contact_number)
@@ -42,7 +42,7 @@ def add_worker(name: str, trade: str, contact_number: str) -> int:
 
 
 def set_worker_active(worker_id: int, active: bool) -> None:
-    _staff("change worker status")
+    _staff("change worker status", session.ADMIN_ROLES)
     worker_id = validate_record_id(worker_id, "Please select a valid worker.")
     status = "Active" if active else "Inactive"
     conn = get_connection()
