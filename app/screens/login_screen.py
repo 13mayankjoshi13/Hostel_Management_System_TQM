@@ -14,8 +14,9 @@ from app.utils.validation import ValidationError
 
 _PANEL_TEXT = {
     "Student": ("Student login", "Sign in to see your room, fines, leave and complaints."),
-    "Staff": ("Staff login", "Wardens and staff: sign in to manage the hostel."),
-    "Administrator": ("Administrator login", "Super admin access: accounts, quality tools and everything else."),
+    "Staff": ("Staff login", "Wardens and staff: sign in to manage your part of the hostel."),
+    "Admin": ("Admin login", "Administrators: students, rooms, accounts and reports."),
+    "Super Admin": ("Super Admin login", "Full control: settings, quality tools, audit and all accounts."),
 }
 
 
@@ -56,7 +57,7 @@ class LoginScreen(tk.Toplevel):
         tabs.pack(fill="x", pady=(0, 16))
         self._tab_labels = {}
         for name in _PANEL_TEXT:
-            tab = tk.Label(tabs, text=name, font=fonts["label"], cursor="hand2", padx=12, pady=6)
+            tab = tk.Label(tabs, text=name, font=fonts["label"], cursor="hand2", padx=9, pady=6)
             tab.pack(side="left", padx=(0, 6))
             tab.bind("<Button-1>", lambda e, n=name: self.select_panel(n))
             self._tab_labels[name] = tab
@@ -114,7 +115,7 @@ class LoginScreen(tk.Toplevel):
         self.hint_label.pack_forget()
         if name == "Student":
             self.signup_label.pack(anchor="w", pady=(14, 0))
-        elif name == "Administrator":
+        elif name == "Super Admin":
             self.hint_label.pack(anchor="w", pady=(14, 0))
         self.error_label.configure(text="")
         self.password_var.set("")
