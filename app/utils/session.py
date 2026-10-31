@@ -49,7 +49,11 @@ def get_role() -> str:
     return _role or _FALLBACK_ROLE
 
 
-STAFF_ROLES = ("Administrator", "Warden", "Staff")
+SUPER_ROLES = ("Super Admin",)
+ADMIN_ROLES = ("Super Admin", "Administrator")
+WARDEN_ROLES = ADMIN_ROLES + ("Warden",)
+STAFF_ROLES = WARDEN_ROLES + ("Staff",)
+ALL_ROLES = STAFF_ROLES + ("Student",)
 
 
 def require_roles(allowed, action: str) -> None:
