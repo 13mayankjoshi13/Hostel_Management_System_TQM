@@ -135,7 +135,7 @@ class TestAuthentication(unittest.TestCase):
     def test_ensure_default_admin_creates_one_on_empty_table(self):
         auth_service.ensure_default_admin()
         result = auth_service.authenticate("admin", "admin123")
-        self.assertEqual(result["role"], "Administrator")
+        self.assertEqual(result["role"], "Super Admin")
 
     def test_ensure_default_admin_does_nothing_if_users_exist(self):
         auth_service.create_user("warden1", "Passw0rd", "Warden")
