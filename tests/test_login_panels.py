@@ -24,6 +24,7 @@ class TestLoginPanels(unittest.TestCase):
         initialize_database(config.DATABASE_PATH)
         session.clear_session()
         sid = student_service.add_student("Kid One", "AB1234", "9876543210")
+        auth_service.create_user("chief", "Secret123", "Super Admin")
         auth_service.create_user("boss", "Secret123", "Administrator")
         auth_service.create_user("warden1", "Secret123", "Warden")
         auth_service.create_user("staff1", "Secret123", "Staff")
@@ -38,7 +39,7 @@ class TestLoginPanels(unittest.TestCase):
         session.clear_session()
 
     def test_each_account_signs_in_only_on_its_own_panel(self):
-        allowed = {"boss": "Administrator", "warden1": "Staff", "staff1": "Staff", "kid1": "Student"}
+        allowed = {"chief": "Super Admin", "boss": "Admin", "warden1": "Staff", "staff1": "Staff", "kid1": "Student"}
         for username, own in allowed.items():
             for panel in auth_service.LOGIN_PANELS:
                 session.clear_session()
@@ -73,18 +74,16 @@ class TestLoginPanels(unittest.TestCase):
             screen = LoginScreen(root, get_fonts(), on_success=got.append)
             self.assertEqual(screen.panel, "Student")
             self.assertTrue(screen.signup_label.winfo_manager())
-            screen.select_panel("Administrator")
+            screen.select_panel("Super Admin")
             self.assertFalse(screen.signup_label.winfo_manager())
             self.assertTrue(screen.hint_label.winfo_manager())
-            screen.username_var.set("boss")
-            screen.password_var.set("Secret123")
             screen.select_panel("Staff")
             screen.username_var.set("boss")
             screen.password_var.set("Secret123")
             screen.on_login()
             self.assertEqual(got, [])
-            self.assertIn("Administrator", screen.error_label.cget("text"))
-            screen.select_panel("Administrator")
+            self.assertIn("Admin", screen.error_label.cget("text"))
+            screen.select_panel("Admin")
             screen.username_var.set("boss")
             screen.password_var.set("Secret123")
             screen.on_login()
