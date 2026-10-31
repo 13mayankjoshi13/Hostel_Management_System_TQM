@@ -38,4 +38,4 @@ IDLE_TIMEOUT_MINUTES = 15
 # The actual logged-in user/role during normal app use comes from
 # app.utils.session, set at login by app.services.auth_service.
 CURRENT_USER = "system_admin"
-CURRENT_ROLE = "Administrator"
+CURRENT_ROLE = "Super Admin"
