@@ -2,12 +2,17 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 
+from app.utils import session
 from app.services import auth_service, student_service
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import COLORS, section_header, form_row, build_panel, form_card, split_layout, build_table, style_treeview_status_tags, status_tag
 
-_ROLES = ["Administrator", "Warden", "Staff", "Student"]
+_ALL_ROLES = ["Super Admin", "Administrator", "Warden", "Staff", "Student"]
+
+
+def _roles_for(role: str) -> list:
+    return _ALL_ROLES if role == "Super Admin" else _ALL_ROLES[2:]
 
 
 class UserScreen(tk.Frame):
@@ -33,9 +38,10 @@ class UserScreen(tk.Frame):
         form_row(wrapper, self.fonts, 1, "Password",
                  ttk.Entry(wrapper, textvariable=self.password_var, show="•"))
 
-        self.role_var = tk.StringVar(value=_ROLES[1])
-        form_row(wrapper, self.fonts, 2, "Role", ttk.Combobox(
-            wrapper, textvariable=self.role_var, values=_ROLES, state="readonly"))
+        roles = _roles_for(session.get_role())
+        self.role_var = tk.StringVar(value="Warden")
+        self.role_combo = ttk.Combobox(wrapper, textvariable=self.role_var, values=roles, state="readonly")
+        form_row(wrapper, self.fonts, 2, "Role", self.role_combo)
 
         self.student_var = tk.StringVar()
         self.student_combo = ttk.Combobox(wrapper, textvariable=self.student_var, state="readonly")
@@ -134,6 +140,7 @@ class UserScreen(tk.Frame):
             handle_unexpected_error("User", "delete_user_ui", e)
 
     def refresh(self):
+        self.role_combo["values"] = _roles_for(session.get_role())
         for row in self.tree.get_children():
             self.tree.delete(row)
         self._rows = {}
