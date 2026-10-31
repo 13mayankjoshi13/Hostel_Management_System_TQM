@@ -17,7 +17,7 @@ from app.utils.logging_service import log_error, log_audit
 
 
 def add_room(room_number: str, room_type: str, capacity) -> int:
-    session.require_roles(session.STAFF_ROLES, "add rooms")
+    session.require_roles(session.ADMIN_ROLES, "add rooms")
     clean_room_no = validate_room_number(room_number)
     clean_type = validate_room_type(room_type)
     clean_capacity = validate_capacity(capacity)
@@ -65,7 +65,7 @@ def get_all_rooms() -> list:
 
 
 def delete_room(room_id: int) -> None:
-    session.require_roles(session.STAFF_ROLES, "delete rooms")
+    session.require_roles(session.ADMIN_ROLES, "delete rooms")
     room_id = validate_record_id(room_id, "Please select a valid room.")
     conn = get_connection()
     try:
