@@ -63,10 +63,12 @@ class TestNewScreens(unittest.TestCase):
         self.assertIn("MyFines", _allowed_screens("Student"))
         self.assertNotIn("Fines", _allowed_screens("Student"))
         self.assertNotIn("Workers", _allowed_screens("Student"))
-        for role in ("Administrator", "Warden", "Staff"):
-            self.assertIn("Fines", _allowed_screens(role))
-            self.assertIn("Workers", _allowed_screens(role))
+        for role in ("Super Admin", "Administrator", "Warden", "Staff"):
             self.assertNotIn("MyFines", _allowed_screens(role))
+        for role in ("Super Admin", "Administrator", "Warden"):
+            self.assertIn("Fines", _allowed_screens(role))
+        for role in ("Super Admin", "Administrator", "Staff"):
+            self.assertIn("Workers", _allowed_screens(role))
 
 
 if __name__ == "__main__":
