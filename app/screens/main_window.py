@@ -56,19 +56,21 @@ _NAV_ITEMS = [
     ("MyDetails", "My Details", "user"),
 ]
 
-_ADMIN_ONLY = {"Users"}
-_STUDENT_ONLY = {"MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyDetails"}
-_EVERYONE = {"Calendar"}
+_COMMON = ["Calendar"]
+ROLE_SCREENS = {
+    "Student": ["MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyDetails"] + _COMMON,
+    "Staff": ["Dashboard", "Complaints", "Workers"] + _COMMON,
+    "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines"] + _COMMON,
+    "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines",
+                      "Workers", "Bugs", "Quality", "Users"] + _COMMON,
+    "Super Admin": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines",
+                    "Workers", "Bugs", "Quality", "Users"] + _COMMON,
+}
 
 
 def _allowed_screens(role: str) -> list:
-    keys = [key for key, _, _ in _NAV_ITEMS]
-    if role == "Student":
-        return [k for k in keys if k in _STUDENT_ONLY] + [k for k in keys if k in _EVERYONE]
-    allowed = [k for k in keys if k not in _STUDENT_ONLY]
-    if role != "Administrator":
-        allowed = [k for k in allowed if k not in _ADMIN_ONLY]
-    return allowed
+    wanted = ROLE_SCREENS.get(role, [])
+    return [key for key, _, _ in _NAV_ITEMS if key in wanted]
 
 
 def _home_screen(role: str) -> str:
