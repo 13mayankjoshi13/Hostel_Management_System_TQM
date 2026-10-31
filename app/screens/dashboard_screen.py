@@ -155,7 +155,8 @@ class DashboardScreen(tk.Frame):
         rooms = room_service.get_all_rooms()
         allocations = allocation_service.get_active_allocations()
         complaints = complaint_service.get_all_complaints()
-        bugs = bug_service.get_all_bugs()
+        is_admin = session.get_role() in session.ADMIN_ROLES
+        bugs = bug_service.get_all_bugs() if is_admin else []
         on_leave = sum(1 for l in leave_service.get_all_leaves() if l["status"] == "On Leave")
 
         capacity = sum(r["capacity"] for r in rooms)
@@ -175,8 +176,7 @@ class DashboardScreen(tk.Frame):
             ("Beds occupied", f"{occupancy}%", "door", COLORS["teal"], COLORS["teal_soft"]),
             ("Open complaints", str(open_complaints), "chat", COLORS["orange"], COLORS["orange_soft"]),
             ("On leave now", str(on_leave), "plane", COLORS["info"], COLORS["info_soft"]),
-            ("Open bugs", str(open_bugs), "bug", COLORS["pink"], COLORS["pink_soft"]),
-        ], self.fonts).pack(fill="x")
+        ] + ([("Open bugs", str(open_bugs), "bug", COLORS["pink"], COLORS["pink_soft"])] if is_admin else []), self.fonts).pack(fill="x")
 
         self._rooms = rooms
         self._occupied = {}
