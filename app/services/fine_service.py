@@ -47,7 +47,7 @@ def _shown(rows: list) -> list:
 
 
 def issue_fine(student_id: int, amount, reason: str) -> int:
-    session.require_roles(session.STAFF_ROLES, "issue fines")
+    session.require_roles(session.WARDEN_ROLES, "issue fines")
     student_id = validate_record_id(student_id, "Please select a student.")
     paise = validate_fine_amount(amount)
     clean_reason = validate_fine_reason(reason)
@@ -74,7 +74,7 @@ def issue_fine(student_id: int, amount, reason: str) -> int:
 
 
 def get_all_fines() -> list:
-    session.require_roles(session.STAFF_ROLES, "view all fines")
+    session.require_roles(session.WARDEN_ROLES, "view all fines")
     return _list(_SELECT + " ORDER BY f.fine_id DESC", ())
 
 
@@ -111,7 +111,7 @@ def _mark_paid(cur, fine_id: int, method: str, payment_id: str = None) -> bool:
 
 
 def record_cash_payment(fine_id: int) -> None:
-    session.require_roles(session.STAFF_ROLES, "record cash payments")
+    session.require_roles(session.WARDEN_ROLES, "record cash payments")
     fine_id = validate_record_id(fine_id, "Please select a valid fine.")
     conn = get_connection()
     try:
@@ -131,7 +131,7 @@ def record_cash_payment(fine_id: int) -> None:
 
 
 def waive_fine(fine_id: int) -> None:
-    session.require_roles(session.STAFF_ROLES, "waive fines")
+    session.require_roles(session.WARDEN_ROLES, "waive fines")
     fine_id = validate_record_id(fine_id, "Please select a valid fine.")
     conn = get_connection()
     try:
