@@ -58,7 +58,7 @@ class CalendarScreen(tk.Frame):
                     command=self.on_add).pack()
 
     def _is_editor(self) -> bool:
-        return session.get_role() in ("Administrator", "Warden")
+        return session.get_role() in session.WARDEN_ROLES
 
     def _on_day(self, day):
         self.date_var.set(day.isoformat())
