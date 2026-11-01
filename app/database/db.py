@@ -223,6 +223,63 @@ def _create_schema(conn: sqlite3.Connection) -> None:
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS wardens (
+            warden_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            gender TEXT NOT NULL,
+            contact_number TEXT NOT NULL,
+            hostel_name TEXT NOT NULL,
+            office_hours TEXT,
+            username TEXT UNIQUE,
+            status TEXT NOT NULL DEFAULT 'Active',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS emergency_contacts (
+            contact_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            number TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'University',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS notices (
+            notice_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            body TEXT NOT NULL,
+            audience TEXT NOT NULL,
+            student_id INTEGER,
+            created_by TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (student_id) REFERENCES students(student_id)
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS student_attendance (
+            student_id INTEGER NOT NULL,
+            att_date TEXT NOT NULL,
+            status TEXT NOT NULL,
+            marked_by TEXT NOT NULL,
+            PRIMARY KEY (student_id, att_date),
+            FOREIGN KEY (student_id) REFERENCES students(student_id)
+        )
+    """)
+
+    for table, column, ddl in (
+        ("students", "gender", "TEXT"),
+        ("rooms", "floor", "INTEGER NOT NULL DEFAULT 0"),
+        ("rooms", "hostel_type", "TEXT"),
+    ):
+        existing = {row[1] for row in cur.execute(f"PRAGMA table_info({table})")}
+        if column not in existing:
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
+
     for index_sql in (
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_one_active_room_per_student "
         "ON allocations(student_id) WHERE status = 'Active'",
