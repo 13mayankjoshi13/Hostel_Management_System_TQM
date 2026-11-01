@@ -10,18 +10,22 @@ from app.utils.validation import (
     validate_room_type,
     validate_capacity,
     validate_type_capacity,
+    validate_floor,
+    validate_hostel_type,
     ValidationError,
 )
 from app.utils import session
 from app.utils.logging_service import log_error, log_audit
 
 
-def add_room(room_number: str, room_type: str, capacity) -> int:
+def add_room(room_number: str, room_type: str, capacity, floor=0, hostel_type=None) -> int:
     session.require_roles(session.ADMIN_ROLES, "add rooms")
     clean_room_no = validate_room_number(room_number)
     clean_type = validate_room_type(room_type)
     clean_capacity = validate_capacity(capacity)
     validate_type_capacity(clean_type, clean_capacity)
+    clean_floor = validate_floor(floor)
+    clean_hostel = validate_hostel_type(hostel_type)
 
     conn = get_connection()
     try:
@@ -31,8 +35,8 @@ def add_room(room_number: str, room_type: str, capacity) -> int:
             raise ValidationError(f"Room '{clean_room_no}' already exists.")
 
         cur.execute(
-            "INSERT INTO rooms (room_number, room_type, capacity) VALUES (?, ?, ?)",
-            (clean_room_no, clean_type, clean_capacity),
+            "INSERT INTO rooms (room_number, room_type, capacity, floor, hostel_type) VALUES (?, ?, ?, ?, ?)",
+            (clean_room_no, clean_type, clean_capacity, clean_floor, clean_hostel),
         )
         conn.commit()
         room_id = cur.lastrowid
