@@ -7,8 +7,9 @@ from tkinter import messagebox, simpledialog
 from datetime import datetime
 
 from app.config import APP_NAME
-from app.theme import COLORS, apply_theme, draw_icon, icon_tile, initials, _round_rect
-from app.services import auth_service
+from app.theme import COLORS, ScrollFrame, apply_theme, draw_icon, icon_tile, initials, _round_rect
+from app.services import auth_service, settings_service
+from app import theme
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error, report_tk_callback_exception
 from app.screens.splash_screen import SplashScreen
@@ -21,7 +22,7 @@ from app.screens.allocation_screen import AllocationScreen
 from app.screens.complaint_screen import ComplaintScreen
 from app.screens.leave_screen import LeaveScreen
 from app.screens.bug_screen import BugScreen
-from app.screens.quality_screen import QualityScreen
+from app.screens.settings_screen import SettingsScreen
 from app.screens.user_screen import UserScreen
 from app.screens.my_room_screen import MyRoomScreen
 from app.screens.my_complaints_screen import MyComplaintsScreen
@@ -58,9 +59,9 @@ _NAV_ITEMS = [
     ("Notices", "Notices", "chat"),
     ("Attendance", "Attendance", "clipboard"),
     ("Contacts", "Wardens & Emergency", "users"),
+    ("Settings", "Settings", "gear"),
     ("Workers", "Workers", "users"),
     ("Bugs", "Bug Tracker", "bug"),
-    ("Quality", "Quality Monitoring", "chart"),
     ("Users", "User Management", "users"),
     ("MyRoom", "My Room", "home"),
     ("MyComplaints", "My Complaints", "chat"),
@@ -70,15 +71,15 @@ _NAV_ITEMS = [
     ("MyDetails", "My Details", "user"),
 ]
 
-_COMMON = ["HostelMap", "Events", "Contacts", "Calendar"]
+_COMMON = ["HostelMap", "Events", "Contacts", "Calendar", "Settings"]
 ROLE_SCREENS = {
     "Student": ["StudentHome", "MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyNotices", "MyDetails"] + _COMMON,
     "Staff": ["Dashboard", "Attendance", "Notices", "Complaints", "Workers"] + _COMMON,
     "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices"] + _COMMON,
     "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices",
-                      "Workers", "Bugs", "Quality", "Users"] + _COMMON,
+                      "Workers", "Bugs", "Users"] + _COMMON,
     "Super Admin": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices",
-                    "Workers", "Bugs", "Quality", "Users"] + _COMMON,
+                    "Workers", "Bugs", "Users"] + _COMMON,
 }
 
 
@@ -138,23 +139,11 @@ class MainWindow(tk.Tk):
         self.geometry(f"1280x{height}")
         self.minsize(1100, 640)
 
-        self.fonts = apply_theme(self)
-        self.screens = {}
-        self._nav_items = {}
         self._current = None
-
-        body = tk.Frame(self, bg=COLORS["background"])
-        body.pack(fill="both", expand=True)
-
-        self._build_sidebar(body)
-
-        main = tk.Frame(body, bg=COLORS["background"])
-        main.pack(side="left", fill="both", expand=True)
-        self._build_topbar(main)
-        self.content = tk.Frame(main, bg=COLORS["background"])
-        self.content.pack(fill="both", expand=True)
-
-        self._create_screens()
+        self._user = None
+        self._body = None
+        theme.set_appearance(*settings_service.get_appearance())
+        self._build_ui()
         self._idle = IdleTracker(IDLE_TIMEOUT_MINUTES * 60)
         for sequence in ("<Motion>", "<Key>", "<Button>", "<MouseWheel>"):
             self.bind_all(sequence, lambda e: self._idle.touch(), add="+")
@@ -165,6 +154,45 @@ class MainWindow(tk.Tk):
             SplashScreen(self, self.fonts, on_finish=self._show_login)
         else:
             self._show_login()
+
+    def _build_ui(self):
+        self.fonts = apply_theme(self)
+        self.screens = {}
+        self._nav_items = {}
+        self._body = tk.Frame(self, bg=COLORS["background"])
+        self._body.pack(fill="both", expand=True)
+
+        self._build_sidebar(self._body)
+
+        main = tk.Frame(self._body, bg=COLORS["background"])
+        main.pack(side="left", fill="both", expand=True)
+        self._build_topbar(main)
+        self.content = tk.Frame(main, bg=COLORS["background"])
+        self.content.pack(fill="both", expand=True)
+
+        self._create_screens()
+
+    def _enter_user_ui(self, user: dict):
+        self._update_account_info(user)
+        allowed = _allowed_screens(user["role"])
+        for item in self._nav_items.values():
+            item.pack_forget()
+        for key, _, _ in _NAV_ITEMS:
+            if key in allowed and key != "Settings":
+                self._nav_items[key].pack(fill="x", padx=14, pady=1)
+        if "Settings" in allowed:
+            if "Settings" in self.screens:
+                self.screens["Settings"].destroy()
+            self.screens["Settings"] = SettingsScreen(self.content, self.fonts, self._change_appearance)
+            self.screens["Settings"].place(relx=0, rely=0, relwidth=1, relheight=1)
+
+    def _change_appearance(self):
+        """Rebuild the whole window in the saved theme, then come back to Settings."""
+        theme.set_appearance(*settings_service.get_appearance(session.get_user()))
+        self._body.destroy()
+        self._build_ui()
+        self._enter_user_ui(self._user)
+        self.show_screen("Settings")
 
     def _show_login(self):
         self._idle.touch()
@@ -188,13 +216,12 @@ class MainWindow(tk.Tk):
             self._handle_logout()
             return
         self._idle.touch()
-        self._update_account_info(user)
-        allowed = _allowed_screens(user["role"])
-        for item in self._nav_items.values():
-            item.pack_forget()
-        for key, _, _ in _NAV_ITEMS:
-            if key in allowed:
-                self._nav_items[key].pack(fill="x", padx=14, pady=1)
+        self._user = user
+        if settings_service.get_appearance(user["username"]) != theme.current_appearance():
+            theme.set_appearance(*settings_service.get_appearance(user["username"]))
+            self._body.destroy()
+            self._build_ui()
+        self._enter_user_ui(user)
         self.deiconify()
         self.show_screen(_home_screen(user["role"]))
 
@@ -240,15 +267,19 @@ class MainWindow(tk.Tk):
         tk.Label(text, text="Management System", bg=COLORS["sidebar_bg"], fg=COLORS["text_tertiary"],
                   font=self.fonts["small"]).pack(anchor="w")
 
-        self.nav_wrap = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
-        self.nav_wrap.pack(fill="x")
+        nav_scroll = ScrollFrame(sidebar, bg=COLORS["sidebar_bg"])
+        nav_scroll.pack(fill="both", expand=True)
+        self.nav_wrap = nav_scroll.inner
         for key, label, icon in _NAV_ITEMS:
             self._nav_items[key] = NavItem(self.nav_wrap, key, label, icon, self.fonts, self.show_screen)
 
-        tk.Frame(sidebar, bg=COLORS["sidebar_bg"]).pack(fill="both", expand=True)
         footer = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
         footer.pack(fill="x", padx=18, pady=(0, 16))
         tk.Frame(footer, bg=COLORS["border"], height=1).pack(fill="x", pady=(0, 10))
+        settings_link = tk.Label(footer, text="Settings", bg=COLORS["sidebar_bg"], fg=COLORS["text_secondary"],
+                                  font=self.fonts["body"], cursor="hand2")
+        settings_link.pack(anchor="w", pady=(0, 8))
+        settings_link.bind("<Button-1>", lambda e: self.show_screen("Settings"))
         change_pw = tk.Label(footer, text="Change password", bg=COLORS["sidebar_bg"], fg=COLORS["text_secondary"],
                               font=self.fonts["body"], cursor="hand2")
         change_pw.pack(anchor="w", pady=(0, 8))
@@ -339,7 +370,6 @@ class MainWindow(tk.Tk):
         self.screens["Complaints"] = ComplaintScreen(self.content, self.fonts)
         self.screens["Leaves"] = LeaveScreen(self.content, self.fonts)
         self.screens["Bugs"] = BugScreen(self.content, self.fonts)
-        self.screens["Quality"] = QualityScreen(self.content, self.fonts)
         self.screens["Users"] = UserScreen(self.content, self.fonts)
         self.screens["MyRoom"] = MyRoomScreen(self.content, self.fonts)
         self.screens["MyComplaints"] = MyComplaintsScreen(self.content, self.fonts)
