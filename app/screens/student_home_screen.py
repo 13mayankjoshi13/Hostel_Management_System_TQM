@@ -33,9 +33,9 @@ class StudentHomeScreen(tk.Frame):
             c.create_oval(cx - r, cy - r, cx + r, cy + r, fill=col, outline="")
         title, sub = self._banner_text
         c.create_text(26, 40, anchor="w", text=title, fill="#FFFFFF", font=self.fonts["hero"])
-        c.create_text(26, 72, anchor="w", text=sub, fill="#CFCDF5", font=self.fonts["body"])
+        c.create_text(26, 72, anchor="w", text=sub, fill=COLORS["hero_text"], font=self.fonts["body"])
         c.create_text(26, 96, anchor="w", text=date.today().strftime("%A, %d %B %Y"),
-                      fill="#A7A3E8", font=self.fonts["label"])
+                      fill=COLORS["hero_text2"], font=self.fonts["label"])
 
     def _card(self, parent, title, row, col, span=1):
         card = Card(parent, fit=True)
