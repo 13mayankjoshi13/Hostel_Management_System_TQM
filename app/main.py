@@ -72,6 +72,13 @@ def run():
                    "seed_defaults", status="Open", message_reference=str(exc))
 
     try:
+        from app.services.fmea_service import ensure_default_sipoc
+        ensure_default_sipoc()
+    except Exception as exc:
+        log_error("Quality", type(exc).__name__, "Medium",
+                   "ensure_default_sipoc", status="Open", message_reference=str(exc))
+
+    try:
         from app.services.event_service import ensure_default_holidays
         ensure_default_holidays()
     except Exception as exc:
