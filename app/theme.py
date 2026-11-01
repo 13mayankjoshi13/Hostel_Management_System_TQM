@@ -315,7 +315,7 @@ def get_fonts_cached():
     return _fonts_cache
 
 
-def split_layout(parent, left_width: int = 372):
+def split_layout(parent, left_width: int = 400):
     """Two columns under the page header: forms on the left, tables on the right."""
     body = tk.Frame(parent, bg=COLORS["background"])
     body.pack(fill="both", expand=True, padx=28, pady=(0, 20))
@@ -329,13 +329,26 @@ def split_layout(parent, left_width: int = 372):
     return left, right
 
 
+_HEADER_ICONS = {
+    "Students": "users", "Rooms": "door", "Room Allocation": "key", "Complaints": "chat", "Leave Tracking": "plane",
+    "Fines": "clipboard", "Workers": "users", "Bug Tracker": "bug", "User Management": "users", "Notices": "chat",
+    "Attendance": "clipboard", "Hostel Events": "calendar", "Wardens & Emergency": "users", "Settings": "gear",
+    "My Room": "home", "My Complaints": "chat", "My Leave": "plane", "My Fines": "clipboard",
+    "My Notices": "chat", "My Details": "user", "Calendar": "calendar",
+}
+
+
 def section_header(parent, title: str, subtitle: str, fonts: dict):
     wrapper = tk.Frame(parent, bg=COLORS["background"])
     wrapper.pack(fill="x", padx=28, pady=(8, 14))
-    tk.Label(wrapper, text=title, bg=COLORS["background"], fg=COLORS["text_primary"],
+    icon_tile(wrapper, _HEADER_ICONS.get(title, "grid"), COLORS["accent"], size=44,
+              bg=COLORS["background"]).pack(side="left", padx=(0, 14))
+    text = tk.Frame(wrapper, bg=COLORS["background"])
+    text.pack(side="left")
+    tk.Label(text, text=title, bg=COLORS["background"], fg=COLORS["text_primary"],
               font=fonts["header"]).pack(anchor="w")
     if subtitle:
-        tk.Label(wrapper, text=subtitle, bg=COLORS["background"], fg=COLORS["text_secondary"],
+        tk.Label(text, text=subtitle, bg=COLORS["background"], fg=COLORS["text_secondary"],
                   font=fonts["subheader"]).pack(anchor="w", pady=(2, 0))
 
 
@@ -348,7 +361,7 @@ def form_row(parent, fonts, row_index: int, label_text: str, widget) -> None:
 
 def button_row(parent, row_index: int = 99) -> tk.Frame:
     row = tk.Frame(parent, bg=parent.cget("bg"))
-    row.grid(row=row_index, column=1, sticky="w", pady=(10, 0))
+    row.grid(row=row_index, column=0, columnspan=2, sticky="w", pady=(10, 0))
     return row
 
 
