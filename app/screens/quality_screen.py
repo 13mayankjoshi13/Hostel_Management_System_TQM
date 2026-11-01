@@ -14,6 +14,8 @@ import tkinter as tk
 from tkinter import ttk
 
 from app.services import quality_service
+from app.screens.quality_views import (SixSigmaView, VarianceView, TaguchiView, FmeaView, SipocView,
+                                       PokaYokeView)
 from app.theme import (COLORS, section_header, build_panel, build_stat_row, ScrollFrame, build_table,
                         style_treeview_status_tags)
 
@@ -23,14 +25,10 @@ _FISHBONE_COLORS = {
 }
 
 
-class QualityScreen(tk.Frame):
+class DefectsView(tk.Frame):
     def __init__(self, parent, fonts):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
-        section_header(self, "Quality Monitoring",
-                        "SQC tools generated live from real bug records — nothing on this page is sample data.",
-                        fonts)
-
         scroll = ScrollFrame(self, bg=COLORS["background"])
         scroll.pack(fill="both", expand=True)
         body = scroll.inner
@@ -235,3 +233,42 @@ class QualityScreen(tk.Frame):
         self._refresh_people()
         self.after(10, self._draw_pareto)
         self.after(10, self._draw_fishbone)
+
+
+class QualityScreen(tk.Frame):
+    """Quality Monitoring: defect charts plus Six Sigma, variance, Taguchi, FMEA, SIPOC and Poka-Yoke."""
+
+    _TABS = (("defects", "Defects", DefectsView), ("sixsigma", "Six Sigma", SixSigmaView),
+             ("variance", "Variance", VarianceView), ("taguchi", "Taguchi", TaguchiView),
+             ("fmea", "FMEA", FmeaView), ("sipoc", "SIPOC", SipocView), ("poka", "Poka-Yoke", PokaYokeView))
+
+    def __init__(self, parent, fonts):
+        super().__init__(parent, bg=COLORS["background"])
+        self.fonts = fonts
+        self._tab = "defects"
+        bar = tk.Frame(self, bg=COLORS["background"])
+        bar.pack(fill="x", pady=(0, 8))
+        self.body = tk.Frame(self, bg=COLORS["background"])
+        self.body.pack(fill="both", expand=True)
+        self.views, self.labels = {}, {}
+        for key, text, cls in self._TABS:
+            self.views[key] = cls(self.body, fonts)
+            lbl = tk.Label(bar, text=text, font=fonts["body"], padx=10, pady=4, cursor="hand2")
+            lbl.pack(side="left", padx=(0, 4))
+            lbl.bind("<Button-1>", lambda e, k=key: self.show(k))
+            self.labels[key] = lbl
+        self.show("defects")
+
+    def show(self, key):
+        self._tab = key
+        for k, lbl in self.labels.items():
+            on = k == key
+            lbl.configure(bg=COLORS["accent_soft"] if on else COLORS["background"],
+                          fg=COLORS["accent"] if on else COLORS["text_secondary"])
+        for view in self.views.values():
+            view.pack_forget()
+        self.views[key].pack(fill="both", expand=True)
+        self.views[key].refresh()
+
+    def refresh(self):
+        self.views[self._tab].refresh()
