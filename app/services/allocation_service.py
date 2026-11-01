@@ -78,6 +78,16 @@ def _check_existing_allocation(cur, student_id: int) -> None:
         )
 
 
+def _check_hostel_gender(student, room) -> None:
+    expected = {"Boys": "Male", "Girls": "Female"}.get(room["hostel_type"])
+    if expected is None:
+        return
+    if student["gender"] is None:
+        raise ValidationError(f"Set the student's gender before allocating a room in a {room['hostel_type']} hostel.")
+    if student["gender"] != expected:
+        raise ValidationError(f"Room '{room['room_number']}' is in the {room['hostel_type']} hostel and cannot be given to this student.")
+
+
 def allocate_room(student_id: int, room_id: int) -> int:
     """
     Run the full prevention pipeline and, if every check passes, create
@@ -97,6 +107,7 @@ def allocate_room(student_id: int, room_id: int) -> int:
         room = _check_room_exists(cur, room_id)
         _check_capacity(cur, room)
         _check_existing_allocation(cur, student_id)
+        _check_hostel_gender(student, room)
 
         cur.execute(
             "INSERT INTO allocations (student_id, room_id, status) "
