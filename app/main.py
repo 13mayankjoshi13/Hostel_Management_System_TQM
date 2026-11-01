@@ -65,6 +65,13 @@ def run():
                    "ensure_default_admin", status="Open", message_reference=str(exc))
 
     try:
+        from app.services.emergency_service import seed_defaults
+        seed_defaults()
+    except Exception as exc:
+        log_error("Emergency", type(exc).__name__, "Medium",
+                   "seed_defaults", status="Open", message_reference=str(exc))
+
+    try:
         from app.services.event_service import ensure_default_holidays
         ensure_default_holidays()
     except Exception as exc:
