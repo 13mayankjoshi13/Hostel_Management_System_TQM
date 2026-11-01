@@ -30,3 +30,10 @@ Default first-run account: `admin` is a **Super Admin** and must change its pass
 | Emergency numbers (add, remove) | yes | – | – | read |
 
 Students have a gender; rooms have a floor and an optional Boys/Girls hostel. A Boys room only takes male students and a Girls room only female students. Only the national numbers (112, 100, 101, 108, 1091) are pre-filled; add your university's own numbers in Wardens & Emergency.
+
+## Batch 78 additions
+
+- Student front page ("Home"): own attendance (30 days), fines due, latest notices for them, their gender's warden, upcoming events and emergency numbers. A student only ever sees their own data.
+- Hostel Map: every role sees rooms by hostel and floor with bed counts; names of occupants are shown to staff roles only, students see counts and a star on their own room.
+- Hostel Events: everyone reads upcoming events (filter by type); Wardens and admins add or delete them.
+- Staff, Warden and admin dashboards add Present / Absent today and a Notices tab.
