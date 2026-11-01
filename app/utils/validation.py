@@ -402,3 +402,89 @@ def validate_type_capacity(room_type: str, capacity: int) -> None:
     if not low <= capacity <= high:
         expected = str(low) if low == high else f"{low} to {high}"
         raise ValidationError(f"A {room_type} room must have capacity {expected}, not {capacity}.")
+
+
+GENDERS = ("Male", "Female")
+HOSTEL_TYPES = ("Boys", "Girls")
+ATTENDANCE_STATUSES = ("Present", "Absent")
+NOTICE_AUDIENCES = ("All", "Boys", "Girls", "Student")
+
+
+def validate_gender(gender, required: bool = True):
+    if gender is None or str(gender).strip() == "":
+        if required:
+            raise ValidationError("Select the student's gender.")
+        return None
+    if gender not in GENDERS:
+        raise ValidationError(f"Gender must be one of: {', '.join(GENDERS)}.")
+    return gender
+
+
+def validate_hostel_type(hostel_type, required: bool = False):
+    if hostel_type is None or str(hostel_type).strip() == "":
+        if required:
+            raise ValidationError("Select Boys or Girls hostel.")
+        return None
+    if hostel_type not in HOSTEL_TYPES:
+        raise ValidationError(f"Hostel must be one of: {', '.join(HOSTEL_TYPES)}.")
+    return hostel_type
+
+
+def validate_floor(floor) -> int:
+    if floor is None or str(floor).strip() == "":
+        return 0
+    if isinstance(floor, bool) or (isinstance(floor, float) and not floor.is_integer()):
+        raise ValidationError("Floor must be a whole number (0 = ground floor).")
+    try:
+        value = int(str(floor).strip())
+    except ValueError:
+        raise ValidationError("Floor must be a whole number (0 = ground floor).")
+    if not 0 <= value <= 20:
+        raise ValidationError("Floor must be between 0 (ground) and 20.")
+    return value
+
+
+def validate_notice_title(title: str) -> str:
+    if title is None or not str(title).strip():
+        raise ValidationError("Notice title cannot be empty.")
+    title = " ".join(str(title).split())
+    if len(title) < 3 or len(title) > 100:
+        raise ValidationError("Notice title must be between 3 and 100 characters.")
+    return title
+
+
+def validate_notice_body(body: str) -> str:
+    if body is None or not str(body).strip():
+        raise ValidationError("Notice text cannot be empty.")
+    body = str(body).strip()
+    if len(body) < 3 or len(body) > 1000:
+        raise ValidationError("Notice text must be between 3 and 1000 characters.")
+    return body
+
+
+def validate_hostel_name(name: str) -> str:
+    if name is None or not str(name).strip():
+        raise ValidationError("Hostel name cannot be empty.")
+    name = " ".join(str(name).split())
+    if len(name) < 2 or len(name) > 60:
+        raise ValidationError("Hostel name must be between 2 and 60 characters.")
+    return name
+
+
+def validate_emergency_number(number: str) -> str:
+    if number is None or not str(number).strip():
+        raise ValidationError("Phone number cannot be empty.")
+    number = " ".join(str(number).split())
+    digits = [ch for ch in number if ch.isdigit()]
+    if not all(ch.isascii() and (ch.isdigit() or ch in "+- ()/") for ch in number) or not 3 <= len(digits) <= 15:
+        raise ValidationError("Enter a phone number with 3 to 15 digits (spaces, +, - and brackets are allowed).")
+    return number
+
+
+def validate_contact_label(label: str, what: str = "Name") -> str:
+    if label is None or not str(label).strip():
+        raise ValidationError(f"{what} cannot be empty.")
+    label = " ".join(str(label).split())
+    if len(label) < 2 or len(label) > 60:
+        raise ValidationError(f"{what} must be between 2 and 60 characters.")
+    return label
