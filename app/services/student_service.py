@@ -13,6 +13,7 @@ import sqlite3
 
 from app.database.db import get_connection
 from app.utils.validation import (
+    validate_gender,
     validate_record_id,
     validate_student_name,
     validate_registration_number,
@@ -23,7 +24,7 @@ from app.utils import session
 from app.utils.logging_service import log_error, log_audit
 
 
-def add_student(name: str, registration_number: str, contact_number: str) -> int:
+def add_student(name: str, registration_number: str, contact_number: str, gender: str = None) -> int:
     """
     Validate and insert a new student. Returns the new student_id.
     Raises ValidationError for any rejected input (duplicate registration
@@ -34,6 +35,7 @@ def add_student(name: str, registration_number: str, contact_number: str) -> int
     clean_name = validate_student_name(name)
     clean_reg_no = validate_registration_number(registration_number)
     clean_contact = validate_contact_number(contact_number)
+    clean_gender = validate_gender(gender, required=False)
 
     conn = get_connection()
     try:
@@ -50,9 +52,9 @@ def add_student(name: str, registration_number: str, contact_number: str) -> int
             )
 
         cur.execute(
-            "INSERT INTO students (name, registration_number, contact_number) "
-            "VALUES (?, ?, ?)",
-            (clean_name, clean_reg_no, clean_contact),
+            "INSERT INTO students (name, registration_number, contact_number, gender) "
+            "VALUES (?, ?, ?, ?)",
+            (clean_name, clean_reg_no, clean_contact, clean_gender),
         )
         conn.commit()
         student_id = cur.lastrowid
@@ -99,19 +101,24 @@ def get_all_students(sort_by: str = "Newest first") -> list:
     return sorted(rows, key=key, reverse=reverse)
 
 
-def update_student(student_id: int, name: str, registration_number: str, contact_number: str) -> None:
+_KEEP = object()
+
+
+def update_student(student_id: int, name: str, registration_number: str, contact_number: str,
+                   gender=_KEEP) -> None:
     """Edit a student's details. Staff roles only; students use student_portal_service."""
     student_id = validate_record_id(student_id, "Please select a valid student.")
     if session.get_role() == "Student":
         raise ValidationError("Students can only edit their own details from My Details.")
     session.require_roles(session.WARDEN_ROLES, "edit student records")
-    _update(student_id, name, registration_number, contact_number)
+    _update(student_id, name, registration_number, contact_number, gender)
 
 
-def _update(student_id: int, name: str, registration_number: str, contact_number: str) -> None:
+def _update(student_id: int, name: str, registration_number: str, contact_number: str, gender=_KEEP) -> None:
     clean_name = validate_student_name(name)
     clean_reg_no = validate_registration_number(registration_number)
     clean_contact = validate_contact_number(contact_number)
+    new_gender = None if gender is _KEEP else validate_gender(gender, required=False)
 
     conn = get_connection()
     try:
@@ -124,13 +131,21 @@ def _update(student_id: int, name: str, registration_number: str, contact_number
                     (clean_reg_no, student_id))
         if cur.fetchone() is not None:
             raise ValidationError(f"A student with registration number '{clean_reg_no}' already exists.")
-        cur.execute("UPDATE students SET name = ?, registration_number = ?, contact_number = ? "
-                    "WHERE student_id = ?", (clean_name, clean_reg_no, clean_contact, student_id))
+        if gender is not _KEEP and new_gender != old["gender"]:
+            cur.execute("SELECT 1 FROM allocations a JOIN rooms r ON r.room_id = a.room_id "
+                        "WHERE a.student_id = ? AND a.status = 'Active' AND r.hostel_type IS NOT NULL "
+                        "AND r.hostel_type != ?", (student_id, {"Male": "Boys", "Female": "Girls"}.get(new_gender, "")))
+            if cur.fetchone() is not None:
+                raise ValidationError("This gender does not match the hostel of the student's current room. Release the room first.")
+        keep_gender = old["gender"] if gender is _KEEP else new_gender
+        cur.execute("UPDATE students SET name = ?, registration_number = ?, contact_number = ?, gender = ? "
+                    "WHERE student_id = ?", (clean_name, clean_reg_no, clean_contact, keep_gender, student_id))
         conn.commit()
         changed = [label for label, before, after in (
             ("name", old["name"], clean_name),
             ("registration number", old["registration_number"], clean_reg_no),
-            ("contact", old["contact_number"], clean_contact)) if before != after]
+            ("contact", old["contact_number"], clean_contact),
+            ("gender", old["gender"], keep_gender)) if before != after]
         log_audit("Student", "Update", str(student_id), "Success",
                    "Changed " + (", ".join(changed) if changed else "nothing") + ".")
     except ValidationError:
