@@ -34,6 +34,9 @@ from app.screens.notice_screen import NoticeScreen
 from app.screens.my_notices_screen import MyNoticesScreen
 from app.screens.attendance_screen import AttendanceScreen
 from app.screens.contacts_screen import ContactsScreen
+from app.screens.student_home_screen import StudentHomeScreen
+from app.screens.hostel_map_screen import HostelMapScreen
+from app.screens.events_screen import EventsScreen
 from app.utils import session
 from app.utils.idle import IdleTracker
 from app.utils.logging_service import log_audit
@@ -42,6 +45,9 @@ from app.config import IDLE_TIMEOUT_MINUTES
 # key, label, icon
 _NAV_ITEMS = [
     ("Dashboard", "Dashboard", "grid"),
+    ("StudentHome", "Home", "grid"),
+    ("HostelMap", "Hostel Map", "door"),
+    ("Events", "Hostel Events", "calendar"),
     ("Calendar", "Calendar", "calendar"),
     ("Students", "Students", "user"),
     ("Rooms", "Rooms", "door"),
@@ -64,9 +70,9 @@ _NAV_ITEMS = [
     ("MyDetails", "My Details", "user"),
 ]
 
-_COMMON = ["Contacts", "Calendar"]
+_COMMON = ["HostelMap", "Events", "Contacts", "Calendar"]
 ROLE_SCREENS = {
-    "Student": ["MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyNotices", "MyDetails"] + _COMMON,
+    "Student": ["StudentHome", "MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyNotices", "MyDetails"] + _COMMON,
     "Staff": ["Dashboard", "Attendance", "Notices", "Complaints", "Workers"] + _COMMON,
     "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices"] + _COMMON,
     "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices",
@@ -82,7 +88,7 @@ def _allowed_screens(role: str) -> list:
 
 
 def _home_screen(role: str) -> str:
-    return "MyRoom" if role == "Student" else "Dashboard"
+    return "StudentHome" if role == "Student" else "Dashboard"
 
 
 class NavItem(tk.Canvas):
@@ -341,6 +347,9 @@ class MainWindow(tk.Tk):
         self.screens["MyFines"] = MyFinesScreen(self.content, self.fonts)
         self.screens["Fines"] = FineScreen(self.content, self.fonts)
         self.screens["Workers"] = WorkerScreen(self.content, self.fonts)
+        self.screens["StudentHome"] = StudentHomeScreen(self.content, self.fonts, navigate=self.show_screen)
+        self.screens["HostelMap"] = HostelMapScreen(self.content, self.fonts)
+        self.screens["Events"] = EventsScreen(self.content, self.fonts)
         self.screens["Notices"] = NoticeScreen(self.content, self.fonts)
         self.screens["MyNotices"] = MyNoticesScreen(self.content, self.fonts)
         self.screens["Attendance"] = AttendanceScreen(self.content, self.fonts)
