@@ -29,12 +29,16 @@ class StudentScreen(tk.Frame):
         self.name_var = tk.StringVar()
         self.reg_var = tk.StringVar()
         self.contact_var = tk.StringVar()
+        self.gender_var = tk.StringVar()
 
         form_row(wrapper, self.fonts, 0, "Name", ttk.Entry(wrapper, textvariable=self.name_var))
         form_row(wrapper, self.fonts, 1, "Registration No.", ttk.Entry(wrapper, textvariable=self.reg_var))
         form_row(wrapper, self.fonts, 2, "Contact No.", ttk.Entry(wrapper, textvariable=self.contact_var))
 
-        buttons = button_row(wrapper, 3)
+        form_row(wrapper, self.fonts, 3, "Gender", ttk.Combobox(
+            wrapper, textvariable=self.gender_var, values=["", "Male", "Female"], state="readonly"))
+
+        buttons = button_row(wrapper, 4)
         ttk.Button(buttons, text="Add Student", style="Primary.TButton", command=self.on_add).pack(side="left")
         self.save_button = ttk.Button(buttons, text="Save Changes", style="Secondary.TButton",
                                        command=self.on_save, state="disabled")
@@ -42,7 +46,7 @@ class StudentScreen(tk.Frame):
         ttk.Button(buttons, text="Clear", style="Secondary.TButton",
                     command=self.on_clear).pack(side="left", padx=(8, 0))
         tk.Label(wrapper, text="Select a student in the table to edit their details.", bg=wrapper.cget("bg"),
-                  fg=COLORS["text_tertiary"], font=self.fonts["label"]).grid(row=4, column=1, sticky="w", pady=(8, 0))
+                  fg=COLORS["text_tertiary"], font=self.fonts["label"]).grid(row=5, column=1, sticky="w", pady=(8, 0))
 
     def _build_table(self):
         wrapper = tk.Frame(self.right, bg=COLORS["background"])
@@ -58,9 +62,9 @@ class StudentScreen(tk.Frame):
         sort_box.pack(side="left")
         sort_box.bind("<<ComboboxSelected>>", lambda e: self.refresh())
 
-        self.tree = build_table(content, ("id", "name", "reg_no", "contact"),
-                                  ("ID", "Name", "Registration No.", "Contact"),
-                                  (50, 240, 170, 150), height=10)
+        self.tree = build_table(content, ("id", "name", "reg_no", "contact", "gender"),
+                                  ("ID", "Name", "Registration No.", "Contact", "Gender"),
+                                  (50, 200, 150, 130, 70), height=10)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
         self.tree.bind("<<TreeviewSelect>>", self.on_select)
@@ -74,11 +78,12 @@ class StudentScreen(tk.Frame):
         self.name_var.set(values[1])
         self.reg_var.set(values[2])
         self.contact_var.set(values[3])
+        self.gender_var.set("" if values[4] == "—" else values[4])
         self.save_button.state(["!disabled"])
 
     def on_clear(self):
         self._editing_id = None
-        for var in (self.name_var, self.reg_var, self.contact_var):
+        for var in (self.name_var, self.reg_var, self.contact_var, self.gender_var):
             var.set("")
         self.tree.selection_remove(self.tree.selection())
         self.save_button.state(["disabled"])
@@ -88,7 +93,8 @@ class StudentScreen(tk.Frame):
             return
         try:
             student_service.update_student(self._editing_id, self.name_var.get(),
-                                            self.reg_var.get(), self.contact_var.get())
+                                            self.reg_var.get(), self.contact_var.get(),
+                                            self.gender_var.get() or None)
             self.on_clear()
             self.refresh()
             messagebox.showinfo("Success", "Student details updated.")
@@ -100,7 +106,8 @@ class StudentScreen(tk.Frame):
     def on_add(self):
         try:
             student_service.add_student(
-                self.name_var.get(), self.reg_var.get(), self.contact_var.get()
+                self.name_var.get(), self.reg_var.get(), self.contact_var.get(),
+                self.gender_var.get() or None
             )
             self.on_clear()
             self.refresh()
@@ -118,7 +125,7 @@ class StudentScreen(tk.Frame):
             for student in student_service.get_all_students(self.sort_var.get()):
                 item = self.tree.insert("", "end", values=(
                     student["student_id"], student["name"],
-                    student["registration_number"], student["contact_number"],
+                    student["registration_number"], student["contact_number"], student["gender"] or "—",
                 ), tags=("default",))
                 if student["student_id"] == self._editing_id:
                     self.tree.selection_set(item)
