@@ -30,6 +30,10 @@ from app.screens.my_details_screen import MyDetailsScreen
 from app.screens.fine_screen import FineScreen
 from app.screens.worker_screen import WorkerScreen
 from app.screens.my_fines_screen import MyFinesScreen
+from app.screens.notice_screen import NoticeScreen
+from app.screens.my_notices_screen import MyNoticesScreen
+from app.screens.attendance_screen import AttendanceScreen
+from app.screens.contacts_screen import ContactsScreen
 from app.utils import session
 from app.utils.idle import IdleTracker
 from app.utils.logging_service import log_audit
@@ -45,6 +49,9 @@ _NAV_ITEMS = [
     ("Complaints", "Complaints", "chat"),
     ("Leaves", "Leave Tracking", "plane"),
     ("Fines", "Fines", "clipboard"),
+    ("Notices", "Notices", "chat"),
+    ("Attendance", "Attendance", "clipboard"),
+    ("Contacts", "Wardens & Emergency", "users"),
     ("Workers", "Workers", "users"),
     ("Bugs", "Bug Tracker", "bug"),
     ("Quality", "Quality Monitoring", "chart"),
@@ -53,17 +60,18 @@ _NAV_ITEMS = [
     ("MyComplaints", "My Complaints", "chat"),
     ("MyLeave", "My Leave", "plane"),
     ("MyFines", "My Fines", "clipboard"),
+    ("MyNotices", "My Notices", "chat"),
     ("MyDetails", "My Details", "user"),
 ]
 
-_COMMON = ["Calendar"]
+_COMMON = ["Contacts", "Calendar"]
 ROLE_SCREENS = {
-    "Student": ["MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyDetails"] + _COMMON,
-    "Staff": ["Dashboard", "Complaints", "Workers"] + _COMMON,
-    "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines"] + _COMMON,
-    "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines",
+    "Student": ["MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyNotices", "MyDetails"] + _COMMON,
+    "Staff": ["Dashboard", "Attendance", "Notices", "Complaints", "Workers"] + _COMMON,
+    "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices"] + _COMMON,
+    "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices",
                       "Workers", "Bugs", "Quality", "Users"] + _COMMON,
-    "Super Admin": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines",
+    "Super Admin": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices",
                     "Workers", "Bugs", "Quality", "Users"] + _COMMON,
 }
 
@@ -333,6 +341,10 @@ class MainWindow(tk.Tk):
         self.screens["MyFines"] = MyFinesScreen(self.content, self.fonts)
         self.screens["Fines"] = FineScreen(self.content, self.fonts)
         self.screens["Workers"] = WorkerScreen(self.content, self.fonts)
+        self.screens["Notices"] = NoticeScreen(self.content, self.fonts)
+        self.screens["MyNotices"] = MyNoticesScreen(self.content, self.fonts)
+        self.screens["Attendance"] = AttendanceScreen(self.content, self.fonts)
+        self.screens["Contacts"] = ContactsScreen(self.content, self.fonts)
         self.screens["MyDetails"] = MyDetailsScreen(self.content, self.fonts)
         for screen in self.screens.values():
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
