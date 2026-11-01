@@ -53,6 +53,78 @@ COLORS = {
     "text_muted": "#5B6275",
 }
 
+ACCENT_PRESETS = {
+    "Indigo": "#5B50E6", "Teal": "#0F9D8A", "Rose": "#D6336C",
+    "Orange": "#E8590C", "Green": "#2F9E44", "Blue": "#1C7ED6",
+}
+DEFAULT_ACCENT = ACCENT_PRESETS["Indigo"]
+
+_LIGHT_BASE = dict(COLORS)
+_DARK_BASE = {
+    "background": "#12141C", "surface": "#1B1E2B", "sidebar_bg": "#161926",
+    "border": "#2A2E40", "border_strong": "#3A3F55", "shadow": "#0D0F15",
+    "text_primary": "#E8EAF2", "text_secondary": "#A5ABBF", "text_tertiary": "#7A8199",
+    "success": "#34C268", "success_soft": "#14301F", "danger": "#F0686C", "danger_soft": "#3A1B1D",
+    "warning": "#F0A02E", "warning_soft": "#3A2C10", "info": "#5B9BF8", "info_soft": "#14263F",
+    "teal": "#2EC4AC", "teal_soft": "#11302B", "pink": "#F06292", "pink_soft": "#3A1827",
+    "orange": "#F5A850", "orange_soft": "#3A2A12",
+}
+_mode = "Light"
+_accent = DEFAULT_ACCENT
+
+
+def _rgb(hex_color: str) -> tuple:
+    return tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
+
+
+def _hex(rgb) -> str:
+    return "#%02X%02X%02X" % tuple(max(0, min(255, round(v))) for v in rgb)
+
+
+def blend(color: str, other: str, amount: float) -> str:
+    """`amount` of `other` mixed into `color` (0 = color, 1 = other)."""
+    a, b = _rgb(color), _rgb(other)
+    return _hex(tuple(x + (y - x) * amount for x, y in zip(a, b)))
+
+
+def luminance(color: str) -> float:
+    def channel(v):
+        v /= 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (channel(v) for v in _rgb(color))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def current_appearance() -> tuple:
+    return _mode, _accent
+
+
+def set_appearance(mode: str = "Light", accent: str = DEFAULT_ACCENT) -> None:
+    """Switch the whole palette. Call before widgets are built (the main window rebuilds itself)."""
+    global _mode, _accent
+    _mode, _accent = mode, accent
+    dark = mode == "Dark"
+    COLORS.update(_LIGHT_BASE)
+    if dark:
+        COLORS.update(_DARK_BASE)
+    surface, background = COLORS["surface"], COLORS["background"]
+    COLORS["accent"] = accent
+    COLORS["accent_hover"] = blend(accent, "#FFFFFF" if dark else "#000000", 0.15)
+    COLORS["accent_soft"] = blend(surface, accent, 0.28 if dark else 0.12)
+    hero = blend(accent, "#000000", 0.62 if not dark else 0.72)
+    COLORS["hero"] = hero
+    COLORS["hero_alt"] = blend(hero, accent, 0.25)
+    COLORS["hero_alt2"] = blend(hero, accent, 0.5)
+    COLORS["hero_text"] = blend(hero, "#FFFFFF", 0.8)
+    COLORS["hero_text2"] = blend(hero, "#FFFFFF", 0.6)
+    COLORS["card_bg"] = surface
+    COLORS["header_bg"] = background
+    COLORS["text_dark"] = COLORS["text_primary"]
+    COLORS["text_muted"] = COLORS["text_secondary"]
+
+
+set_appearance("Light", DEFAULT_ACCENT)
+
 STATUS_FG = {
     "Open": "#E58A00",
     "Assigned": "#3B82F6",
@@ -120,6 +192,11 @@ def apply_theme(root) -> dict:
     root.option_add("*TCombobox*Listbox.foreground", COLORS["text_primary"])
     root.option_add("*TCombobox*Listbox.selectBackground", COLORS["accent_soft"])
     root.option_add("*TCombobox*Listbox.selectForeground", COLORS["text_primary"])
+
+    style.configure("TRadiobutton", background=COLORS["surface"], foreground=COLORS["text_primary"],
+                     font=fonts["body"], indicatorcolor=COLORS["surface"])
+    style.map("TRadiobutton", background=[("active", COLORS["surface"])],
+              indicatorcolor=[("selected", COLORS["accent"])])
 
     style.configure("Primary.TButton", background=COLORS["accent"], foreground="#FFFFFF",
                      font=fonts["body_bold"], padding=(16, 8), borderwidth=0, relief="flat")
@@ -343,6 +420,10 @@ def draw_icon(c: tk.Canvas, name: str, size: int, color: str, bg: str = None):
     elif name == "plane":
         c.create_polygon(3 * k, 11 * k, 21 * k, 4 * k, 15 * k, 20 * k, 11 * k, 14 * k,
                          fill=color, outline=color)
+    elif name == "gear":
+        c.create_oval(7 * k, 7 * k, 17 * k, 17 * k, outline=color, width=w + 1, fill="")
+        for x1, y1, x2, y2 in ((12, 3, 12, 6), (12, 18, 12, 21), (3, 12, 6, 12), (18, 12, 21, 12)):
+            ln(x1, y1, x2, y2, fill=color, width=w + 1)
     elif name == "clipboard":
         _round_rect(c, 5 * k, 5 * k, 19 * k, 21 * k, 2 * k, outline=color, width=w, fill="")
         r(9, 3, 15, 7, fill=color, outline=color)
