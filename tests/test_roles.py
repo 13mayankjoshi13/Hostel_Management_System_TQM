@@ -65,8 +65,11 @@ class TestRoles(unittest.TestCase):
             self.assertNotIn(key, sets["Student"])
         self.assertNotIn("Fines", sets["Staff"])
         self.assertNotIn("Students", sets["Staff"])
-        self.assertTrue(all(k.startswith("My") or k in ("Calendar", "Contacts", "StudentHome", "HostelMap", "Events") for k in sets["Student"]))
+        self.assertTrue(all(k.startswith("My") or k in ("Calendar", "Contacts", "StudentHome", "HostelMap", "Events", "Settings") for k in sets["Student"]))
         self.assertEqual(sets["Administrator"], sets["Super Admin"])
+        for wanted in ROLE_SCREENS.values():
+            self.assertNotIn("Quality", wanted)
+            self.assertIn("Settings", wanted)
         known = {k for k, _, _ in _NAV_ITEMS}
         for wanted in ROLE_SCREENS.values():
             self.assertTrue(set(wanted) <= known)
