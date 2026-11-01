@@ -110,6 +110,26 @@ class TestBatch77Screens(unittest.TestCase):
         session.set_session("s", "Staff")
         Dash.refresh()
 
+    def test_quality_screen_tabs_show_not_enough_data_and_real_rows(self):
+        from app.screens.quality_screen import QualityScreen
+        from app.services import fmea_service
+        from app.theme import apply_theme, get_fonts
+
+        apply_theme(self.root)
+        fonts = get_fonts()
+        fmea_service.ensure_default_sipoc()
+        fmea_service.add_fmea("Allocation", "Double booking", "Two students one bed", "No check", 8, 3, 4)
+        screen = QualityScreen(self.root, fonts)
+        screen.pack(fill="both", expand=True)
+        for key in ("defects", "sixsigma", "variance", "taguchi", "fmea", "sipoc", "poka"):
+            screen.show(key)
+            self.root.update()
+        self.assertEqual(len(screen.views["fmea"].tree.get_children()), 1)
+        self.assertEqual(len(screen.views["sipoc"].tree.get_children()), 8)
+        self.assertTrue(all(screen.views["poka"].tree.item(i)["values"][4] == "Proven"
+                            for i in screen.views["poka"].tree.get_children()))
+        self.assertEqual(screen.views["taguchi"].tol_var.get(), "3")
+
 
 if __name__ == "__main__":
     unittest.main()
