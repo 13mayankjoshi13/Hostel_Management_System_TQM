@@ -48,3 +48,7 @@ Students have a gender; rooms have a floor and an optional Boys/Girls hostel. A 
 
 Quality Monitoring (Settings, Administrator and Super Admin only) now has seven tabs: Defects (Pareto, fishbone), Six Sigma (DPMO, sigma level, p-chart), Variance, Taguchi (S/N and loss), FMEA (editable, RPN), SIPOC (editable) and Poka-Yoke (controls with the test that proves each).
 Definitions are stated on each tab. Six Sigma and Variance count audit-log rows as operations and error-log rows as defects, and show "not enough data" below 5 days. Taguchi uses complaint resolution time; its tolerance (D0) and cost (A0) are your own settings. Nothing is estimated or pre-filled except the SIPOC rows, which describe how the application works.
+
+## Batch 81 additions
+
+Every list screen (Students, Rooms, Allocation, Complaints, Leaves, Fines, Workers, Bug Tracker, Users, Notices, Attendance, Events, Wardens & Emergency, and the student's My Complaints, My Leave, My Fines, My Notices) now shows a summary strip under its title with live counts, and every page title has an icon. The strip uses only the data the logged-in role is already allowed to see; if it cannot be computed it is hidden and the screen still works.
