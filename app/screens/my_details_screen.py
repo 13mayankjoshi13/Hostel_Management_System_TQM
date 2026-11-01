@@ -27,7 +27,7 @@ class MyDetailsScreen(tk.Frame):
         ttk.Button(buttons, text="Save Changes", style="Primary.TButton", command=self.on_save).pack(side="left")
         tk.Label(wrapper, text="The registration number is set by the hostel office; ask them to change it.",
                   bg=wrapper.cget("bg"), fg=COLORS["text_tertiary"], font=fonts["label"]).grid(
-            row=4, column=1, sticky="w", pady=(8, 0))
+            row=4, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
     def on_save(self):
         try:
