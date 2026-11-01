@@ -43,3 +43,8 @@ Students have a gender; rooms have a floor and an optional Boys/Girls hostel. A 
 - **Settings** is in every role's footer link. Appearance (light/dark theme, accent colour) is saved per user; the last choice is used on the login screen of that computer. Colours too light for white button text are rejected.
 - Audit log viewer, student data download and **Quality Monitoring** are inside Settings for Administrator and Super Admin only. Quality Monitoring is no longer in the main menu.
 - Every student data download is written to the audit log.
+
+## Batch 80 additions
+
+Quality Monitoring (Settings, Administrator and Super Admin only) now has seven tabs: Defects (Pareto, fishbone), Six Sigma (DPMO, sigma level, p-chart), Variance, Taguchi (S/N and loss), FMEA (editable, RPN), SIPOC (editable) and Poka-Yoke (controls with the test that proves each).
+Definitions are stated on each tab. Six Sigma and Variance count audit-log rows as operations and error-log rows as defects, and show "not enough data" below 5 days. Taguchi uses complaint resolution time; its tolerance (D0) and cost (A0) are your own settings. Nothing is estimated or pre-filled except the SIPOC rows, which describe how the application works.
