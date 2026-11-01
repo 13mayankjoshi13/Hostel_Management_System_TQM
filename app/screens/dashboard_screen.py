@@ -9,7 +9,7 @@ from datetime import date, datetime
 
 from app.config import AUDIT_LOG_CSV
 from app.screens.calendar_widget import CalendarWidget, UpcomingList
-from app.services import (event_service, student_service, room_service, allocation_service, complaint_service,
+from app.services import (home_service, event_service, student_service, room_service, allocation_service, complaint_service,
                            bug_service, leave_service)
 from app.theme import (COLORS, Card, ScrollFrame, _round_rect, build_table, chip, icon_tile,
                         kpi_row, style_treeview_status_tags)
@@ -92,7 +92,7 @@ class DashboardScreen(tk.Frame):
         head = tk.Frame(panel.body, bg=COLORS["surface"])
         head.pack(fill="x", pady=(0, 10))
         self.tab_labels = {}
-        for key, text in (("rooms", "Rooms"), ("activity", "Recent activity")):
+        for key, text in (("rooms", "Rooms"), ("notices", "Notices"), ("activity", "Recent activity")):
             lbl = tk.Label(head, text=text, bg=COLORS["surface"], font=self.fonts["section_title"],
                             padx=12, pady=5, cursor="hand2")
             lbl.pack(side="left", padx=(0, 6))
@@ -110,6 +110,7 @@ class DashboardScreen(tk.Frame):
 
         self.rooms_scroll = ScrollFrame(self.body)
         self.activity_wrap = tk.Frame(self.body, bg=COLORS["surface"])
+        self.notices_wrap = tk.Frame(self.body, bg=COLORS["surface"])
         self.tree = build_table(self.activity_wrap, ("timestamp", "module", "action", "description"),
                                   ("Time", "Module", "Action", "Description"),
                                   (140, 100, 90, 360), height=9)
@@ -127,7 +128,11 @@ class DashboardScreen(tk.Frame):
                           fg=COLORS["accent"] if active else COLORS["text_secondary"])
         self.rooms_scroll.pack_forget()
         self.activity_wrap.pack_forget()
-        if key == "rooms":
+        self.notices_wrap.pack_forget()
+        if key == "notices":
+            self.notices_wrap.pack(fill="both", expand=True)
+            self.legend.pack_forget()
+        elif key == "rooms":
             self.rooms_scroll.pack(fill="both", expand=True)
             self.legend.pack(side="right")
         else:
@@ -171,11 +176,15 @@ class DashboardScreen(tk.Frame):
 
         for w in self.kpi_slot.winfo_children():
             w.destroy()
+        self._home = home_service.staff_home()
+        att = self._home["attendance"]
         kpi_row(self.kpi_slot, [
             ("Students", str(len(students)), "users", COLORS["accent"], COLORS["accent_soft"]),
             ("Beds occupied", f"{occupancy}%", "door", COLORS["teal"], COLORS["teal_soft"]),
             ("Open complaints", str(open_complaints), "chat", COLORS["orange"], COLORS["orange_soft"]),
             ("On leave now", str(on_leave), "plane", COLORS["info"], COLORS["info_soft"]),
+            ("Present today", str(att["Present"]), "users", COLORS["success"], COLORS["success_soft"]),
+            ("Absent today", str(att["Absent"]), "chat", COLORS["pink"], COLORS["pink_soft"]),
         ] + ([("Open bugs", str(open_bugs), "bug", COLORS["pink"], COLORS["pink_soft"])] if is_admin else []), self.fonts).pack(fill="x")
 
         self._rooms = rooms
@@ -220,6 +229,20 @@ class DashboardScreen(tk.Frame):
                 for w in [cell] + list(cell.winfo_children()):
                     w.bind("<Button-1>", lambda e: self._navigate("Allocation"))
 
+    def _refresh_notices(self):
+        for w in self.notices_wrap.winfo_children():
+            w.destroy()
+        notices = self._home["notices"]
+        if not notices:
+            tk.Label(self.notices_wrap, text="No notices sent yet.", bg=COLORS["surface"],
+                     fg=COLORS["text_tertiary"], font=self.fonts["body"]).pack(anchor="w", pady=8)
+        for n in notices:
+            tk.Label(self.notices_wrap, text=n["title"], bg=COLORS["surface"], fg=COLORS["text_primary"],
+                     font=self.fonts["body_bold"]).pack(anchor="w", pady=(6, 0))
+            target = n["student_name"] or {"All": "Everyone", "Boys": "Boys hostel", "Girls": "Girls hostel"}[n["audience"]]
+            tk.Label(self.notices_wrap, text=f"To {target} · {n['created_by']} · {n['created_at']}",
+                     bg=COLORS["surface"], fg=COLORS["text_tertiary"], font=self.fonts["small"]).pack(anchor="w")
+
     def _refresh_activity(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
@@ -250,6 +273,7 @@ class DashboardScreen(tk.Frame):
     def refresh(self):
         self._refresh_banner_and_kpis()
         self._refresh_rooms()
+        self._refresh_notices()
         self._refresh_activity()
         self.calendar.refresh()
         self.upcoming.refresh()
