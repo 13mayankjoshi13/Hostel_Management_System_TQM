@@ -272,6 +272,33 @@ def _create_schema(conn: sqlite3.Connection) -> None:
     """)
 
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS fmea (
+            fmea_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            process_step TEXT NOT NULL,
+            failure_mode TEXT NOT NULL,
+            effect TEXT NOT NULL,
+            cause TEXT NOT NULL,
+            severity INTEGER NOT NULL,
+            occurrence INTEGER NOT NULL,
+            detection INTEGER NOT NULL,
+            current_controls TEXT,
+            recommended_action TEXT,
+            module TEXT
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS sipoc (
+            sipoc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            supplier TEXT NOT NULL,
+            input TEXT NOT NULL,
+            process TEXT NOT NULL,
+            output TEXT NOT NULL,
+            customer TEXT NOT NULL
+        )
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS app_settings (
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
