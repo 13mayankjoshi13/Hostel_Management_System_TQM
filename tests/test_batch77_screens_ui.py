@@ -76,6 +76,40 @@ class TestBatch77Screens(unittest.TestCase):
         mine.refresh()
         self.assertTrue(mine.content.winfo_children())
 
+    def test_home_map_and_events_screens(self):
+        from app.screens.dashboard_screen import DashboardScreen
+        from app.screens.events_screen import EventsScreen
+        from app.screens.hostel_map_screen import HostelMapScreen
+        from app.screens.student_home_screen import StudentHomeScreen
+        from app.services import allocation_service, event_service, room_service, student_service
+        from app.theme import apply_theme, get_fonts
+        from app.utils import session
+        from datetime import date, timedelta
+
+        apply_theme(self.root)
+        fonts = get_fonts()
+        sid = student_service.add_student("Meera Nair", "AB1002", "9876543202", "Female")
+        rid = room_service.add_room("G101", "Double", 2, 1, "Girls")
+        allocation_service.allocate_room(sid, rid)
+        event_service.add_event((date.today() + timedelta(days=2)).isoformat(), "Hostel Day", "Hostel Event")
+        events = EventsScreen(self.root, fonts)
+        events.refresh()
+        self.assertEqual(len(events.tree.get_children()), 1)
+        hostel_map = HostelMapScreen(self.root, fonts)
+        hostel_map.refresh()
+        self.assertTrue(hostel_map.scroll.inner.winfo_children())
+        Dash = DashboardScreen(self.root, fonts)
+        Dash.refresh()
+        session.set_session("meera", "Student", sid)
+        events.refresh()
+        self.assertEqual(str(events.form_host.winfo_manager()), "")
+        hostel_map.refresh()
+        home = StudentHomeScreen(self.root, fonts)
+        home.refresh()
+        self.assertTrue(home.scroll.inner.winfo_children())
+        session.set_session("s", "Staff")
+        Dash.refresh()
+
 
 if __name__ == "__main__":
     unittest.main()
