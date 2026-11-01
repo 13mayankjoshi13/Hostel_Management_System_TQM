@@ -23,6 +23,7 @@ from app.screens.complaint_screen import ComplaintScreen
 from app.screens.leave_screen import LeaveScreen
 from app.screens.bug_screen import BugScreen
 from app.screens.settings_screen import SettingsScreen
+from app.screens import page_stats
 from app.screens.user_screen import UserScreen
 from app.screens.my_room_screen import MyRoomScreen
 from app.screens.my_complaints_screen import MyComplaintsScreen
@@ -385,7 +386,8 @@ class MainWindow(tk.Tk):
         self.screens["Attendance"] = AttendanceScreen(self.content, self.fonts)
         self.screens["Contacts"] = ContactsScreen(self.content, self.fonts)
         self.screens["MyDetails"] = MyDetailsScreen(self.content, self.fonts)
-        for screen in self.screens.values():
+        for key, screen in self.screens.items():
+            page_stats.attach(screen, key, self.fonts)
             screen.place(relx=0, rely=0, relwidth=1, relheight=1)
 
     def show_screen(self, key: str):
