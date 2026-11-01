@@ -46,7 +46,7 @@ class StudentScreen(tk.Frame):
         ttk.Button(buttons, text="Clear", style="Secondary.TButton",
                     command=self.on_clear).pack(side="left", padx=(8, 0))
         tk.Label(wrapper, text="Select a student in the table to edit their details.", bg=wrapper.cget("bg"),
-                  fg=COLORS["text_tertiary"], font=self.fonts["label"]).grid(row=5, column=1, sticky="w", pady=(8, 0))
+                  fg=COLORS["text_tertiary"], font=self.fonts["label"]).grid(row=5, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
     def _build_table(self):
         wrapper = tk.Frame(self.right, bg=COLORS["background"])
