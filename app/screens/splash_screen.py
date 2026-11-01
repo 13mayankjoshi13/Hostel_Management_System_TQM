@@ -29,7 +29,7 @@ class SplashScreen(tk.Toplevel):
         canvas.create_window(48, 70, anchor="nw", window=tile)
         canvas.create_text(48, 160, anchor="w", text=APP_NAME, fill="#FFFFFF", font=fonts["hero"])
         canvas.create_text(48, 192, anchor="w", text="Quality-first hostel administration",
-                           fill="#CFCDF5", font=fonts["body"])
+                           fill=COLORS["hero_text"], font=fonts["body"])
 
         style = ttk.Style(self)
         style.configure("Splash.Horizontal.TProgressbar", troughcolor=COLORS["hero_alt"],
