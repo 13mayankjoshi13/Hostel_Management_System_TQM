@@ -271,6 +271,13 @@ def _create_schema(conn: sqlite3.Connection) -> None:
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    """)
+
     for table, column, ddl in (
         ("students", "gender", "TEXT"),
         ("rooms", "floor", "INTEGER NOT NULL DEFAULT 0"),
