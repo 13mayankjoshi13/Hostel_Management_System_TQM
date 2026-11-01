@@ -150,9 +150,9 @@ class DashboardScreen(tk.Frame):
             c.create_oval(cx - r, cy - r, cx + r, cy + r, fill=col, outline="")
         title, sub = self._banner_text
         c.create_text(26, 40, anchor="w", text=title, fill="#FFFFFF", font=self.fonts["hero"])
-        c.create_text(26, 72, anchor="w", text=sub, fill="#CFCDF5", font=self.fonts["body"])
+        c.create_text(26, 72, anchor="w", text=sub, fill=COLORS["hero_text"], font=self.fonts["body"])
         c.create_text(26, 96, anchor="w", text=date.today().strftime("%A, %d %B %Y"),
-                      fill="#A7A3E8", font=self.fonts["label"])
+                      fill=COLORS["hero_text2"], font=self.fonts["label"])
 
     # ------------------------------------------------------------ data
     def _refresh_banner_and_kpis(self):
@@ -183,8 +183,12 @@ class DashboardScreen(tk.Frame):
             ("Beds occupied", f"{occupancy}%", "door", COLORS["teal"], COLORS["teal_soft"]),
             ("Open complaints", str(open_complaints), "chat", COLORS["orange"], COLORS["orange_soft"]),
             ("On leave now", str(on_leave), "plane", COLORS["info"], COLORS["info_soft"]),
+        ], self.fonts).pack(fill="x")
+        tk.Frame(self.kpi_slot, height=10, bg=COLORS["background"]).pack()
+        kpi_row(self.kpi_slot, [
             ("Present today", str(att["Present"]), "users", COLORS["success"], COLORS["success_soft"]),
             ("Absent today", str(att["Absent"]), "chat", COLORS["pink"], COLORS["pink_soft"]),
+            ("Not marked today", str(att["Unmarked"]), "clipboard", COLORS["orange"], COLORS["orange_soft"]),
         ] + ([("Open bugs", str(open_bugs), "bug", COLORS["pink"], COLORS["pink_soft"])] if is_admin else []), self.fonts).pack(fill="x")
 
         self._rooms = rooms
