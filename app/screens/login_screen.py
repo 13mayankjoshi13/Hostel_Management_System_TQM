@@ -47,7 +47,7 @@ class LoginScreen(tk.Toplevel):
         hero.create_text(36, 150, anchor="nw", text="Hostel\nManagement\nSystem", fill="#FFFFFF",
                          font=fonts["hero"])
         hero.create_text(36, 250, anchor="nw", text="Rooms, complaints and leaves\nin one place.",
-                         fill="#CFCDF5", font=fonts["body"])
+                         fill=COLORS["hero_text"], font=fonts["body"])
 
         wrapper = tk.Frame(self, bg=COLORS["surface"])
         wrapper.pack(side="left", fill="both", expand=True, padx=44, pady=44)
