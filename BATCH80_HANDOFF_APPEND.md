@@ -1,0 +1,5 @@
+
+## Update – quality tools (append; do not replace the file)
+
+New tables `fmea` and `sipoc`. Services: `sixsigma_service` (operations = audit rows, defects = error-log rows per day; DPMO, sigma = inv_cdf(yield)+1.5, p-chart with 3-sigma limits, rolling variance; MIN_DAYS = 5, zero defects gives a ">=" sigma bound), `taguchi_service` (complaint days to resolve, smaller-is-better S/N and loss; D0 default 3 days, optional A0 stored in `app_settings`), `fmea_service` (FMEA CRUD, RPN threshold 100 = "Act", bug count per module as evidence; SIPOC seeded from the real workflow), `poka_yoke_service` (register where each control names a test; a unit test fails if the test is renamed).
+`QualityScreen` is now tabbed (Defects, Six Sigma, Variance, Taguchi, FMEA, SIPOC, Poka-Yoke) and lives in Settings. FMEA starts empty: copy the planning ratings from TQM/FMEA.md; they are the team's to set. The error log includes test rows from earlier runs; clear them before presenting sigma figures. Suite: 319 tests. Charts were checked with synthetic data in screenshots only; real values are "not measured" until the logs have 5 days.
