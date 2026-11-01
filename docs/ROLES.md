@@ -37,3 +37,9 @@ Students have a gender; rooms have a floor and an optional Boys/Girls hostel. A 
 - Hostel Map: every role sees rooms by hostel and floor with bed counts; names of occupants are shown to staff roles only, students see counts and a star on their own room.
 - Hostel Events: everyone reads upcoming events (filter by type); Wardens and admins add or delete them.
 - Staff, Warden and admin dashboards add Present / Absent today and a Notices tab.
+
+## Batch 79 additions
+
+- **Settings** is in every role's footer link. Appearance (light/dark theme, accent colour) is saved per user; the last choice is used on the login screen of that computer. Colours too light for white button text are rejected.
+- Audit log viewer, student data download and **Quality Monitoring** are inside Settings for Administrator and Super Admin only. Quality Monitoring is no longer in the main menu.
+- Every student data download is written to the audit log.
