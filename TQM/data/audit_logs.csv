@@ -179,3 +179,73 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-10-31T15:39:51,admin,Administrator,Auth,Logout,admin,Success,'admin' logged out.
 2026-10-31T15:40:03,mayank,Staff,Auth,Login,59,Success,'mayank' logged in.
 2026-10-31T15:42:33,mayank,Staff,Auth,Logout,mayank,Success,'mayank' logged out.
+2026-11-01T20:36:49,system_admin,Super Admin,Database,Backup,hostel_20261101_203649.db,Success,Daily database backup created.
+2026-11-01T20:36:49,system_admin,Super Admin,User,Promote,1,Success,'admin' became the Super Admin (first Administrator account).
+2026-11-01T20:37:14,mayank,Staff,Auth,Login,59,Success,'mayank' logged in.
+2026-11-01T20:38:52,mayank,Staff,Auth,Logout,mayank,Success,'mayank' logged out.
+2026-11-01T20:39:14,system_admin,Super Admin,Auth,LoginFailed,1,Failure,Wrong password for 'admin'.
+2026-11-01T20:39:28,system_admin,Super Admin,Auth,LoginFailed,1,Failure,Wrong password for 'admin'.
+2026-11-01T20:39:34,admin,Super Admin,Auth,Login,1,Success,'admin' logged in.
+2026-11-01T20:40:03,admin,Super Admin,Fine,Issue,1,Success,Fine of ₹500.00 issued to student 1.
+2026-11-01T20:40:37,admin,Super Admin,Notice,Create,1,Success,Notice sent to All.
+2026-11-01T20:44:42,admin,Super Admin,Auth,Logout,admin,Success,'admin' logged out.
+2026-11-01T20:45:09,system_admin,Super Admin,Auth,LoginWrongPanel,59,Failure,'mayank' (Staff) tried the Admin login.
+2026-11-01T20:45:19,system_admin,Super Admin,Auth,LoginWrongPanel,59,Failure,'mayank' (Staff) tried the Super Admin login.
+2026-11-01T20:45:28,admin,Super Admin,Auth,Login,1,Success,'admin' logged in.
+2026-11-01T20:46:50,admin,Super Admin,User,Create,60,Success,Created account 'mayankjoshi' with role 'Student'.
+2026-11-01T20:46:53,admin,Super Admin,Auth,Logout,admin,Success,'admin' logged out.
+2026-11-01T20:47:04,mayankjoshi,Student,Auth,Login,60,Success,'mayankjoshi' logged in.
+2026-11-01T20:47:18,mayankjoshi,Student,Fine,PaymentLink,1,Success,Online payment link created.
+2026-11-01T20:48:17,mayankjoshi,Student,Fine,PayOnline,1,Success,Razorpay payment pay_TuxR4NeFHSpOQ5 confirmed.
+2026-11-01T20:48:31,mayankjoshi,Student,Fine,PrintReceipt,1,Success,Receipt generated.
+2026-11-01T20:49:27,mayankjoshi,Student,Auth,Logout,mayankjoshi,Success,'mayankjoshi' logged out.
+2026-11-01T20:49:38,system_admin,Super Admin,Auth,LoginFailed,1,Failure,Wrong password for 'admin'.
+2026-11-01T20:49:46,system_admin,Super Admin,Auth,LoginWrongPanel,1,Failure,'admin' (Super Admin) tried the Admin login.
+2026-11-01T20:50:45,mayank,Staff,Auth,Login,59,Success,'mayank' logged in.
+2026-11-01T20:51:24,mayank,Staff,Auth,Logout,mayank,Success,'mayank' logged out.
+2026-11-01T21:43:42,superadmin,Super Admin,Auth,Login,61,Success,'superadmin' logged in.
+2026-11-01T21:43:42,admin,Super Admin,Auth,Login,1,Success,'admin' logged in.
+2026-11-01T21:43:42,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-01T21:43:42,hostel_staff,Staff,Auth,Login,63,Success,'hostel_staff' logged in.
+2026-11-01T21:43:42,warden,Warden,Auth,Login,64,Success,'warden' logged in.
+2026-11-01T21:43:42,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T22:10:38,superadmin,Super Admin,Auth,Login,61,Success,'superadmin' logged in.
+2026-11-01T22:10:55,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T22:10:55,student,Student,Security,AccessDenied,student,Failure,Role 'Student' tried to view the student list.
+2026-11-01T22:15:05,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T22:15:06,student,Student,Security,AccessDenied,student,Failure,Role 'Student' tried to view the student list.
+2026-11-01T22:22:44,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T22:23:06,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T22:23:18,hostel_staff,Staff,Auth,Login,63,Success,'hostel_staff' logged in.
+2026-11-01T22:23:19,hostel_staff,Staff,Security,AccessDenied,hostel_staff,Failure,Role 'Staff' tried to view all fines.
+2026-11-01T22:23:45,hostel_staff,Staff,Auth,Login,63,Success,'hostel_staff' logged in.
+2026-11-01T22:23:57,warden,Warden,Auth,Login,64,Success,'warden' logged in.
+2026-11-01T22:24:12,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-01T22:24:33,superadmin,Super Admin,Auth,Login,61,Success,'superadmin' logged in.
+2026-11-01T22:38:15,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-01T22:38:15,hostel_admin,Administrator,Notice,Create,8,Success,Notice sent to All.
+2026-11-01T22:38:25,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T22:38:58,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-01T22:49:18,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-01T22:49:18,hostel_admin,Administrator,Notice,Create,10,Success,Notice sent to 2 selected students.
+2026-11-01T22:50:04,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-01T23:01:57,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T23:03:10,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-01T23:03:27,warden,Warden,Auth,Login,64,Success,'warden' logged in.
+2026-11-01T23:06:35,warden,Warden,Auth,Logout,warden,Success,'warden' logged out.
+2026-11-01T23:06:41,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-01T23:15:46,hostel_admin,Administrator,Auth,Logout,hostel_admin,Success,'hostel_admin' logged out.
+2026-11-01T23:15:54,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T23:18:04,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-01T23:20:03,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T23:22:41,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-01T23:58:11,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-01T23:59:30,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-01T23:59:36,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-02T00:07:19,hostel_admin,Administrator,Auth,Logout,hostel_admin,Success,'hostel_admin' logged out.
+2026-11-02T00:48:18,system_admin,Super Admin,Database,Backup,hostel_20261102_004818.db,Success,Daily database backup created.
+2026-11-02T00:48:31,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-02T00:49:20,student,Student,Security,AccessDenied,student,Failure,Role 'Student' tried to view all fines.
+2026-11-02T00:49:25,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-02T00:49:42,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-02T00:50:23,hostel_admin,Administrator,Auth,Logout,hostel_admin,Success,'hostel_admin' logged out.

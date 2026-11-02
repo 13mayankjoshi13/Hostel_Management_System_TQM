@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
 from app.services import student_service, room_service, allocation_service
+from app.utils import session
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, form_card, split_layout
@@ -52,6 +53,28 @@ class AllocationScreen(tk.Frame):
                                   (50, 190, 100, 100, 160), height=7)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
+
+        def _on_alloc_select(event=None):
+            sel = self.tree.selection()
+            if not sel: return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Allotment #{vals[0]} — {vals[1]}",
+                    fields={
+                        "Allocation ID": vals[0],
+                        "Student": vals[1],
+                        "Room": vals[2],
+                        "Room Type": vals[3],
+                        "Allocated Date": vals[4],
+                    },
+                    full_text=f"Active room allocation: {vals[1]} is allotted to Room {vals[2]} ({vals[3]})."
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_alloc_select)
+        self.tree.bind("<Return>", _on_alloc_select)
+
 
         button_row = tk.Frame(content, bg=COLORS["surface"])
         button_row.pack(anchor="e", pady=(10, 0))
@@ -139,5 +162,7 @@ class AllocationScreen(tk.Frame):
             ), tags=("default",))
 
     def refresh(self):
+        if session.get_role() not in session.STAFF_ROLES:
+            return
         self.refresh_dropdowns()
         self.refresh_allocations()

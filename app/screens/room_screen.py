@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from app.services import room_service
+from app.utils import session
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, form_card, split_layout
@@ -54,6 +55,29 @@ class RoomScreen(tk.Frame):
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
 
+        def _on_room_double_click(event=None):
+            sel = self.tree.selection()
+            if not sel: return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Room {vals[1]} Details",
+                    fields={
+                        "Room ID": vals[0],
+                        "Room Number": vals[1],
+                        "Room Type": vals[2],
+                        "Capacity": vals[3],
+                        "Floor": vals[4],
+                        "Hostel Block": vals[5] or "Not assigned",
+                    },
+                    full_text=f"Details for Room {vals[1]}: {vals[2]} accommodation with total capacity of {vals[3]} beds."
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_room_double_click)
+        self.tree.bind("<Return>", _on_room_double_click)
+
+
     def on_add(self):
         try:
             room_service.add_room(
@@ -71,6 +95,8 @@ class RoomScreen(tk.Frame):
             handle_unexpected_error("Room", "add_room_ui", e)
 
     def refresh(self):
+        if session.get_role() not in session.STAFF_ROLES:
+            return
         for row in self.tree.get_children():
             self.tree.delete(row)
         for room in room_service.get_all_rooms():

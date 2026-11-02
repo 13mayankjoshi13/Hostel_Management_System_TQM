@@ -4,6 +4,7 @@ from datetime import date
 from tkinter import ttk, messagebox
 
 from app.services import allocation_service, leave_service
+from app.utils import session
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import keep_selection, COLORS, status_tag, section_header, form_row, build_panel, build_table, style_treeview_status_tags, form_card, split_layout
@@ -47,8 +48,32 @@ class LeaveScreen(tk.Frame):
                                   (45, 160, 70, 90, 90, 170, 90), height=7)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
+
+        def _on_leave_select(event=None):
+            sel = self.tree.selection()
+            if not sel: return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Leave #{vals[0]} — {vals[1]}",
+                    fields={
+                        "Leave ID": vals[0],
+                        "Student": vals[1],
+                        "Room": vals[2],
+                        "From Date": vals[3],
+                        "To Date": vals[4],
+                        "Status": vals[6],
+                    },
+                    full_text=f"Reason: {vals[5]}"
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_leave_select)
+        self.tree.bind("<Return>", _on_leave_select)
+
         ttk.Button(content, text="Mark Returned", style="Primary.TButton",
                     command=self.on_return).pack(anchor="e", pady=(10, 0))
+
 
     def on_record(self):
         student_id = self._student_options.get(self.student_var.get())
@@ -90,6 +115,8 @@ class LeaveScreen(tk.Frame):
             ), tags=(status_tag(leave["status"]),))
 
     def refresh(self):
+        if session.get_role() not in session.STAFF_ROLES:
+            return
         self._student_options = {
             f"{a['student_name']} — Room {a['room_number']}": a["student_id"]
             for a in allocation_service.get_active_allocations()

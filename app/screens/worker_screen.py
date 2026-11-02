@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from app.services import worker_service
+from app.utils import session
 from app.utils.validation import ValidationError, WORKER_TRADES
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import (keep_selection, COLORS, status_tag, section_header, form_row, build_panel, build_table,
@@ -35,7 +36,33 @@ class WorkerScreen(tk.Frame):
                                   (40, 130, 85, 95, 65, 80, 70, 45), height=7)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
+
+        def _on_worker_select(event=None):
+            sel = self.tree.selection()
+            if not sel: return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Worker: {vals[1]}",
+                    fields={
+                        "Worker ID": vals[0],
+                        "Name": vals[1],
+                        "Role / Trade": vals[2],
+                        "Contact Number": vals[3],
+                        "Status": vals[4],
+                        "Today's Attendance": vals[5],
+                        "Open Tasks": vals[6],
+                        "Completed Tasks": vals[7],
+                    },
+                    full_text=f"Worker details for {vals[1]} ({vals[2]}). Phone: {vals[3]}."
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_worker_select)
+        self.tree.bind("<Return>", _on_worker_select)
+
         buttons = tk.Frame(content, bg=COLORS["surface"])
+
         buttons.pack(anchor="e", pady=(10, 0))
         for label, status in (("Present", "Present"), ("Absent", "Absent"), ("On Leave", "On Leave")):
             ttk.Button(buttons, text=label, style="Secondary.TButton",
@@ -76,6 +103,8 @@ class WorkerScreen(tk.Frame):
             handle_unexpected_error("Worker", "worker_action_ui", e)
 
     def refresh(self):
+        if session.get_role() not in session.STAFF_ROLES:
+            return
         keep_selection(self.tree, self._rebuild)
 
     def _rebuild(self):

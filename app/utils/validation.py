@@ -473,11 +473,16 @@ def validate_hostel_name(name: str) -> str:
 
 def validate_emergency_number(number: str) -> str:
     if number is None or not str(number).strip():
-        raise ValidationError("Phone number cannot be empty.")
-    number = " ".join(str(number).split())
+        raise ValidationError("Phone number or email cannot be empty.")
+    number = " ".join(str(number).split()).strip()
+    if "@" in number:
+        parts = number.split("@")
+        if len(parts) == 2 and "." in parts[1] and len(parts[0]) >= 1 and len(parts[1]) >= 3:
+            return number.lower()
+        raise ValidationError("Enter a valid email address (e.g. hostel.helpdesk@gmail.com).")
     digits = [ch for ch in number if ch.isdigit()]
     if not all(ch.isascii() and (ch.isdigit() or ch in "+- ()/") for ch in number) or not 3 <= len(digits) <= 15:
-        raise ValidationError("Enter a phone number with 3 to 15 digits (spaces, +, - and brackets are allowed).")
+        raise ValidationError("Enter a phone number with 3 to 15 digits (spaces, +, - and brackets are allowed) or a valid email address.")
     return number
 
 

@@ -226,6 +226,13 @@ def apply_theme(root) -> dict:
     style.configure("Vertical.TScrollbar", background=COLORS["border"], troughcolor=COLORS["surface"],
                      borderwidth=0, arrowsize=12)
 
+    try:
+        root.bind_all("<MouseWheel>", _dispatch_mousewheel, add="+")
+        root.bind_all("<Button-4>", _dispatch_mousewheel, add="+")
+        root.bind_all("<Button-5>", _dispatch_mousewheel, add="+")
+    except Exception:
+        pass
+
     return fonts
 
 
@@ -486,10 +493,106 @@ def initials(name: str) -> str:
     return "".join(p[0] for p in parts[:2]).upper() or "?"
 
 
+# ---------------------------------------------------------------- universal mousewheel
+
+def _dispatch_mousewheel(event):
+    """Universal mousewheel scroll: dynamically finds whatever scrollable widget is under the cursor."""
+    try:
+        x, y = getattr(event, "x_root", 0), getattr(event, "y_root", 0)
+        target = event.widget.winfo_containing(x, y) if getattr(event, "widget", None) else None
+    except Exception:
+        target = getattr(event, "widget", None)
+    if target is None:
+        return
+    delta = int(-1 * (event.delta / 120)) * 2 if getattr(event, "delta", 0) else (
+        2 if getattr(event, "num", None) == 5 else -2
+    )
+    curr = target
+    while curr is not None:
+        try:
+            if isinstance(curr, ttk.Treeview):
+                curr.yview_scroll(delta, "units")
+                return "break"
+            if isinstance(curr, tk.Text):
+                curr.yview_scroll(delta, "units")
+                return "break"
+            if hasattr(curr, "_scroll_canvas"):
+                curr._scroll_canvas.yview_scroll(delta, "units")
+                return "break"
+            if isinstance(curr, tk.Canvas) and str(curr.cget("scrollregion")).strip():
+                curr.yview_scroll(delta, "units")
+                return "break"
+            curr = getattr(curr, "master", None)
+        except Exception:
+            break
+
+
 # ---------------------------------------------------------------- tables
 
+class ScrollableTreeview(ttk.Treeview):
+    """Treeview that comes pre-packaged with a vertical Scrollbar and mousewheel support."""
+
+    def __init__(self, parent, *args, **kwargs):
+        bg = COLORS["surface"]
+        try:
+            if hasattr(parent, "cget"):
+                bg = parent.cget("bg")
+        except Exception:
+            pass
+        self._container = tk.Frame(parent, bg=bg)
+        super().__init__(self._container, *args, **kwargs)
+        self._scrollbar = ttk.Scrollbar(self._container, orient="vertical", command=self.yview)
+        self.configure(yscrollcommand=self._scrollbar.set)
+        self._scrollbar.pack(side="right", fill="y")
+        super().pack(side="left", fill="both", expand=True)
+        self.bind("<MouseWheel>", self._on_tree_wheel)
+        self.bind("<Button-4>", lambda e: self.yview_scroll(-2, "units"))
+        self.bind("<Button-5>", lambda e: self.yview_scroll(2, "units"))
+
+    def _on_tree_wheel(self, event):
+        delta = int(-1 * (event.delta / 120)) * 2 if getattr(event, "delta", 0) else (
+            2 if getattr(event, "num", None) == 5 else -2
+        )
+        self.yview_scroll(delta, "units")
+        return "break"
+
+    def pack(self, *args, **kwargs):
+        self._container.pack(*args, **kwargs)
+
+    def pack_forget(self):
+        self._container.pack_forget()
+
+    def pack_info(self):
+        return self._container.pack_info()
+
+    def grid(self, *args, **kwargs):
+        self._container.grid(*args, **kwargs)
+
+    def grid_forget(self):
+        self._container.grid_forget()
+
+    def place(self, *args, **kwargs):
+        self._container.place(*args, **kwargs)
+
+    def place_forget(self):
+        self._container.place_forget()
+
+    def winfo_ismapped(self):
+        return self._container.winfo_ismapped()
+
+    def destroy(self):
+        try:
+            self._container.destroy()
+        except Exception:
+            pass
+        try:
+            super().destroy()
+        except Exception:
+            pass
+
+
 def build_table(parent, columns, headings, widths, height=10) -> ttk.Treeview:
-    tree = ttk.Treeview(parent, columns=columns, show="headings", height=height, style="App.Treeview")
+    tree = ScrollableTreeview(parent, columns=columns, show="headings", height=height, style="App.Treeview")
     factor = min(0.75, 520.0 / max(sum(widths), 1))
     for col, label, width in zip(columns, headings, widths):
         tree.heading(col, text=label, anchor="w")
@@ -523,6 +626,118 @@ def bind_hover(widget, normal_bg: str, hover_bg: str):
     widget.bind("<Leave>", lambda e: widget.configure(bg=normal_bg))
 
 
+def make_clickable(widget, command, hover_bg=None, normal_bg=None):
+    """Recursively set cursor to hand2 and bind Button-1 to command for widget and all descendants."""
+    try:
+        widget.configure(cursor="hand2")
+    except Exception:
+        pass
+    widget.bind("<Button-1>", lambda e: command())
+    if hover_bg and normal_bg:
+        widget.bind("<Enter>", lambda e: widget.configure(bg=hover_bg))
+        widget.bind("<Leave>", lambda e: widget.configure(bg=normal_bg))
+    for child in widget.winfo_children():
+        make_clickable(child, command, hover_bg, normal_bg)
+
+
+def show_detail_dialog(parent=None, title: str = "Details", subtitle: str = "", icon: str = "clipboard", color: str = None,
+                       fields=None, action_btn_text: str = None, on_action=None, **kwargs):
+    """Modern modal dialog showing structured details (Notice, Event, Complaint, etc.)."""
+    if isinstance(parent, str):
+        title, parent = parent, None
+
+    title = kwargs.get("title", title)
+    subtitle = kwargs.get("subtitle", subtitle)
+    icon = kwargs.get("icon", icon)
+    color = kwargs.get("color", color) or COLORS.get("accent", "#5B50E6")
+    fields = kwargs.get("fields", fields) or []
+    action_btn_text = kwargs.get("action_btn_text", action_btn_text)
+    on_action = kwargs.get("on_action", on_action)
+    full_text = kwargs.get("full_text")
+
+    if isinstance(fields, dict):
+        fields = list(fields.items())
+    elif isinstance(fields, (list, tuple)):
+        fields = list(fields)
+    else:
+        fields = []
+
+    if full_text and not any(k.lower() in ("description", "details", "notice message", "message", "full content") for k, _ in fields):
+        fields.append(("Details", str(full_text)))
+
+    root = tk._default_root
+    target_parent = parent if parent is not None and hasattr(parent, "winfo_toplevel") else root
+
+    dlg = tk.Toplevel(target_parent)
+    dlg.title(title)
+    dlg.configure(bg=COLORS["surface"])
+    dlg.resizable(False, False)
+    if target_parent is not None:
+        try:
+            dlg.transient(target_parent.winfo_toplevel())
+        except Exception:
+            pass
+    fonts = get_fonts_cached()
+
+    w, h = 540, 440
+    dlg.update_idletasks()
+    try:
+        top = target_parent.winfo_toplevel() if target_parent else None
+        pw = top.winfo_width() if top else 800
+        ph = top.winfo_height() if top else 600
+        px = top.winfo_rootx() if top else 100
+        py = top.winfo_rooty() if top else 100
+    except Exception:
+        pw, ph, px, py = 800, 600, 100, 100
+    x = max(0, px + (pw - w) // 2)
+    y = max(0, py + (ph - h) // 2)
+    dlg.geometry(f"{w}x{h}+{x}+{y}")
+
+    head = tk.Frame(dlg, bg=COLORS["background"], padx=20, pady=16)
+    head.pack(fill="x")
+    icon_tile(head, icon, color, size=40, bg=COLORS["background"]).pack(side="left", padx=(0, 14))
+    tframe = tk.Frame(head, bg=COLORS["background"])
+    tframe.pack(side="left", fill="both", expand=True)
+    tk.Label(tframe, text=title, bg=COLORS["background"], fg=COLORS["text_primary"],
+             font=fonts["header"], anchor="w").pack(anchor="w")
+    if subtitle:
+        tk.Label(tframe, text=subtitle, bg=COLORS["background"], fg=COLORS["text_secondary"],
+                 font=fonts["small"], anchor="w").pack(anchor="w", pady=(2, 0))
+
+    body_frame = tk.Frame(dlg, bg=COLORS["surface"], padx=24, pady=16)
+    body_frame.pack(fill="both", expand=True)
+
+    for label, val in fields:
+        row = tk.Frame(body_frame, bg=COLORS["surface"], pady=4)
+        row.pack(fill="x")
+        tk.Label(row, text=str(label).upper(), bg=COLORS["surface"], fg=COLORS["text_tertiary"],
+                 font=fonts["small_bold"], width=13, anchor="w").pack(side="left", anchor="nw")
+        if "\n" in str(val) or len(str(val)) > 55:
+            txt = tk.Text(row, bg=COLORS["background"], fg=COLORS["text_primary"],
+                          font=fonts["body"], wrap="word", relief="flat", padx=8, pady=8, height=6)
+            txt.insert("1.0", str(val))
+            txt.configure(state="disabled")
+            txt.pack(side="left", fill="both", expand=True)
+        else:
+            tk.Label(row, text=str(val), bg=COLORS["surface"], fg=COLORS["text_primary"],
+                     font=fonts["body"], anchor="w", justify="left").pack(side="left", fill="x", expand=True)
+
+    foot = tk.Frame(dlg, bg=COLORS["surface"], padx=24, pady=14)
+    foot.pack(fill="x")
+    ttk.Button(foot, text="Close", style="Secondary.TButton", command=dlg.destroy).pack(side="right")
+    if action_btn_text and on_action:
+        def do_action():
+            dlg.destroy()
+            on_action()
+        ttk.Button(foot, text=action_btn_text, style="Primary.TButton", command=do_action).pack(side="right", padx=(0, 8))
+
+    try:
+        dlg.grab_set()
+    except Exception:
+        pass
+    return dlg
+
+
 # ---------------------------------------------------------------- scrolling
 
 class ScrollFrame(tk.Frame):
@@ -532,41 +747,36 @@ class ScrollFrame(tk.Frame):
         bg = bg or COLORS["surface"]
         super().__init__(parent, bg=bg)
         self.canvas = tk.Canvas(self, bg=bg, highlightthickness=0, bd=0)
-        bar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=bar.set)
-        bar.pack(side="right", fill="y")
+        self.bar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.bar.set)
+        self.bar.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
         self.inner = tk.Frame(self.canvas, bg=bg)
         self._win = self.canvas.create_window(0, 0, anchor="nw", window=self.inner)
+
+        self.canvas._scroll_canvas = self.canvas
+        self.inner._scroll_canvas = self.canvas
+        self._scroll_canvas = self.canvas
+
         self.inner.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(self._win, width=e.width))
-        for widget in (self.canvas, self.inner):
-            widget.bind("<Enter>", self._bind_wheel)
-            widget.bind("<Leave>", self._unbind_wheel)
 
-    def _bind_wheel(self, _e):
-        self.canvas.bind_all("<MouseWheel>", self._on_wheel)
-        self.canvas.bind_all("<Button-4>", lambda e: self.canvas.yview_scroll(-2, "units"))
-        self.canvas.bind_all("<Button-5>", lambda e: self.canvas.yview_scroll(2, "units"))
-
-    def _unbind_wheel(self, _e):
-        self.canvas.unbind_all("<MouseWheel>")
-        self.canvas.unbind_all("<Button-4>")
-        self.canvas.unbind_all("<Button-5>")
-
-    def _on_wheel(self, event):
-        self.canvas.yview_scroll(int(-event.delta / 60) or (-1 if event.delta > 0 else 1), "units")
+    def update_scroll(self):
+        self.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
 
 # ---------------------------------------------------------------- KPI cards
 
 def kpi_row(parent, items, fonts: dict) -> tk.Frame:
     """
-    Row of equal KPI cards. items: (label, value, icon, color, soft_color).
+    Row of equal KPI cards. items: (label, value, icon, color, soft_color[, on_click]).
     Returns the row frame (children are Cards).
     """
     row = tk.Frame(parent, bg=COLORS["background"])
-    for i, (label, value, icon, color, soft) in enumerate(items):
+    for i, itm in enumerate(items):
+        label, value, icon, color, soft = itm[:5]
+        on_click = itm[5] if len(itm) > 5 else None
         row.columnconfigure(i, weight=1, uniform="kpi")
         card = Card(row, pad=14, radius=14, fit=True)
         card.grid(row=0, column=i, sticky="ew", padx=(0 if i == 0 else 6, 0 if i == len(items) - 1 else 6))
@@ -577,6 +787,8 @@ def kpi_row(parent, items, fonts: dict) -> tk.Frame:
                   font=fonts["kpi"]).pack(anchor="w", pady=(8, 0))
         tk.Label(card.body, text=label, bg=COLORS["surface"], fg=COLORS["text_secondary"],
                   font=fonts["stat_label"]).pack(anchor="w")
+        if on_click:
+            make_clickable(card, on_click)
     return row
 
 

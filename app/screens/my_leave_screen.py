@@ -34,8 +34,34 @@ class MyLeaveScreen(tk.Frame):
                                   (45, 70, 100, 100, 220, 90), height=7)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
-        ttk.Button(content, text="I Have Returned", style="Primary.TButton",
-                    command=self.on_return).pack(anchor="e", pady=(10, 0))
+
+        def _on_leave_select(event=None):
+            sel = self.tree.selection()
+            if not sel:
+                return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Leave Application #{vals[0]}",
+                    fields={
+                        "Leave ID": vals[0],
+                        "Room": vals[1],
+                        "From Date": vals[2],
+                        "To Date": vals[3],
+                        "Status": vals[5],
+                    },
+                    full_text=f"Reason: {vals[4]}"
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_leave_select)
+        self.tree.bind("<Return>", _on_leave_select)
+
+        info_strip = tk.Frame(content, bg=COLORS["surface"], pady=4)
+        info_strip.pack(fill="x", pady=(10, 0))
+        tk.Label(info_strip, text="ℹ Note: Return from leave must be verified & marked by Warden / Admin upon hostel check-in.",
+                 bg=COLORS["surface"], fg=COLORS["text_secondary"], font=self.fonts["small"]).pack(anchor="w")
+
 
     def on_apply(self):
         try:

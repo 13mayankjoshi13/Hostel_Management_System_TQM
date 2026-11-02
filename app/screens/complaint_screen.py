@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 
 from app.services import student_service, complaint_service, worker_service
+from app.utils import session
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import keep_selection, COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, status_tag, form_card, split_layout
@@ -63,7 +64,37 @@ class ComplaintScreen(tk.Frame):
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
 
+        def _on_complaint_double_click(event=None):
+            selected = self.tree.selection()
+            if not selected:
+                return
+            complaint = getattr(self, "_complaint_rows", {}).get(selected[0])
+            if not complaint:
+                return
+            from app.theme import show_detail_dialog
+            fields = {
+                "Complaint ID": complaint["complaint_id"],
+                "Student": complaint["student_name"],
+                "Category": complaint["category"],
+                "Status": complaint["status"],
+                "Assigned To": complaint.get("assigned_to") or "—",
+                "Created At": complaint["created_at"],
+            }
+            if complaint.get("resolved_at"):
+                fields["Resolved At"] = complaint["resolved_at"]
+            if complaint.get("resolution_notes"):
+                fields["Resolution Notes"] = complaint["resolution_notes"]
+            show_detail_dialog(
+                title=f"Complaint #{complaint['complaint_id']} — {complaint['category']}",
+                fields=fields,
+                full_text=complaint.get("description", "")
+            )
+
+        self.tree.bind("<Double-Button-1>", _on_complaint_double_click)
+        self.tree.bind("<Return>", _on_complaint_double_click)
+
         button_row = tk.Frame(content, bg=COLORS["surface"])
+
         button_row.pack(anchor="e", pady=(10, 0))
         ttk.Button(button_row, text="Assign Selected", style="Secondary.TButton",
                     command=self.on_assign).pack(side="left", padx=(0, 8))
@@ -172,5 +203,7 @@ class ComplaintScreen(tk.Frame):
             self._complaint_rows[item_id] = complaint
 
     def refresh(self):
+        if session.get_role() not in session.STAFF_ROLES:
+            return
         self.refresh_student_dropdown()
         self.refresh_table()

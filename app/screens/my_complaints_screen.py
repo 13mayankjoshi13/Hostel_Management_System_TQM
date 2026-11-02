@@ -40,6 +40,29 @@ class MyComplaintsScreen(tk.Frame):
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
 
+        def _on_complaint_select(event=None):
+            sel = self.tree.selection()
+            if not sel:
+                return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Complaint #{vals[0]} — {vals[1]}",
+                    fields={
+                        "Complaint ID": vals[0],
+                        "Category": vals[1],
+                        "Status": vals[3],
+                        "Assigned To": vals[4],
+                        "Filed Date": vals[5],
+                    },
+                    full_text=vals[2]
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_complaint_select)
+        self.tree.bind("<Return>", _on_complaint_select)
+
+
     def on_submit(self):
         try:
             student_portal_service.file_complaint(

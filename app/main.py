@@ -65,8 +65,16 @@ def run():
                    "ensure_default_admin", status="Open", message_reference=str(exc))
 
     try:
-        from app.services.emergency_service import seed_defaults
+        from app.database.seed_demo import seed_test_accounts_and_data
+        seed_test_accounts_and_data()
+    except Exception as exc:
+        log_error("Database", type(exc).__name__, "Medium",
+                   "seed_test_accounts_and_data", status="Open", message_reference=str(exc))
+
+    try:
+        from app.services.emergency_service import seed_defaults, seed_university_defaults
         seed_defaults()
+        seed_university_defaults()
     except Exception as exc:
         log_error("Emergency", type(exc).__name__, "Medium",
                    "seed_defaults", status="Open", message_reference=str(exc))

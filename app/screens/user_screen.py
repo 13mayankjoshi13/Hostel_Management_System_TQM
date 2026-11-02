@@ -64,7 +64,30 @@ class UserScreen(tk.Frame):
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
 
+        def _on_user_select(event=None):
+            sel = self.tree.selection()
+            if not sel: return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"User Account: {vals[1]}",
+                    fields={
+                        "User ID": vals[0],
+                        "Username": vals[1],
+                        "Role": vals[2],
+                        "Status": vals[3],
+                        "Linked Student": vals[4],
+                        "Created At": vals[5],
+                    },
+                    full_text=f"Account '{vals[1]}' with role '{vals[2]}'. Status: {vals[3]}."
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_user_select)
+        self.tree.bind("<Return>", _on_user_select)
+
         button_row = tk.Frame(content, bg=COLORS["surface"])
+
         button_row.pack(anchor="e", pady=(10, 0))
         ttk.Button(button_row, text="Approve Selected", style="Primary.TButton",
                     command=self.on_approve).pack(side="left", padx=(0, 8))
@@ -140,6 +163,8 @@ class UserScreen(tk.Frame):
             handle_unexpected_error("User", "delete_user_ui", e)
 
     def refresh(self):
+        if session.get_role() not in session.ADMIN_ROLES:
+            return
         self.role_combo["values"] = _roles_for(session.get_role())
         for row in self.tree.get_children():
             self.tree.delete(row)

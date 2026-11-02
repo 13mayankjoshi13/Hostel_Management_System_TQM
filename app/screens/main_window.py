@@ -258,15 +258,26 @@ class MainWindow(tk.Tk):
         sidebar.pack_propagate(False)
         tk.Frame(parent, bg=COLORS["border"], width=1).pack(side="left", fill="y")
 
-        brand = tk.Frame(sidebar, bg=COLORS["sidebar_bg"])
+        brand = tk.Frame(sidebar, bg=COLORS["sidebar_bg"], cursor="hand2")
         brand.pack(fill="x", padx=18, pady=(20, 18))
-        icon_tile(brand, "home", COLORS["accent"], size=40, bg=COLORS["sidebar_bg"]).pack(side="left")
-        text = tk.Frame(brand, bg=COLORS["sidebar_bg"])
+        brand_icon = icon_tile(brand, "home", COLORS["accent"], size=40, bg=COLORS["sidebar_bg"])
+        brand_icon.pack(side="left")
+        brand_icon.configure(cursor="hand2")
+        text = tk.Frame(brand, bg=COLORS["sidebar_bg"], cursor="hand2")
         text.pack(side="left", padx=(10, 0))
-        tk.Label(text, text="Hostel MS", bg=COLORS["sidebar_bg"], fg=COLORS["text_primary"],
-                  font=self.fonts["brand"]).pack(anchor="w")
-        tk.Label(text, text="Management System", bg=COLORS["sidebar_bg"], fg=COLORS["text_tertiary"],
-                  font=self.fonts["small"]).pack(anchor="w")
+        lbl_brand = tk.Label(text, text="Hostel MS", bg=COLORS["sidebar_bg"], fg=COLORS["text_primary"],
+                  font=self.fonts["brand"], cursor="hand2")
+        lbl_brand.pack(anchor="w")
+        lbl_sub = tk.Label(text, text="Management System", bg=COLORS["sidebar_bg"], fg=COLORS["text_tertiary"],
+                  font=self.fonts["small"], cursor="hand2")
+        lbl_sub.pack(anchor="w")
+
+        def _go_home(e=None):
+            if self._user:
+                self.show_screen(_home_screen(self._user["role"]))
+
+        for w in (brand, brand_icon, text, lbl_brand, lbl_sub):
+            w.bind("<Button-1>", _go_home)
 
         nav_scroll = ScrollFrame(sidebar, bg=COLORS["sidebar_bg"])
         nav_scroll.pack(fill="both", expand=True)
@@ -301,18 +312,29 @@ class MainWindow(tk.Tk):
                                font=self.fonts["label"])
         self.crumb.pack(side="left")
 
-        account = tk.Frame(bar, bg=COLORS["background"])
+        account = tk.Frame(bar, bg=COLORS["background"], cursor="hand2")
         account.pack(side="right")
-        self.avatar = tk.Canvas(account, width=38, height=38, bg=COLORS["background"], highlightthickness=0)
+        self.avatar = tk.Canvas(account, width=38, height=38, bg=COLORS["background"], highlightthickness=0, cursor="hand2")
         self.avatar.pack(side="right", padx=(10, 0))
-        names = tk.Frame(account, bg=COLORS["background"])
+        names = tk.Frame(account, bg=COLORS["background"], cursor="hand2")
         names.pack(side="right")
         self.account_name = tk.Label(names, text="", bg=COLORS["background"], fg=COLORS["text_primary"],
-                                      font=self.fonts["body_bold"])
+                                      font=self.fonts["body_bold"], cursor="hand2")
         self.account_name.pack(anchor="e")
         self.account_role = tk.Label(names, text="", bg=COLORS["background"], fg=COLORS["text_tertiary"],
-                                      font=self.fonts["small"])
+                                      font=self.fonts["small"], cursor="hand2")
         self.account_role.pack(anchor="e")
+
+        def _go_profile(e=None):
+            if not self._user:
+                return
+            if self._user.get("role") == "Student":
+                self.show_screen("MyDetails")
+            else:
+                self.show_screen("Settings")
+
+        for w in (account, self.avatar, names, self.account_name, self.account_role):
+            w.bind("<Button-1>", _go_profile)
 
         tk.Frame(account, bg=COLORS["border_strong"], width=1, height=28).pack(side="right", padx=16)
         clock = tk.Frame(account, bg=COLORS["background"])
@@ -323,6 +345,7 @@ class MainWindow(tk.Tk):
         self.clock_date = tk.Label(clock, text="", bg=COLORS["background"], fg=COLORS["text_tertiary"],
                                     font=self.fonts["small"])
         self.clock_date.pack(anchor="e")
+
 
     def exit_app(self):
         """Closing the window ends the session cleanly, so the audit log shows the log-out."""

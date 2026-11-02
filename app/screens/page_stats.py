@@ -178,13 +178,195 @@ class StatStrip(tk.Frame):
             self.columnconfigure(i, weight=1, uniform="stat")
             card = Card(self, pad=10, radius=14, fit=True)
             card.grid(row=0, column=i, sticky="ew", padx=(0 if i == 0 else 5, 0 if i == len(items) - 1 else 5))
-            icon_circle(card.body, icon, fg, soft, size=34, bg=COLORS["surface"]).pack(side="left")
+            ic = icon_circle(card.body, icon, fg, soft, size=34, bg=COLORS["surface"])
+            ic.pack(side="left")
             text = tk.Frame(card.body, bg=COLORS["surface"])
             text.pack(side="left", padx=(10, 0))
-            tk.Label(text, text=value, bg=COLORS["surface"], fg=COLORS["text_primary"],
-                     font=self.fonts["stat_value"]).pack(anchor="w")
-            tk.Label(text, text=label, bg=COLORS["surface"], fg=COLORS["text_secondary"],
-                     font=self.fonts["small"]).pack(anchor="w")
+            lbl_v = tk.Label(text, text=value, bg=COLORS["surface"], fg=COLORS["text_primary"],
+                             font=self.fonts["stat_value"])
+            lbl_v.pack(anchor="w")
+            lbl_l = tk.Label(text, text=label, bg=COLORS["surface"], fg=COLORS["text_secondary"],
+                             font=self.fonts["small"])
+            lbl_l.pack(anchor="w")
+
+            def _stat_click(lbl=label, val=value, cname=self._name, ic=icon, col=fg, p=self):
+                from app.theme import show_detail_dialog
+                cat = str(cname).replace("_", " ").title()
+                title = f"{lbl} — {cat}"
+                subtitle = f"Overview and status for {cat}"
+                fields = [("Category", cat), ("Metric", lbl), ("Current Count", str(val))]
+                details = f"{lbl} in {cat} is currently {val}."
+
+                cat_low = cat.lower()
+                lbl_low = str(lbl).lower()
+
+                try:
+                    if "leave" in cat_low:
+                        if "on leave" in lbl_low:
+                            title = "Hostellers Currently on Leave"
+                            subtitle = "Active leave permits requiring return check-in"
+                            fields = [("Status", "On Leave"), ("Total Hostellers Away", str(val)), ("Policy", "Warden verification required on check-in")]
+                            rows = [l for l in leave_service.get_all_leaves() if l.get("status") == "On Leave"]
+                            if rows:
+                                lines = [f"• {l.get('student_name', 'Student')} (Room {l.get('room_number', '-')}) — From {l.get('from_date')} to {l.get('to_date')}\n  Reason: {l.get('reason', 'N/A')}" for l in rows[:10]]
+                                details = "Hostellers currently away on approved leave:\n\n" + "\n\n".join(lines)
+                            else:
+                                details = "All hostellers are currently present inside the hostel campus. No active leaves."
+                        elif "returned" in lbl_low:
+                            title = "Returned Hostellers"
+                            subtitle = "Completed leaves verified by administration"
+                            fields = [("Status", "Returned"), ("Completed Records", str(val))]
+                            rows = [l for l in leave_service.get_all_leaves() if l.get("status") == "Returned"]
+                            if rows:
+                                lines = [f"• {l.get('student_name', 'Student')} (Room {l.get('room_number', '-')}) — Return verified (Leave: {l.get('from_date')} to {l.get('to_date')})" for l in rows[:10]]
+                                details = "Recently returned hostellers:\n" + "\n".join(lines)
+                            else:
+                                details = "No returned leave records found."
+                        else:
+                            title = "Hostel Leave Records"
+                            subtitle = "Cumulative leave requests and status overview"
+                            details = f"A total of {val} leave applications are currently on record in the hostel tracking system."
+
+                    elif "allocation" in cat_low:
+                        if "active" in lbl_low:
+                            title = "Active Room Allocations"
+                            subtitle = "Hostellers currently assigned to rooms"
+                            fields = [("Occupied Beds", str(val)), ("Status", "Active Resident Allocation")]
+                            allocs = allocation_service.get_active_allocations()
+                            if allocs:
+                                lines = [f"• Room {a.get('room_number', '-')} ({a.get('hostel_type', 'Hostel')}): {a.get('student_name', 'Student')} (Allocated: {str(a.get('allocated_at', ''))[:10]})" for a in allocs[:10]]
+                                details = f"Active room allocation records ({len(allocs)} total):\n" + "\n".join(lines)
+                            else:
+                                details = "No active room allocations currently in the database."
+                        elif "beds free" in lbl_low:
+                            title = "Available Free Beds"
+                            subtitle = "Vacant capacity ready for student assignment"
+                            fields = [("Free Beds", str(val)), ("Availability", "Open for Allocation")]
+                            rooms = [r for r in home_service.floor_plan() if r["capacity"] > r["taken"]]
+                            if rooms:
+                                lines = [f"• Room {r['room_number']} ({r.get('hostel_type', 'Hostel')} · Floor {r.get('floor', 0)}): {r['capacity'] - r['taken']} free bed(s) out of {r['capacity']}" for r in rooms[:10]]
+                                details = f"Rooms with free bed capacity ({len(rooms)} rooms):\n" + "\n".join(lines)
+                            else:
+                                details = "All hostel beds are currently occupied. Capacity is at 100%."
+                        elif "without a room" in lbl_low:
+                            title = "Students Awaiting Room Allocation"
+                            subtitle = "Registered hostellers without active bed assignment"
+                            fields = [("Awaiting Allocation", str(val)), ("Action Required", "Assign room in Room Allocation module")]
+                            active_ids = {a["student_id"] for a in allocation_service.get_active_allocations()}
+                            unhoused = [s for s in student_service.get_all_students() if s["student_id"] not in active_ids]
+                            if unhoused:
+                                lines = [f"• {s['name']} (Reg: {s['registration_number']}, Contact: {s.get('contact_number', 'N/A')})" for s in unhoused[:10]]
+                                details = f"Registered students awaiting room assignment ({len(unhoused)}):\n" + "\n".join(lines)
+                            else:
+                                details = "Every registered student currently has an active room allocation."
+
+                    elif "student" in cat_low:
+                        if "without a room" in lbl_low:
+                            title = "Unallocated Students"
+                            subtitle = "Registered hostellers without room assignment"
+                            fields = [("Unallocated", str(val)), ("Action", "Assign room in Allocation")]
+                            active_ids = {a["student_id"] for a in allocation_service.get_active_allocations()}
+                            unhoused = [s for s in student_service.get_all_students() if s["student_id"] not in active_ids]
+                            if unhoused:
+                                lines = [f"• {s['name']} (Reg: {s['registration_number']}) — Contact: {s.get('contact_number', '—')}" for s in unhoused[:10]]
+                                details = "Students waiting for room allocation:\n" + "\n".join(lines)
+                            else:
+                                details = "All students currently have rooms assigned."
+                        elif "with a room" in lbl_low:
+                            title = "Accommodated Students"
+                            subtitle = "Students actively allocated to hostel rooms"
+                            fields = [("Accommodated", str(val)), ("Status", "Active Residents")]
+                            details = f"Currently {val} hostellers have confirmed room allocations."
+                        elif "gender" in lbl_low:
+                            title = "Incomplete Student Profiles"
+                            subtitle = "Hostellers missing gender specification"
+                            fields = [("Unset Profiles", str(val)), ("Action", "Update profile in Students screen")]
+                            no_gender = [s for s in student_service.get_all_students() if not s.get("gender")]
+                            if no_gender:
+                                lines = [f"• {s['name']} (Reg: {s['registration_number']})" for s in no_gender[:10]]
+                                details = "Students with gender not set in their profile:\n" + "\n".join(lines)
+                            else:
+                                details = "All hostellers have gender specified."
+                        else:
+                            title = "Enrolled Hostellers"
+                            subtitle = "Total students registered in hostel records"
+                            details = f"Total enrolled hostellers: {val}. Review and manage individual records in the table below."
+
+                    elif "complaint" in cat_low:
+                        title = f"{lbl} Complaints"
+                        subtitle = "Maintenance and hosteller issue resolution"
+                        fields = [("Complaint Status", lbl), ("Count", str(val))]
+                        if lbl_low in ("open", "assigned", "resolved"):
+                            matched = [c for c in complaint_service.get_all_complaints() if str(c.get("status", "")).lower() == lbl_low]
+                            if matched:
+                                lines = [f"• #{c['complaint_id']} [{c.get('category', 'General')}] (Room {c.get('room_number', '-')}, {c.get('student_name', 'Student')}):\n  {str(c.get('description', ''))[:80]}" for c in matched[:8]]
+                                details = f"{lbl} complaints ({len(matched)} total):\n\n" + "\n\n".join(lines)
+                            else:
+                                details = f"There are currently no {lbl.lower()} complaints."
+                        else:
+                            details = f"Total logged complaints in the system: {val} across all maintenance categories."
+
+                    elif "event" in cat_low:
+                        title = f"{lbl} Events"
+                        subtitle = "Hostel and university calendar schedule"
+                        fields = [("Event Type / Filter", lbl), ("Total Count", str(val))]
+                        evts = event_service.get_upcoming(date.today().isoformat(), 15)
+                        if lbl_low != "upcoming":
+                            evts = [e for e in evts if str(e.get("kind", "")).lower() == lbl_low.replace("s", "")]
+                        if evts:
+                            lines = [f"• {e['event_date']} — {e['title']} ({e.get('kind', 'Event')})" for e in evts[:8]]
+                            details = f"Scheduled items ({len(evts)}):\n" + "\n".join(lines)
+                        else:
+                            details = f"No upcoming {lbl.lower()} scheduled on the calendar."
+
+                    elif "fine" in cat_low:
+                        title = f"Hostel Fines — {lbl}"
+                        subtitle = "Disciplinary charges and fee collections"
+                        fields = [("Fine Status", lbl), ("Amount / Count", str(val))]
+                        fines = fine_service.get_all_fines()
+                        if "unpaid" in lbl_low or "due" in lbl_low:
+                            unpaid = [f for f in fines if f.get("status") == "Unpaid"]
+                            if unpaid:
+                                lines = [f"• Fine #{f['fine_id']} — {f.get('student_name', 'Student')} (Room {f.get('room_number', '-')}): ₹{f['amount_paise'] / 100:.2f} — {f.get('reason', 'Fine')}" for f in unpaid[:8]]
+                                details = f"Unpaid fines awaiting settlement ({len(unpaid)}):\n" + "\n".join(lines)
+                            else:
+                                details = "No outstanding unpaid fines. All accounts settled."
+                        else:
+                            details = f"Hostel fines summary for '{lbl}': {val}."
+
+                    elif "contact" in cat_low:
+                        if "warden" in lbl_low:
+                            title = "Hostel Wardens Directory"
+                            subtitle = "Administrative oversight contacts"
+                            wardens = warden_service.list_wardens()
+                            if wardens:
+                                lines = [f"• {w['name']} ({w['hostel_name']}) — Contact: {w['contact_number']}, Office hours: {w.get('office_hours', '—')}" for w in wardens]
+                                details = "Hostel Wardens:\n" + "\n".join(lines)
+                        elif "emergency" in lbl_low:
+                            title = "Emergency & University Helplines"
+                            subtitle = "Essential contacts, medical and university support"
+                            conts = emergency_service.list_contacts()
+                            if conts:
+                                lines = [f"• {c['name']} ({c['category']}): {c['number']}" for c in conts[:10]]
+                                details = "Helpline Directory:\n" + "\n".join(lines)
+
+                except Exception:
+                    pass
+
+                show_detail_dialog(
+                    parent=p,
+                    title=title,
+                    subtitle=subtitle,
+                    icon=ic,
+                    color=col,
+                    fields=fields,
+                    full_text=details
+                )
+
+            from app.theme import make_clickable
+            for widget in (card, card.body, text, lbl_v, lbl_l, ic):
+                make_clickable(widget, _stat_click)
+
 
 
 def attach(screen, key, fonts):

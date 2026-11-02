@@ -77,6 +77,17 @@ class TestNoticesAttendance(unittest.TestCase):
         with self.assertRaises(ValidationError):
             notice_service.list_notices()
 
+    def test_notice_to_multiple_selected_students(self):
+        notice_service.send_notice("Team Assembly", "Assemble in gym", "Selected Students", [self.boy, self.girl])
+        session.set_session("a", "Student", self.boy)
+        titles_boy = {n["title"] for n in notice_service.notices_for_student()}
+        self.assertIn("Team Assembly", titles_boy)
+        session.set_session("m", "Student", self.girl)
+        titles_girl = {n["title"] for n in notice_service.notices_for_student()}
+        self.assertIn("Team Assembly", titles_girl)
+        with self.assertRaises(ValidationError):
+            notice_service.send_notice("Empty team", "Nobody here", "Selected Students", [])
+
     def test_notice_validation_and_roles(self):
         for args in (("", "body text", "All"), ("Title", "", "All"), ("Title", "body", "Nobody"),
                      ("Title", "body", "Student"), ("Title", "body", "Student", 999)):

@@ -4,9 +4,11 @@ from datetime import date
 from tkinter import ttk, messagebox
 
 from app.services import attendance_service
+from app.utils import session
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
-from app.theme import COLORS, keep_selection, section_header, build_panel, build_table, status_tag, style_treeview_status_tags
+from app.theme import (COLORS, keep_selection, section_header, build_panel, build_table,
+                       status_tag, style_treeview_status_tags, chip)
 
 
 class AttendanceScreen(tk.Frame):
@@ -29,14 +31,45 @@ class AttendanceScreen(tk.Frame):
                                 ("ID", "Student", "Registration No.", "Room", "Status"), (45, 200, 140, 80, 90), height=12)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
-        buttons = tk.Frame(content, bg=COLORS["surface"])
-        buttons.pack(anchor="e", pady=(10, 0))
-        ttk.Button(buttons, text="Mark Present", style="Primary.TButton",
-                   command=lambda: self.mark("Present")).pack(side="left", padx=(0, 8))
-        ttk.Button(buttons, text="Mark Absent", style="Secondary.TButton",
-                   command=lambda: self.mark("Absent")).pack(side="left")
+
+        def _on_att_select(event=None):
+            sel = self.tree.selection()
+            if not sel:
+                return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Attendance Record: {vals[1]}",
+                    fields={
+                        "Student ID": vals[0],
+                        "Name": vals[1],
+                        "Registration No.": vals[2],
+                        "Room": vals[3],
+                        "Attendance Status": vals[4],
+                        "Date": self.date_var.get(),
+                    },
+                    full_text=f"Roll call record for {vals[1]} on {self.date_var.get()}: status is currently marked as {vals[4]}."
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_att_select)
+        self.tree.bind("<Return>", _on_att_select)
+
+        self.buttons = tk.Frame(content, bg=COLORS["surface"])
+
+        self.buttons.pack(anchor="e", pady=(10, 0))
+        self.btn_present = ttk.Button(self.buttons, text="Mark Present", style="Primary.TButton",
+                                      command=lambda: self.mark("Present"))
+        self.btn_absent = ttk.Button(self.buttons, text="Mark Absent", style="Secondary.TButton",
+                                     command=lambda: self.mark("Absent"))
+        self.view_only_notice = tk.Label(self.buttons,
+                                         text="View-only mode: Only Administrator & Super Admin can mark attendance.",
+                                         bg=COLORS["surface"], fg=COLORS["text_tertiary"], font=fonts["small"])
 
     def mark(self, status):
+        if session.get_role() not in session.ADMIN_ROLES:
+            messagebox.showerror("Permission Denied", "Only Administrator and Super Admin can mark attendance.")
+            return
         selected = self.tree.selection()
         if not selected:
             messagebox.showerror("No Selection", "Select a student first.")
@@ -50,6 +83,15 @@ class AttendanceScreen(tk.Frame):
             handle_unexpected_error("Attendance", "mark_attendance_ui", e)
 
     def refresh(self):
+        is_admin = session.get_role() in session.ADMIN_ROLES
+        if is_admin:
+            self.view_only_notice.pack_forget()
+            self.btn_present.pack(side="left", padx=(0, 8))
+            self.btn_absent.pack(side="left")
+        else:
+            self.btn_present.pack_forget()
+            self.btn_absent.pack_forget()
+            self.view_only_notice.pack(side="right")
         keep_selection(self.tree, self._rebuild)
 
     def _rebuild(self):

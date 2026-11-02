@@ -24,7 +24,7 @@ def _on_leave(cur, student_id: int, day: str) -> bool:
 
 
 def mark_attendance(student_id: int, day: str, status: str) -> None:
-    session.require_roles(session.STAFF_ROLES, "mark attendance")
+    session.require_roles(session.ADMIN_ROLES, "mark attendance")
     student_id = validate_record_id(student_id, "Select a student first.")
     day = _clean_date(day)
     if status not in ATTENDANCE_STATUSES:

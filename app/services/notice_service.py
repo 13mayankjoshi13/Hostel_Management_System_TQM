@@ -14,28 +14,59 @@ def send_notice(title: str, body: str, audience: str, student_id=None) -> int:
     session.require_roles(session.STAFF_ROLES, "send notices")
     title = validate_notice_title(title)
     body = validate_notice_body(body)
+    audience_aliases = {
+        "All Accounts": "All",
+        "All Accounts (Everyone)": "All",
+        "Everyone": "All",
+        "All": "All",
+        "Selected Students": "Student",
+        "Selected Students (Multiple)": "Student",
+        "Selected": "Student",
+        "Single Student": "Student",
+        "One student": "Student",
+        "Student": "Student",
+        "Boys hostel": "Boys",
+        "Boys Hostel": "Boys",
+        "Boys": "Boys",
+        "Girls hostel": "Girls",
+        "Girls Hostel": "Girls",
+        "Girls": "Girls",
+    }
+    audience = audience_aliases.get(audience, audience)
     if audience not in NOTICE_AUDIENCES:
         raise ValidationError("Choose who the notice is for.")
+
+    target_student_ids = []
     if audience == "Student":
-        student_id = validate_record_id(student_id, "Select the student who should get this notice.")
+        if isinstance(student_id, (list, tuple, set)):
+            if not student_id:
+                raise ValidationError("Select at least one student who should get this notice.")
+            for sid in student_id:
+                target_student_ids.append(validate_record_id(sid, "Select valid students who should get this notice."))
+        else:
+            target_student_ids.append(validate_record_id(student_id, "Select the student who should get this notice."))
     else:
-        student_id = None
+        target_student_ids = [None]
 
     conn = get_connection()
     try:
         cur = conn.cursor()
-        if student_id is not None:
-            cur.execute("SELECT 1 FROM students WHERE student_id = ?", (student_id,))
-            if cur.fetchone() is None:
-                raise ValidationError(f"No student found with ID {student_id}.")
-        cur.execute(
-            "INSERT INTO notices (title, body, audience, student_id, created_by) VALUES (?, ?, ?, ?, ?)",
-            (title, body, audience, student_id, session.get_user()),
-        )
+        created_ids = []
+        for sid in target_student_ids:
+            if sid is not None:
+                cur.execute("SELECT 1 FROM students WHERE student_id = ?", (sid,))
+                if cur.fetchone() is None:
+                    raise ValidationError(f"No student found with ID {sid}.")
+            cur.execute(
+                "INSERT INTO notices (title, body, audience, student_id, created_by) VALUES (?, ?, ?, ?, ?)",
+                (title, body, audience, sid, session.get_user()),
+            )
+            created_ids.append(cur.lastrowid)
         conn.commit()
-        notice_id = cur.lastrowid
-        log_audit("Notice", "Create", str(notice_id), "Success", f"Notice sent to {audience}.")
-        return notice_id
+        last_id = created_ids[-1] if created_ids else None
+        target_desc = f"{len(target_student_ids)} selected students" if len(target_student_ids) > 1 else str(audience)
+        log_audit("Notice", "Create", str(last_id), "Success", f"Notice sent to {target_desc}.")
+        return last_id
     except ValidationError:
         raise
     except sqlite3.Error as exc:
@@ -43,6 +74,11 @@ def send_notice(title: str, body: str, audience: str, student_id=None) -> int:
         raise ValidationError("Could not save the notice due to a database error.")
     finally:
         conn.close()
+
+
+def send_notice_to_students(title: str, body: str, student_ids: list) -> int:
+    """Send a notice to multiple selected student IDs."""
+    return send_notice(title, body, "Student", student_ids)
 
 
 def list_notices(limit: int = 200) -> list:

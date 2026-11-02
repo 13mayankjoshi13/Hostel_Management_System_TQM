@@ -137,14 +137,35 @@ class CalendarWidget(tk.Frame):
         if not events:
             tk.Label(self.day_list, text="No holiday or event.", bg=self._bg,
                       fg=COLORS["text_tertiary"], font=self.fonts["label"]).pack(anchor="w", pady=(2, 0))
-        for ev in events[:3]:
-            row = tk.Frame(self.day_list, bg=self._bg)
+        for ev in events[:5]:
+            row = tk.Frame(self.day_list, bg=self._bg, cursor="hand2")
             row.pack(fill="x", pady=(3, 0))
             dot = tk.Canvas(row, width=8, height=8, bg=self._bg, highlightthickness=0)
             dot.create_oval(0, 0, 8, 8, fill=KIND_COLORS.get(ev["kind"], COLORS["accent"]), outline="")
             dot.pack(side="left", padx=(0, 6))
-            tk.Label(row, text=ev["title"], bg=self._bg, fg=COLORS["text_primary"],
-                      font=self.fonts["label"], anchor="w").pack(side="left")
+            lbl = tk.Label(row, text=ev["title"], bg=self._bg, fg=COLORS["text_primary"],
+                           font=self.fonts["label"], anchor="w")
+            lbl.pack(side="left")
+            for w in (row, dot, lbl):
+                w.bind("<Button-1>", lambda e, item=ev: self._click_event(item))
+
+    def _click_event(self, ev):
+        if self._on_select:
+            try:
+                self._on_select(datetime.strptime(ev["event_date"], "%Y-%m-%d").date())
+            except Exception:
+                pass
+        from app.theme import show_detail_dialog
+        days_left = (datetime.strptime(ev["event_date"], "%Y-%m-%d").date() - date.today()).days
+        timing = "Today" if days_left == 0 else (f"In {days_left} days" if days_left > 0 else f"{abs(days_left)} days ago")
+        show_detail_dialog(
+            self, ev["title"], f"{ev['kind']} · {ev['event_date']}", "calendar",
+            KIND_COLORS.get(ev["kind"], COLORS["accent"]),
+            [("Event Title", ev["title"]),
+             ("Event Type", ev["kind"]),
+             ("Date", ev["event_date"]),
+             ("Timeline", timing)]
+        )
 
     def _on_click(self, event):
         cw = self._cell_geometry()
@@ -166,10 +187,11 @@ class CalendarWidget(tk.Frame):
 class UpcomingList(tk.Frame):
     """Next few holidays/events with a date badge."""
 
-    def __init__(self, parent, fonts, limit=3, bg=None):
+    def __init__(self, parent, fonts, limit=3, bg=None, on_event_click=None):
         self._bg = bg or COLORS["surface"]
         super().__init__(parent, bg=self._bg)
         self.fonts, self.limit = fonts, limit
+        self._on_event_click = on_event_click
 
     def refresh(self):
         for w in self.winfo_children():
@@ -181,18 +203,41 @@ class UpcomingList(tk.Frame):
         for ev in events:
             day = datetime.strptime(ev["event_date"], "%Y-%m-%d")
             color = KIND_COLORS.get(ev["kind"], COLORS["accent"])
-            row = tk.Frame(self, bg=self._bg)
+            row = tk.Frame(self, bg=self._bg, cursor="hand2")
             row.pack(fill="x", pady=3)
             badge = tk.Frame(row, bg=COLORS["background"], width=44, height=40)
             badge.pack(side="left")
             badge.pack_propagate(False)
-            tk.Label(badge, text=day.strftime("%d"), bg=COLORS["background"], fg=color,
-                      font=self.fonts["body_bold"]).pack(pady=(3, 0))
-            tk.Label(badge, text=day.strftime("%b").upper(), bg=COLORS["background"],
-                      fg=COLORS["text_tertiary"], font=self.fonts["small"]).pack()
+            b_day = tk.Label(badge, text=day.strftime("%d"), bg=COLORS["background"], fg=color,
+                             font=self.fonts["body_bold"])
+            b_day.pack(pady=(3, 0))
+            b_mon = tk.Label(badge, text=day.strftime("%b").upper(), bg=COLORS["background"],
+                             fg=COLORS["text_tertiary"], font=self.fonts["small"])
+            b_mon.pack()
             text = tk.Frame(row, bg=self._bg)
             text.pack(side="left", padx=(10, 0))
-            tk.Label(text, text=ev["title"], bg=self._bg, fg=COLORS["text_primary"],
-                      font=self.fonts["label"]).pack(anchor="w")
-            tk.Label(text, text=f"{ev['kind']} · {day.strftime('%a')}", bg=self._bg, fg=color,
-                      font=self.fonts["small"]).pack(anchor="w")
+            t_title = tk.Label(text, text=ev["title"], bg=self._bg, fg=COLORS["text_primary"],
+                               font=self.fonts["label"])
+            t_title.pack(anchor="w")
+            t_sub = tk.Label(text, text=f"{ev['kind']} · {day.strftime('%a')}", bg=self._bg, fg=color,
+                             font=self.fonts["small"])
+            t_sub.pack(anchor="w")
+
+            def handle_click(e, item=ev):
+                if self._on_event_click:
+                    self._on_event_click(item)
+                else:
+                    from app.theme import show_detail_dialog
+                    days_left = (datetime.strptime(item["event_date"], "%Y-%m-%d").date() - date.today()).days
+                    timing = "Today" if days_left == 0 else (f"In {days_left} days" if days_left > 0 else f"{abs(days_left)} days ago")
+                    show_detail_dialog(
+                        self, item["title"], f"{item['kind']} · {item['event_date']}", "calendar",
+                        KIND_COLORS.get(item["kind"], COLORS["accent"]),
+                        [("Event Title", item["title"]),
+                         ("Event Type", item["kind"]),
+                         ("Date", item["event_date"]),
+                         ("Timeline", timing)]
+                    )
+
+            for w in (row, badge, b_day, b_mon, text, t_title, t_sub):
+                w.bind("<Button-1>", handle_click)

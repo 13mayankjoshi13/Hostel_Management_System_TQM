@@ -23,7 +23,31 @@ class MyFinesScreen(tk.Frame):
                                   (45, 90, 260, 80, 140, 140), height=8)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
+
+        def _on_fine_select(event=None):
+            sel = self.tree.selection()
+            if not sel:
+                return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Fine Record #{vals[0]}",
+                    fields={
+                        "Fine ID": vals[0],
+                        "Amount": vals[1],
+                        "Status": vals[3],
+                        "Paid On": vals[4],
+                        "Receipt": vals[5],
+                    },
+                    full_text=f"Reason: {vals[2]}"
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_fine_select)
+        self.tree.bind("<Return>", _on_fine_select)
+
         buttons = tk.Frame(content, bg=COLORS["surface"])
+
         buttons.pack(anchor="e", pady=(10, 0))
         ttk.Button(buttons, text="Pay Online", style="Primary.TButton",
                     command=self.on_pay).pack(side="left", padx=(0, 8))

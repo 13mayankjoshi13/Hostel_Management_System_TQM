@@ -4,6 +4,7 @@ import webbrowser
 from tkinter import ttk, messagebox
 
 from app.services import fine_service, student_service
+from app.utils import session
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import (keep_selection, COLORS, status_tag, section_header, form_row, build_panel, build_table,
@@ -37,7 +38,31 @@ class FineScreen(tk.Frame):
                                   (40, 140, 80, 160, 70, 70, 130), height=7)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
+
+        def _on_fine_select(event=None):
+            sel = self.tree.selection()
+            if not sel: return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Fine #{vals[0]} — {vals[1]}",
+                    fields={
+                        "Fine ID": vals[0],
+                        "Student": vals[1],
+                        "Amount": vals[2],
+                        "Status": vals[4],
+                        "Payment Method": vals[5],
+                        "Receipt": vals[6],
+                    },
+                    full_text=f"Reason: {vals[3]}"
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_fine_select)
+        self.tree.bind("<Return>", _on_fine_select)
+
         buttons = tk.Frame(content, bg=COLORS["surface"])
+
         buttons.pack(anchor="e", pady=(10, 0))
         ttk.Button(buttons, text="Record Cash", style="Secondary.TButton",
                     command=lambda: self._act(fine_service.record_cash_payment, "Cash payment recorded.")).pack(side="left", padx=(0, 8))
@@ -118,6 +143,8 @@ class FineScreen(tk.Frame):
                 f["payment_method"] or "—", f["receipt_number"] or "—"), tags=(status_tag(f["status"]),))
 
     def refresh(self):
+        if session.get_role() not in session.WARDEN_ROLES:
+            return
         self._student_options = {f"{s['name']} ({s['registration_number']})": s["student_id"]
                                  for s in student_service.get_all_students()}
         self.student_combo["values"] = list(self._student_options.keys())

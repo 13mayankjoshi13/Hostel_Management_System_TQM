@@ -54,7 +54,7 @@ class TestSettingsUI(unittest.TestCase):
 
     def test_admin_sees_all_tabs_and_staff_only_appearance(self):
         self._log_in("boss", "Administrator")
-        self.assertEqual(set(self.window.screens["Settings"].pages), {"appearance", "audit", "data", "quality"})
+        self.assertEqual(set(self.window.screens["Settings"].pages), {"appearance", "timings", "audit", "data", "quality"})
         self.assertNotIn("Quality", self.window.screens)
         self._log_in("sam", "Staff")
         self.assertEqual(set(self.window.screens["Settings"].pages), {"appearance"})

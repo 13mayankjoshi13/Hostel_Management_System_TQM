@@ -7,7 +7,7 @@ import app.utils.logging_service as ls
 from app.database import db as db_module
 from app.database.db import initialize_database
 from app.screens.main_window import ROLE_SCREENS, _NAV_ITEMS, _allowed_screens
-from app.services import (allocation_service, auth_service, bug_service, fine_service, room_service,
+from app.services import (allocation_service, attendance_service, auth_service, bug_service, fine_service, room_service,
                           student_service, worker_service)
 from app.utils import session
 from app.utils.validation import ValidationError, validate_role
@@ -90,6 +90,11 @@ class TestRoles(unittest.TestCase):
         self._allowed("Administrator", lambda: room_service.add_room("B1", "Single", 1))
         wid = self._allowed("Administrator", lambda: worker_service.add_worker("Ram Das", "Cleaner", "9876543210"))
         self._allowed("Staff", lambda: worker_service.mark_attendance(wid, "Present"))
+        self._blocked("Staff", lambda: attendance_service.mark_attendance(self.sid, "2026-11-01", "Present"))
+        self._blocked("Warden", lambda: attendance_service.mark_attendance(self.sid, "2026-11-01", "Present"))
+        self._blocked("Student", lambda: attendance_service.mark_attendance(self.sid, "2026-11-01", "Present"))
+        self._allowed("Administrator", lambda: attendance_service.mark_attendance(self.sid, "2026-11-01", "Present"))
+        self._allowed("Super Admin", lambda: attendance_service.mark_attendance(self.sid, "2026-11-01", "Absent"))
 
     def test_only_a_super_admin_manages_administrator_accounts(self):
         session.set_session("chief", "Super Admin")

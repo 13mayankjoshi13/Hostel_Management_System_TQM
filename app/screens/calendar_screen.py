@@ -5,7 +5,7 @@ from tkinter import ttk, messagebox
 
 from app.screens.calendar_widget import CalendarWidget, KIND_COLORS
 from app.services import event_service
-from app.theme import COLORS, Card, section_header, form_card, form_row, button_row, build_table, split_layout
+from app.theme import COLORS, Card, ScrollFrame, section_header, form_card, form_row, button_row, build_table, split_layout
 from app.utils import session
 from app.utils.exception_handler import handle_unexpected_error
 from app.utils.validation import ValidationError
@@ -22,11 +22,14 @@ class CalendarScreen(tk.Frame):
 
         self.left, self.right = split_layout(self)
 
-        self.form_slot = tk.Frame(self.left, bg=COLORS["background"])
-        self.form_slot.pack(fill="x")
+        self.left_scroll = ScrollFrame(self.left, bg=COLORS["background"])
+        self.left_scroll.pack(fill="both", expand=True)
+
+        self.form_slot = tk.Frame(self.left_scroll.inner, bg=COLORS["background"])
+        self.form_slot.pack(fill="x", pady=(0, 10))
         self._build_form()
 
-        cal_card = Card(self.left, fit=True)
+        cal_card = Card(self.left_scroll.inner, fit=True)
         cal_card.pack(fill="x")
         self.calendar = CalendarWidget(cal_card.body, fonts, on_select=self._on_day)
         self.calendar.pack(fill="x")
@@ -41,8 +44,30 @@ class CalendarScreen(tk.Frame):
         self.tree.pack(fill="both", expand=True)
         for kind, color in KIND_COLORS.items():
             self.tree.tag_configure(f"kind_{kind}", foreground=color)
+
+        def _on_event_select(event=None):
+            sel = self.tree.selection()
+            if not sel:
+                return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Calendar Event: {vals[1]}",
+                    fields={
+                        "Date": vals[0],
+                        "Title": vals[1],
+                        "Type": vals[2],
+                    },
+                    full_text=f"Event details: {vals[1]} ({vals[2]}) scheduled on {vals[0]}."
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_event_select)
+        self.tree.bind("<Return>", _on_event_select)
+
         self.delete_btn = ttk.Button(list_card.body, text="Delete Selected", style="Danger.TButton",
                                       command=self.on_delete)
+
         self.delete_btn.pack(anchor="e", pady=(10, 0))
 
     def _build_form(self):
@@ -111,3 +136,5 @@ class CalendarScreen(tk.Frame):
         if upcoming_item:
             self.tree.see(upcoming_item)
         self.calendar.refresh()
+        if hasattr(self, "left_scroll"):
+            self.left_scroll.update_scroll()

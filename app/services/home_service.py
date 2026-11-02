@@ -3,7 +3,7 @@ from datetime import date
 
 from app.database.db import get_connection
 from app.services import (attendance_service, emergency_service, event_service, fine_service,
-                          notice_service, warden_service)
+                          notice_service, timing_service, warden_service)
 from app.utils import session
 from app.utils.validation import ValidationError
 
@@ -37,6 +37,8 @@ def student_home() -> dict:
         "warden": warden_service.warden_for_student(sid),
         "emergency": emergency_service.list_contacts(),
         "events": event_service.get_upcoming(today, 4),
+        "timings": timing_service.get_timings(),
+        "return_status": timing_service.get_student_return_status(sid),
     }
 
 

@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 
 from app.services import bug_service
+from app.utils import session
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import keep_selection, COLORS, section_header, form_row, build_panel, style_treeview_status_tags, status_tag, form_card, split_layout, build_table
@@ -86,6 +87,41 @@ class BugScreen(tk.Frame):
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
         self.tree.bind("<<TreeviewSelect>>", self.on_select)
+
+        def _on_bug_double_click(event=None):
+            selected = self.tree.selection()
+            if not selected:
+                return
+            bug = self._bug_rows.get(selected[0])
+            if not bug:
+                return
+            from app.theme import show_detail_dialog
+            fields = {
+                "Bug ID": bug["id"],
+                "Title": bug["title"],
+                "Module": bug["module"],
+                "Category": bug["category"],
+                "Severity": bug["severity"],
+                "Priority": bug["priority"],
+                "Status": bug["status"],
+                "Reported By": bug.get("reported_by") or "—",
+                "Date": bug["date"],
+            }
+            if bug.get("fixed_by"):
+                fields["Fixed By"] = bug["fixed_by"]
+            if bug.get("root_cause"):
+                fields["Root Cause"] = bug["root_cause"]
+            if bug.get("test_case"):
+                fields["Test Case"] = bug["test_case"]
+            show_detail_dialog(
+                title=f"Bug #{bug['id']} — {bug['title']}",
+                fields=fields,
+                full_text=bug.get("description", "")
+            )
+
+        self.tree.bind("<Double-Button-1>", _on_bug_double_click)
+        self.tree.bind("<Return>", _on_bug_double_click)
+
 
         self.detail = tk.Label(content, text="Select a bug to see how it was found and fixed.", anchor="nw",
                                 justify="left", wraplength=520, bg=COLORS["surface"],
@@ -189,6 +225,8 @@ class BugScreen(tk.Frame):
             handle_unexpected_error("Bug", "close_bug_ui", e)
 
     def refresh(self):
+        if session.get_role() not in session.ADMIN_ROLES:
+            return
         keep_selection(self.tree, self._rebuild)
         self.on_select()
 

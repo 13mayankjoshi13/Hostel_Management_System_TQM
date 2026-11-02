@@ -26,11 +26,12 @@ class SettingsScreen(tk.Frame):
         self.pages = {"appearance": self._build_appearance()}
         self.quality = None
         if session.get_role() in session.ADMIN_ROLES:
+            self.pages["timings"] = self._build_timings()
             self.pages["audit"] = self._build_audit()
             self.pages["data"] = self._build_data()
             self.quality = QualityScreen(self.body, fonts)
             self.pages["quality"] = self.quality
-        labels = {"appearance": "Appearance", "audit": "Audit log", "data": "Data download",
+        labels = {"appearance": "Appearance", "timings": "Hostel Timings", "audit": "Audit log", "data": "Data download",
                   "quality": "Quality Monitoring"}
         for key in self.pages:
             lbl = tk.Label(self.tabs, text=labels[key], font=fonts["section_title"], padx=12, pady=5, cursor="hand2")
@@ -162,9 +163,64 @@ class SettingsScreen(tk.Frame):
         except Exception as e:
             handle_unexpected_error("Student", "download_students_ui", e)
 
+    # ------------------------------------------------------ hostel timings
+    def _build_timings(self):
+        from app.services import timing_service
+        card, body = self._card_page("Hostel Timings & Daily Schedule")
+        current = timing_service.get_timings()
+        self.timing_vars = {}
+
+        tk.Label(body, text="Configure campus daily hours, dining schedules, college sessions and night curfew.",
+                 bg=COLORS["surface"], fg=COLORS["text_secondary"], font=self.fonts["body"]).pack(anchor="w", pady=(0, 14))
+
+        fields = [
+            ("mess_breakfast", "Mess: Breakfast", "e.g. 07:30 AM – 09:30 AM"),
+            ("mess_lunch", "Mess: Lunch", "e.g. 12:30 PM – 02:30 PM"),
+            ("mess_snacks", "Mess: Evening Snacks", "e.g. 05:00 PM – 06:00 PM"),
+            ("mess_dinner", "Mess: Dinner", "e.g. 07:30 PM – 09:30 PM"),
+            ("college", "College Timings", "e.g. 09:00 AM – 05:00 PM (Mon–Fri)"),
+            ("outing", "Outing Permitted", "e.g. 05:00 PM – 08:30 PM (Daily)"),
+            ("returning", "Gate Curfew / In-Time", "e.g. 08:30 PM (Strict Gate In-Time)"),
+        ]
+
+        grid_f = tk.Frame(body, bg=COLORS["surface"])
+        grid_f.pack(fill="x", pady=(0, 16))
+
+        for key, label, hint in fields:
+            row = tk.Frame(grid_f, bg=COLORS["surface"], pady=6)
+            row.pack(fill="x")
+            tk.Label(row, text=label, bg=COLORS["surface"], fg=COLORS["text_primary"],
+                     font=self.fonts["body_bold"], width=22, anchor="w").pack(side="left")
+            var = tk.StringVar(value=current.get(key, ""))
+            self.timing_vars[key] = var
+            ent = ttk.Entry(row, textvariable=var, width=32)
+            ent.pack(side="left", padx=(8, 12))
+            tk.Label(row, text=hint, bg=COLORS["surface"], fg=COLORS["text_tertiary"],
+                     font=self.fonts["small"]).pack(side="left")
+
+        ttk.Button(body, text="Save Timings", style="Primary.TButton",
+                   command=self.on_save_timings).pack(anchor="w", pady=(10, 0))
+        return card
+
+    def on_save_timings(self):
+        from app.services import timing_service
+        try:
+            new_data = {k: v.get().strip() for k, v in self.timing_vars.items()}
+            timing_service.save_timings(new_data)
+            messagebox.showinfo("Success", "Hostel schedule and timings updated successfully.")
+        except ValidationError as err:
+            messagebox.showerror("Validation Error", str(err))
+        except Exception as ex:
+            handle_unexpected_error("Settings", "save_timings_ui", ex)
+
     def _refresh_tab(self):
         if self._tab == "audit":
             self._refresh_audit()
+        elif self._tab == "timings" and hasattr(self, "timing_vars"):
+            from app.services import timing_service
+            cur = timing_service.get_timings()
+            for k, var in self.timing_vars.items():
+                var.set(cur.get(k, ""))
         elif self._tab == "quality" and self.quality is not None:
             self.quality.refresh()
 

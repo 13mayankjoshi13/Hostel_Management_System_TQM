@@ -45,6 +45,28 @@ class EventsScreen(tk.Frame):
                                 (40, 100, 260, 110), height=12)
         self.tree.pack(fill="both", expand=True)
 
+        def _on_event_select(event=None):
+            sel = self.tree.selection()
+            if not sel:
+                return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Event: {vals[2]}",
+                    fields={
+                        "Event ID": vals[0],
+                        "Date": vals[1],
+                        "Title": vals[2],
+                        "Type": vals[3],
+                    },
+                    full_text=f"The '{vals[2]}' event is scheduled on {vals[1]} ({vals[3]})."
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_event_select)
+        self.tree.bind("<Return>", _on_event_select)
+
+
     def _can_edit(self):
         return session.get_role() in session.WARDEN_ROLES
 

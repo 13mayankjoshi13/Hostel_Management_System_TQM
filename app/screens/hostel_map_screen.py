@@ -68,6 +68,7 @@ class HostelMapScreen(tk.Frame):
         tk.Label(cell, text=f"{taken}/{cap} beds", bg=soft, fg=fg, font=self.fonts["small_bold"]).pack(anchor="w")
         for w in [cell] + list(cell.winfo_children()):
             w.bind("<Button-1>", lambda e, r=room, m=is_mine: self._show(r, m))
+            w.bind("<Double-Button-1>", lambda e, r=room, m=is_mine: self._show_modal(r, m))
 
     def _show(self, room, is_mine):
         text = (f"Room {room['room_number']} · {room['room_type']} · floor {room['floor']} · "
@@ -75,3 +76,19 @@ class HostelMapScreen(tk.Frame):
         if room["occupants"]:
             text += "\nStaying here: " + ", ".join(room["occupants"])
         self.detail.config(text=text)
+
+    def _show_modal(self, room, is_mine):
+        from app.theme import show_detail_dialog
+        occupants_text = ", ".join(room["occupants"]) if room["occupants"] else "No occupants currently allocated."
+        show_detail_dialog(
+            title=f"Room {room['room_number']} Details" + (" (Your Room)" if is_mine else ""),
+            fields={
+                "Room Number": room["room_number"],
+                "Hostel": room.get("hostel_type") or "Unassigned",
+                "Floor": "Ground" if room["floor"] == 0 else f"Floor {room['floor']}",
+                "Type": room["room_type"],
+                "Occupancy": f"{room['taken']} / {room['capacity']} beds taken",
+            },
+            full_text=f"Current Occupants:\n{occupants_text}"
+        )
+

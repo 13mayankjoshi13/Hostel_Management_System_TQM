@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from app.services import student_service
+from app.utils import session
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import COLORS, section_header, form_row, build_panel, build_table, style_treeview_status_tags, form_card, split_layout, button_row
@@ -69,6 +70,28 @@ class StudentScreen(tk.Frame):
         style_treeview_status_tags(self.tree)
         self.tree.bind("<<TreeviewSelect>>", self.on_select)
 
+        def _on_student_double_click(event=None):
+            sel = self.tree.selection()
+            if not sel: return
+            vals = self.tree.item(sel[0], "values")
+            if vals:
+                from app.theme import show_detail_dialog
+                show_detail_dialog(
+                    title=f"Student Profile: {vals[1]}",
+                    fields={
+                        "Student ID": vals[0],
+                        "Full Name": vals[1],
+                        "Registration No.": vals[2],
+                        "Contact No.": vals[3],
+                        "Gender": vals[4] or "Not specified",
+                    },
+                    full_text=f"Student record for {vals[1]} (Reg No: {vals[2]})."
+                )
+
+        self.tree.bind("<Double-Button-1>", _on_student_double_click)
+        self.tree.bind("<Return>", _on_student_double_click)
+
+
     def on_select(self, _event=None):
         selected = self.tree.selection()
         if not selected or self._restoring:
@@ -118,6 +141,8 @@ class StudentScreen(tk.Frame):
             handle_unexpected_error("Student", "add_student_ui", e)
 
     def refresh(self):
+        if session.get_role() not in session.STAFF_ROLES:
+            return
         for row in self.tree.get_children():
             self.tree.delete(row)
         self._restoring = True
