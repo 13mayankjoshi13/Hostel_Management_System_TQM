@@ -249,3 +249,7 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-11-02T00:49:25,student,Student,Auth,Logout,student,Success,'student' logged out.
 2026-11-02T00:49:42,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
 2026-11-02T00:50:23,hostel_admin,Administrator,Auth,Logout,hostel_admin,Success,'hostel_admin' logged out.
+2026-11-02T15:19:25,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-02T15:20:44,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-02T15:20:52,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-02T15:22:19,hostel_admin,Administrator,Auth,Logout,hostel_admin,Success,'hostel_admin' logged out.

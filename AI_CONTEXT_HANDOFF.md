@@ -651,3 +651,23 @@ Sidebar is now scrollable (admins have many entries). Dashboard KPIs split into 
 `page_stats.attach(screen, key, fonts)` (called for every screen in `MainWindow._create_screens`) inserts a `StatStrip` after the screen's title and wraps `screen.refresh` so the strip updates with it; providers live in `page_stats.PROVIDERS`. A provider error hides the strip and logs a Low error. `section_header` now draws an icon tile; `split_layout` left column is 400 wide and `button_row` spans both columns.
 Batches 77-81 together: gender and floor/hostel on students and rooms with a Boys/Girls allocation rule; notices, attendance, gender-matched wardens, emergency numbers; student home page, hostel map, events; Super Admin/Admin/Warden/Staff/Student menus; Settings with light/dark theme and accent colour, audit log viewer, student data download, Quality Monitoring (Six Sigma, variance, Taguchi, FMEA, SIPOC, Poka-Yoke); summary strips. Suite: 322 tests.
 Not verified: Windows rendering (screenshots were taken under Xvfb on Linux; the rupee sign did not show in that font), live Razorpay, the exe release run, real quality figures (need 5+ days of logs).
+
+## Batch 83
+- Attendance: mark_attendance and get_roster are ADMIN_ROLES only; attendance_counts stays STAFF_ROLES (read-only totals). Attendance removed from Warden/Staff menus.
+- Dashboard: quick actions and KPI cards built per role on every refresh; Dashboard/StudentHome auto-refresh every 30 s.
+- Scrolling: theme.split_layout left column is a ScrollFrame.
+- Seed: genders, hostel types, floors; student_girl account; 14 days attendance (no longer overwrites marked rows); seeded event kinds fixed; calendar tolerates unknown kinds.
+- docs/TEST_ACCOUNTS.md lists credentials. Startup seeder resets those passwords each run.
+- Tests: 333 pass.
+
+## Batch 84
+- Visitors: visitors table, visitor_service, VisitorScreen (all staff roles); flags After hours (9-19) and Overstayed.
+- Leave approval: leaves.status Pending/Rejected, decided_by/decided_at/decision_note columns; student applications start Pending, decide_leave (WARDEN_ROLES) notifies the student; releasing an allocation rejects pending leaves.
+- Attendance: monthly_report and export_report_csv (ADMIN_ROLES), 75% low threshold; Monthly report tab on Attendance screen. student_summary now counts only On Leave/Returned leaves.
+- Badges: notice_reads table, unread_count/mark_all_read; sidebar badge for My Notices (students) and Leaves (pending, Warden+); refreshed every 30 s.
+- Global search: search_service + top-bar box (staff roles).
+- Seed: pending leave and 4 sample visitors.
+- Tests: 341 pass.
+## Batch 85
+- Hostel map: filters (hostel, floor, status), room sort (number, most vacant, most occupied), floor order, wrapped 6-column room tiles, hostels stacked full width, per-floor facility chips (washrooms, water cooler, stairs; ground floor adds entrance, warden office, common room, mess). Facilities are fixed defaults, not stored in the database.
+- Tests: 341 pass.
