@@ -3,12 +3,12 @@ Application shell: icon sidebar, top bar (screen name, clock, account),
 and the screens. Login gate: splash -> login -> home screen for the role.
 """
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import messagebox, simpledialog, ttk
 from datetime import datetime
 
 from app.config import APP_NAME
 from app.theme import COLORS, ScrollFrame, apply_theme, draw_icon, icon_tile, initials, _round_rect
-from app.services import auth_service, settings_service
+from app.services import auth_service, settings_service, search_service, notice_service, leave_service
 from app import theme
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error, report_tk_callback_exception
@@ -35,6 +35,7 @@ from app.screens.my_fines_screen import MyFinesScreen
 from app.screens.notice_screen import NoticeScreen
 from app.screens.my_notices_screen import MyNoticesScreen
 from app.screens.attendance_screen import AttendanceScreen
+from app.screens.visitor_screen import VisitorScreen
 from app.screens.contacts_screen import ContactsScreen
 from app.screens.student_home_screen import StudentHomeScreen
 from app.screens.hostel_map_screen import HostelMapScreen
@@ -59,6 +60,7 @@ _NAV_ITEMS = [
     ("Fines", "Fines", "clipboard"),
     ("Notices", "Notices", "chat"),
     ("Attendance", "Attendance", "clipboard"),
+    ("Visitors", "Visitors", "users"),
     ("Contacts", "Wardens & Emergency", "users"),
     ("Settings", "Settings", "gear"),
     ("Workers", "Workers", "users"),
@@ -75,11 +77,11 @@ _NAV_ITEMS = [
 _COMMON = ["HostelMap", "Events", "Contacts", "Calendar", "Settings"]
 ROLE_SCREENS = {
     "Student": ["StudentHome", "MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyNotices", "MyDetails"] + _COMMON,
-    "Staff": ["Dashboard", "Attendance", "Notices", "Complaints", "Workers"] + _COMMON,
-    "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices"] + _COMMON,
-    "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices",
+    "Staff": ["Dashboard", "Notices", "Complaints", "Visitors", "Workers"] + _COMMON,
+    "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines", "Notices", "Visitors"] + _COMMON,
+    "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Visitors", "Notices",
                       "Workers", "Bugs", "Users"] + _COMMON,
-    "Super Admin": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Notices",
+    "Super Admin": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Visitors", "Notices",
                     "Workers", "Bugs", "Users"] + _COMMON,
 }
 
@@ -101,6 +103,7 @@ class NavItem(tk.Canvas):
         self.key, self.label, self.icon, self.fonts = key, label, icon, fonts
         self.active = False
         self.hover = False
+        self.badge = 0
         self.bind("<Configure>", lambda e: self._draw())
         self.bind("<Button-1>", lambda e: on_click(key))
         self.bind("<Enter>", lambda e: self._set_hover(True))
@@ -109,6 +112,11 @@ class NavItem(tk.Canvas):
     def _set_hover(self, value):
         self.hover = value
         self._draw()
+
+    def set_badge(self, count):
+        if count != self.badge:
+            self.badge = count
+            self._draw()
 
     def set_active(self, value):
         self.active = value
@@ -128,6 +136,10 @@ class NavItem(tk.Canvas):
         self.create_text(48, 21, anchor="w", text=self.label,
                          fill=COLORS["accent"] if self.active else COLORS["text_secondary"],
                          font=self.fonts["nav_active"] if self.active else self.fonts["nav"])
+        if self.badge:
+            self.create_oval(w - 44, 11, w - 20, 31, fill=COLORS["danger"], outline="")
+            self.create_text(w - 32, 21, text=str(self.badge) if self.badge < 100 else "99+", fill="#FFFFFF",
+                             font=self.fonts["small_bold"])
 
 
 class MainWindow(tk.Tk):
@@ -175,6 +187,9 @@ class MainWindow(tk.Tk):
 
     def _enter_user_ui(self, user: dict):
         self._update_account_info(user)
+        self.search_box.pack_forget()
+        if user["role"] in session.STAFF_ROLES:
+            self.search_box.pack(side="left", padx=(24, 0))
         allowed = _allowed_screens(user["role"])
         for item in self._nav_items.values():
             item.pack_forget()
@@ -312,6 +327,8 @@ class MainWindow(tk.Tk):
                                font=self.fonts["label"])
         self.crumb.pack(side="left")
 
+        self._build_search(bar)
+
         account = tk.Frame(bar, bg=COLORS["background"], cursor="hand2")
         account.pack(side="right")
         self.avatar = tk.Canvas(account, width=38, height=38, bg=COLORS["background"], highlightthickness=0, cursor="hand2")
@@ -347,6 +364,76 @@ class MainWindow(tk.Tk):
         self.clock_date.pack(anchor="e")
 
 
+    def _build_search(self, bar):
+        self.search_var = tk.StringVar()
+        self._search_hits = []
+        self.search_box = tk.Frame(bar, bg=COLORS["background"])
+        self.search_box.pack(side="left", padx=(24, 0))
+        tk.Label(self.search_box, text="Search", bg=COLORS["background"], fg=COLORS["text_tertiary"],
+                 font=self.fonts["small"]).pack(side="left", padx=(0, 6))
+        self.search_entry = ttk.Entry(self.search_box, textvariable=self.search_var, width=28)
+        self.search_entry.pack(side="left")
+        self.search_list = tk.Listbox(self, height=8, activestyle="none", bd=0, highlightthickness=1,
+                                      highlightbackground=COLORS["border_strong"], bg=COLORS["surface"],
+                                      fg=COLORS["text_primary"], selectbackground=COLORS["accent_soft"],
+                                      selectforeground=COLORS["text_primary"], font=self.fonts["body"])
+        self.search_entry.bind("<KeyRelease>", self._run_search)
+        self.search_entry.bind("<Escape>", lambda e: self._hide_search())
+        self.search_entry.bind("<FocusOut>", lambda e: self.after(200, self._hide_search))
+        self.search_entry.bind("<Down>", lambda e: (self.search_list.focus_set(), self.search_list.selection_set(0)))
+        self.search_list.bind("<ButtonRelease-1>", self._pick_search)
+        self.search_list.bind("<Return>", self._pick_search)
+
+    def _hide_search(self):
+        self.search_list.place_forget()
+
+    def _run_search(self, event=None):
+        if event is not None and event.keysym in ("Escape", "Down", "Return"):
+            return
+        user = getattr(self, "_user", None)
+        if not user or user["role"] not in session.STAFF_ROLES:
+            return
+        try:
+            self._search_hits = search_service.search(self.search_var.get())
+        except Exception:
+            self._search_hits = []
+        self._search_hits = [h for h in self._search_hits if h["screen"] in _allowed_screens(user["role"])]
+        if not self._search_hits:
+            self._hide_search()
+            return
+        self.search_list.delete(0, "end")
+        for h in self._search_hits:
+            self.search_list.insert("end", f"{h['kind']}: {h['title']}  —  {h['detail']}")
+        self.update_idletasks()
+        x = self.search_entry.winfo_rootx() - self.winfo_rootx()
+        y = self.search_entry.winfo_rooty() - self.winfo_rooty() + self.search_entry.winfo_height() + 2
+        self.search_list.place(x=x, y=y, width=460)
+        self.search_list.lift()
+
+    def _pick_search(self, event=None):
+        sel = self.search_list.curselection()
+        if not sel:
+            return
+        screen = self._search_hits[sel[0]]["screen"]
+        self._hide_search()
+        self.search_var.set("")
+        self.show_screen(screen)
+
+    def refresh_badges(self):
+        user = getattr(self, "_user", None)
+        if not user or not self._nav_items:
+            return
+        counts = {}
+        try:
+            if user["role"] == "Student":
+                counts["MyNotices"] = notice_service.unread_count()
+            if user["role"] in session.WARDEN_ROLES:
+                counts["Leaves"] = leave_service.pending_count()
+        except Exception:
+            counts = {}
+        for key, item in self._nav_items.items():
+            item.set_badge(counts.get(key, 0))
+
     def exit_app(self):
         """Closing the window ends the session cleanly, so the audit log shows the log-out."""
         auth_service.logout()
@@ -374,6 +461,14 @@ class MainWindow(tk.Tk):
         now = datetime.now()
         self.clock_time.configure(text=now.strftime("%I:%M:%S %p"))
         self.clock_date.configure(text=now.strftime("%a, %d %b %Y"))
+        self._ticks = getattr(self, "_ticks", 0) + 1
+        if self._ticks % 30 == 0:
+            self.refresh_badges()
+        if self._ticks % 30 == 0 and getattr(self, "_current", None) in ("Dashboard", "StudentHome"):
+            try:
+                self.screens[self._current].refresh()
+            except Exception:
+                pass
         self._tick_job = self.after(1000, self._tick)
 
     def _update_account_info(self, user: dict):
@@ -407,6 +502,7 @@ class MainWindow(tk.Tk):
         self.screens["Notices"] = NoticeScreen(self.content, self.fonts)
         self.screens["MyNotices"] = MyNoticesScreen(self.content, self.fonts)
         self.screens["Attendance"] = AttendanceScreen(self.content, self.fonts)
+        self.screens["Visitors"] = VisitorScreen(self.content, self.fonts)
         self.screens["Contacts"] = ContactsScreen(self.content, self.fonts)
         self.screens["MyDetails"] = MyDetailsScreen(self.content, self.fonts)
         for key, screen in self.screens.items():
@@ -417,9 +513,11 @@ class MainWindow(tk.Tk):
         if key not in _allowed_screens(session.get_role()):
             return
         self._current = key
+        self._hide_search()
         self.screens[key].tkraise()
         self.screens[key].refresh()
         labels = {k: label for k, label, _ in _NAV_ITEMS}
         self.crumb.configure(text=f"Hostel MS  /  {labels[key]}")
+        self.refresh_badges()
         for nav_key, item in self._nav_items.items():
             item.set_active(nav_key == key)

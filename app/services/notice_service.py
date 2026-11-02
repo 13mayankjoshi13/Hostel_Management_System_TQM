@@ -125,3 +125,31 @@ def delete_notice(notice_id: int) -> None:
         log_audit("Notice", "Delete", str(notice_id), "Success", "Notice deleted.")
     finally:
         conn.close()
+
+
+def unread_count(student_id=None) -> int:
+    """Notices visible to the student that they have not opened yet."""
+    if student_id is None:
+        student_id = session.get_student_id()
+    shown = notices_for_student(student_id, limit=500)
+    if not shown:
+        return 0
+    conn = get_connection()
+    try:
+        read = {r[0] for r in conn.execute("SELECT notice_id FROM notice_reads WHERE student_id = ?", (student_id,))}
+    finally:
+        conn.close()
+    return sum(1 for n in shown if n["notice_id"] not in read)
+
+
+def mark_all_read(student_id=None) -> None:
+    if student_id is None:
+        student_id = session.get_student_id()
+    ids = [n["notice_id"] for n in notices_for_student(student_id, limit=500)]
+    conn = get_connection()
+    try:
+        conn.executemany("INSERT OR IGNORE INTO notice_reads (student_id, notice_id) VALUES (?, ?)",
+                         [(student_id, i) for i in ids])
+        conn.commit()
+    finally:
+        conn.close()

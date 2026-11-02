@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 from app.database import db as db_module
 from app.database.db import initialize_database
-from app.services import (auth_service, student_service, room_service, allocation_service,
+from app.services import (auth_service, leave_service, student_service, room_service, allocation_service,
                            student_portal_service as portal)
 from app.utils import session
 from app.utils.validation import ValidationError
@@ -120,6 +120,12 @@ class TestStudentPortal(unittest.TestCase):
     def test_apply_leave_and_return(self):
         self._login("student1")
         leave_id = portal.apply_leave(_day(-9), _day(-5), "Family function")
+        self.assertEqual(portal.my_leaves()[0]["status"], "Pending")
+        with self.assertRaises(ValidationError):
+            portal.return_from_leave(leave_id)
+        session.set_session("w", "Warden")
+        leave_service.decide_leave(leave_id, True)
+        self._login("student1")
         self.assertEqual(portal.my_leaves()[0]["status"], "On Leave")
         portal.return_from_leave(leave_id)
         self.assertEqual(portal.my_leaves()[0]["status"], "Returned")

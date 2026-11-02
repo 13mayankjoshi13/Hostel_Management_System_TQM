@@ -52,3 +52,14 @@ Definitions are stated on each tab. Six Sigma and Variance count audit-log rows 
 ## Batch 81 additions
 
 Every list screen (Students, Rooms, Allocation, Complaints, Leaves, Fines, Workers, Bug Tracker, Users, Notices, Attendance, Events, Wardens & Emergency, and the student's My Complaints, My Leave, My Fines, My Notices) now shows a summary strip under its title with live counts, and every page title has an icon. The strip uses only the data the logged-in role is already allowed to see; if it cannot be computed it is hidden and the screen still works.
+
+## Batch 83
+- Attendance marking and the roster are Administrator / Super Admin only; Warden and Staff keep read-only totals on the dashboard.
+- Dashboard quick actions and KPI cards are built per role and refreshed every 30 s.
+
+## Batch 84
+- Visitors (Staff, Warden, Administrator, Super Admin): check-in/out log; visits outside 9 AM-7 PM and overstays are flagged.
+- Leave approval: a student's application is Pending; Warden, Administrator and Super Admin approve or reject (rejection needs a reason) and the student gets a notice. Leaves recorded by staff start as On Leave.
+- Attendance monthly report and CSV export: Administrator and Super Admin only; below 75% is highlighted.
+- Sidebar badges: unread notices for students, pending leaves for Warden and above.
+- Global search (top bar): Staff sees complaints, Warden adds students, Administrator and Super Admin add rooms.

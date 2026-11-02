@@ -15,7 +15,7 @@ Only Mayank's roll is known; the others are ASSIGNED in alphabetical order
 and contact numbers are made up — replace both with real values.
 """
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 import random
 import tempfile
 import sqlite3
@@ -195,7 +195,7 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
       - Super Admin: superadmin / admin123 (and admin / admin123)
       - Administrator: hostel_admin / admin123
       - Staff: hostel_staff / staff123 (and warden / warden123)
-      - Student: student / student123 (and mayankjoshi13 / student123)
+      - Student: student / student123 (and mayankjoshi13 / student123); student_girl / student123 (girls block)
     All test accounts have must_change_password=0 and status='Active'.
     Also seeds attendance records, notices across audiences, leaves, complaints,
     events, fines, wardens and workers.
@@ -242,6 +242,18 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
                         (demo_student_id, demo_room_id))
             conn.commit()
 
+        for name, block in STUDENTS:
+            cur.execute("UPDATE students SET gender = ? WHERE name = ? AND (gender IS NULL OR gender = '')",
+                        ("Female" if block == "B" else "Male", name))
+        cur.execute("UPDATE rooms SET hostel_type = CASE WHEN room_number LIKE 'B%' THEN 'Girls' ELSE 'Boys' END "
+                    "WHERE hostel_type IS NULL OR hostel_type = ''")
+        cur.execute("UPDATE rooms SET floor = CAST(substr(room_number, 2, 1) AS INTEGER) "
+                    "WHERE floor = 0 AND substr(room_number, 2, 1) GLOB '[0-9]'")
+        cur.execute("SELECT student_id FROM students WHERE name = 'Neha Rawat' LIMIT 1")
+        girl_row = cur.fetchone()
+        girl_student_id = girl_row["student_id"] if girl_row else None
+        conn.commit()
+
         # 2. Dedicated test accounts with must_change_password=0
         test_accounts = [
             ("superadmin", "admin123", "Super Admin", None),
@@ -250,10 +262,13 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
             ("hostel_staff", "staff123", "Staff", None),
             ("warden", "warden123", "Warden", None),
             ("student", "student123", "Student", demo_student_id),
+            ("student_girl", "student123", "Student", girl_student_id),
             ("mayankjoshi13", "student123", "Student", demo_student_id),
         ]
         accounts_count = 0
         for username, pwd, role, sid in test_accounts:
+            if role == "Student" and sid is None:
+                continue
             cur.execute("SELECT user_id FROM users WHERE LOWER(username) = LOWER(?)", (username,))
             existing_user = cur.fetchone()
             h = auth_service._hash_password(pwd)
@@ -320,7 +335,7 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
             active_sids.append(demo_student_id)
 
         att_count = 0
-        for offset in (0, -1, -2, -3):
+        for offset in range(0, -14, -1):
             att_day = (today_d + timedelta(days=offset)).isoformat()
             for idx, sid in enumerate(active_sids):
                 st = "Present"
@@ -328,7 +343,7 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
                     st = "Absent"
                 cur.execute(
                     "INSERT INTO student_attendance (student_id, att_date, status, marked_by) VALUES (?, ?, ?, 'hostel_admin') "
-                    "ON CONFLICT(student_id, att_date) DO UPDATE SET status = excluded.status",
+                    "ON CONFLICT(student_id, att_date) DO NOTHING",
                     (sid, att_day, st)
                 )
                 att_count += 1
@@ -395,6 +410,35 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
                 )
             conn.commit()
 
+        # 7b. A pending leave to approve and a few visitors
+        if cur.execute("SELECT 1 FROM leaves WHERE status = 'Pending'").fetchone() is None:
+            free = cur.execute(
+                "SELECT al.student_id, al.room_id FROM allocations al JOIN students s ON s.student_id = al.student_id "
+                "WHERE al.status = 'Active' AND al.student_id != ? AND NOT EXISTS (SELECT 1 FROM leaves l "
+                "WHERE l.student_id = al.student_id AND l.status IN ('On Leave', 'Pending')) "
+                "ORDER BY (s.gender = 'Female') DESC, al.student_id LIMIT 1", (demo_student_id,)).fetchone()
+            if free:
+                cur.execute(
+                    "INSERT INTO leaves (student_id, room_id, from_date, to_date, reason, status) "
+                    "VALUES (?, ?, ?, ?, 'Sister''s wedding', 'Pending')",
+                    (free["student_id"], free["room_id"], (today_d + timedelta(days=3)).isoformat(),
+                     (today_d + timedelta(days=7)).isoformat()))
+        if cur.execute("SELECT COUNT(*) AS n FROM visitors").fetchone()["n"] == 0:
+            def _utc(days_back, hour, minute=0):
+                local = (datetime.now() - timedelta(days=days_back)).replace(hour=hour, minute=minute, second=0, microsecond=0)
+                return local.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+            for sid, vname, rel, purpose, day, hour, stay in (
+                    (demo_student_id, "Ramesh Joshi", "Parent", "Bringing supplies", 1, 17, None),
+                    (demo_student_id, "Kunal Verma", "Friend", "Project discussion", 2, 11, 1),
+                    (girl_student_id or demo_student_id, "Sunita Rawat", "Parent", "Routine visit", 1, 10, 2),
+                    (demo_student_id, "Anil Mehra", "Relative", "Festival gift", 3, 20, 1)):
+                cur.execute("INSERT INTO visitors (student_id, visitor_name, relation, purpose, in_time, out_time, logged_by) "
+                            "VALUES (?, ?, ?, ?, ?, ?, 'hostel_staff')",
+                            (sid, vname, rel, purpose, _utc(day, hour),
+                             _utc(day, hour + stay) if stay else None))
+        conn.commit()
+
         # 8. Complaints
         cur.execute("SELECT COUNT(*) AS n FROM complaints")
         if cur.fetchone()["n"] < 4:
@@ -425,11 +469,11 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
         if cur.fetchone()["n"] < 5:
             sample_events = [
                 (today_d.isoformat(), "Hostel Roll Call & Floor Inspection", "Hostel Event"),
-                ((today_d + timedelta(days=1)).isoformat(), "Mess Committee Review Meeting", "Meeting"),
-                ((today_d + timedelta(days=4)).isoformat(), "Inter-Hostel Table Tennis Tournament", "Sports"),
-                ((today_d + timedelta(days=10)).isoformat(), "Career Guidance & Alumni Interaction Workshop", "Workshop"),
+                ((today_d + timedelta(days=1)).isoformat(), "Mess Committee Review Meeting", "Hostel Event"),
+                ((today_d + timedelta(days=4)).isoformat(), "Inter-Hostel Table Tennis Tournament", "Hostel Event"),
+                ((today_d + timedelta(days=10)).isoformat(), "Career Guidance & Alumni Interaction Workshop", "Hostel Event"),
                 ((today_d + timedelta(days=18)).isoformat(), "Hostel Cultural Night & Music Jam", "Hostel Event"),
-                ((today_d + timedelta(days=25)).isoformat(), "Blood Donation Camp & Health Checkup", "Campus Event"),
+                ((today_d + timedelta(days=25)).isoformat(), "Blood Donation Camp & Health Checkup", "Hostel Event"),
             ]
             for edate, etitle, ekind in sample_events:
                 cur.execute("INSERT OR IGNORE INTO events (event_date, title, kind) VALUES (?, ?, ?)",

@@ -19,6 +19,7 @@ class MyNoticesScreen(tk.Frame):
         for child in self.sf.inner.winfo_children():
             child.destroy()
         notices = notice_service.notices_for_student()
+        notice_service.mark_all_read()
         if not notices:
             empty_box = tk.Frame(self.sf.inner, bg=COLORS["surface"], padx=24, pady=32,
                                  highlightthickness=1, highlightbackground=COLORS["border"])

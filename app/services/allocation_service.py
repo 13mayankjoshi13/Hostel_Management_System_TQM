@@ -159,6 +159,11 @@ def release_allocation(allocation_id: int) -> None:
             "WHERE student_id = ? AND status = 'On Leave'",
             (utc_now(), allocation["student_id"]),
         )
+        cur.execute(
+            "UPDATE leaves SET status = 'Rejected', decision_note = 'Room allocation released' "
+            "WHERE student_id = ? AND status = 'Pending'",
+            (allocation["student_id"],),
+        )
         conn.commit()
         log_audit("Allocation", "Release", str(allocation_id), "Success",
                    "Allocation released; room freed for reallocation.")

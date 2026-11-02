@@ -52,23 +52,8 @@ class DashboardScreen(tk.Frame):
         actions.pack(fill="x", pady=(14, 0))
         tk.Label(actions.body, text="QUICK ACTIONS", bg=COLORS["surface"], fg=COLORS["text_tertiary"],
                   font=self.fonts["small_bold"]).pack(anchor="w", pady=(0, 8))
-        grid = tk.Frame(actions.body, bg=COLORS["surface"])
-        grid.pack(fill="x")
-        tiles = [("Add student", "user", COLORS["accent"], "Students"),
-                 ("Allocate room", "key", COLORS["teal"], "Allocation"),
-                 ("Log complaint", "chat", COLORS["pink"], "Complaints"),
-                 ("Record leave", "plane", COLORS["orange"], "Leaves")]
-        for i, (label, icon, color, target) in enumerate(tiles):
-            grid.columnconfigure(i, weight=1)
-            cell = tk.Frame(grid, bg=COLORS["surface"], cursor="hand2")
-            cell.grid(row=0, column=i, sticky="n")
-            tile = icon_tile(cell, icon, color, size=46, bg=COLORS["surface"])
-            tile.pack()
-            text = tk.Label(cell, text=label, bg=COLORS["surface"], fg=COLORS["text_secondary"],
-                             font=self.fonts["small"], wraplength=64, justify="center")
-            text.pack(pady=(5, 0))
-            for w in (cell, tile, text):
-                w.bind("<Button-1>", lambda e, t=target: self._navigate(t))
+        self.actions_slot = tk.Frame(actions.body, bg=COLORS["surface"])
+        self.actions_slot.pack(fill="x")
 
         upcoming = Card(left, fit=True)
         upcoming.pack(fill="x", pady=(14, 0))
@@ -156,6 +141,36 @@ class DashboardScreen(tk.Frame):
                       fill=COLORS["hero_text2"], font=self.fonts["label"])
 
     # ------------------------------------------------------------ data
+    def _can_open(self, key: str) -> bool:
+        from app.screens.main_window import _allowed_screens
+        return key in _allowed_screens(session.get_role())
+
+    def _go(self, key: str):
+        return (lambda: self._navigate(key)) if self._can_open(key) else None
+
+    def _refresh_actions(self):
+        for w in self.actions_slot.winfo_children():
+            w.destroy()
+        catalog = [("Add student", "user", COLORS["accent"], "Students"),
+                   ("Allocate room", "key", COLORS["teal"], "Allocation"),
+                   ("Log complaint", "chat", COLORS["pink"], "Complaints"),
+                   ("Mark attendance", "clipboard", COLORS["success"], "Attendance"),
+                   ("Record leave", "plane", COLORS["orange"], "Leaves"),
+                   ("Send notice", "chat", COLORS["info"], "Notices"),
+                   ("Workers", "users", COLORS["teal"], "Workers")]
+        tiles = [t for t in catalog if self._can_open(t[3])][:4]
+        for i, (label, icon, color, target) in enumerate(tiles):
+            self.actions_slot.columnconfigure(i, weight=1)
+            cell = tk.Frame(self.actions_slot, bg=COLORS["surface"], cursor="hand2")
+            cell.grid(row=0, column=i, sticky="n")
+            tile = icon_tile(cell, icon, color, size=46, bg=COLORS["surface"])
+            tile.pack()
+            text = tk.Label(cell, text=label, bg=COLORS["surface"], fg=COLORS["text_secondary"],
+                            font=self.fonts["small"], wraplength=64, justify="center")
+            text.pack(pady=(5, 0))
+            for w in (cell, tile, text):
+                w.bind("<Button-1>", lambda e, t=target: self._navigate(t))
+
     def _refresh_banner_and_kpis(self):
         students = student_service.get_all_students()
         rooms = room_service.get_all_rooms()
@@ -179,26 +194,24 @@ class DashboardScreen(tk.Frame):
             w.destroy()
         self._home = home_service.staff_home()
         att = self._home["attendance"]
-        kpi_row(self.kpi_slot, [
-            ("Students", str(len(students)), "users", COLORS["accent"], COLORS["accent_soft"],
-             lambda: self._navigate("Students")),
-            ("Beds occupied", f"{occupancy}%", "door", COLORS["teal"], COLORS["teal_soft"],
-             lambda: self._navigate("Allocation")),
-            ("Open complaints", str(open_complaints), "chat", COLORS["orange"], COLORS["orange_soft"],
-             lambda: self._navigate("Complaints")),
-            ("On leave now", str(on_leave), "plane", COLORS["info"], COLORS["info_soft"],
-             lambda: self._navigate("Leaves")),
-        ], self.fonts).pack(fill="x")
+        role = session.get_role()
+        first = [("Students", str(len(students)), "users", COLORS["accent"], COLORS["accent_soft"], self._go("Students")),
+                 ("Beds occupied", f"{occupancy}%", "door", COLORS["teal"], COLORS["teal_soft"], self._go("Allocation")),
+                 ("Open complaints", str(open_complaints), "chat", COLORS["orange"], COLORS["orange_soft"],
+                  self._go("Complaints")),
+                 ("On leave now", str(on_leave), "plane", COLORS["info"], COLORS["info_soft"], self._go("Leaves"))]
+        second = [("Present today", str(att["Present"]), "users", COLORS["success"], COLORS["success_soft"],
+                   self._go("Attendance")),
+                  ("Absent today", str(att["Absent"]), "chat", COLORS["pink"], COLORS["pink_soft"], self._go("Attendance")),
+                  ("Not marked today", str(att["Unmarked"]), "clipboard", COLORS["orange"], COLORS["orange_soft"],
+                   self._go("Attendance"))]
+        if is_admin:
+            second.append(("Open bugs", str(open_bugs), "bug", COLORS["pink"], COLORS["pink_soft"], self._go("Bugs")))
+        if role == "Staff":
+            first = [i for i in first if i[0] != "Students"]
+        kpi_row(self.kpi_slot, first, self.fonts).pack(fill="x")
         tk.Frame(self.kpi_slot, height=10, bg=COLORS["background"]).pack()
-        kpi_row(self.kpi_slot, [
-            ("Present today", str(att["Present"]), "users", COLORS["success"], COLORS["success_soft"],
-             lambda: self._navigate("Attendance")),
-            ("Absent today", str(att["Absent"]), "chat", COLORS["pink"], COLORS["pink_soft"],
-             lambda: self._navigate("Attendance")),
-            ("Not marked today", str(att["Unmarked"]), "clipboard", COLORS["orange"], COLORS["orange_soft"],
-             lambda: self._navigate("Attendance")),
-        ] + ([("Open bugs", str(open_bugs), "bug", COLORS["pink"], COLORS["pink_soft"],
-               lambda: self._navigate("Bugs"))] if is_admin else []), self.fonts).pack(fill="x")
+        kpi_row(self.kpi_slot, second, self.fonts).pack(fill="x")
 
         self._rooms = rooms
         self._occupied = {}
@@ -331,6 +344,7 @@ class DashboardScreen(tk.Frame):
     def refresh(self):
         if session.get_role() not in session.STAFF_ROLES:
             return
+        self._refresh_actions()
         self._refresh_banner_and_kpis()
         self._refresh_rooms()
         self._refresh_notices()

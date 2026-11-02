@@ -132,6 +132,21 @@ class TestNoticesAttendance(unittest.TestCase):
         with self.assertRaises(ValidationError):
             attendance_service.mark_attendance(self.boy, today, "Late")
 
+    def test_only_admins_mark_attendance(self):
+        allocation_service.allocate_room(self.boy, self.boys_room)
+        today = date.today().isoformat()
+        for role in ("Staff", "Warden"):
+            session.set_session("x", role)
+            with self.assertRaises(ValidationError):
+                attendance_service.mark_attendance(self.boy, today, "Present")
+            with self.assertRaises(ValidationError):
+                attendance_service.get_roster(today)
+            self.assertEqual(attendance_service.attendance_counts(today)["Unmarked"], 1)
+        for role in ("Administrator", "Super Admin"):
+            session.set_session("x", role)
+            attendance_service.mark_attendance(self.boy, today, "Present")
+            self.assertEqual(len(attendance_service.get_roster(today)), 1)
+
     def test_student_summary_and_permissions(self):
         allocation_service.allocate_room(self.boy, self.boys_room)
         today = date.today().isoformat()

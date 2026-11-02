@@ -13,7 +13,7 @@ class MyLeaveScreen(tk.Frame):
     def __init__(self, parent, fonts):
         super().__init__(parent, bg=COLORS["background"])
         self.fonts = fonts
-        section_header(self, "My Leave", "Let the hostel know when you are away.", fonts)
+        section_header(self, "My Leave", "Apply for leave. A warden approves or rejects it.", fonts)
         self.left, self.right = split_layout(self)
 
         wrapper = form_card(self.left, "Apply for leave", self.fonts)
@@ -29,9 +29,9 @@ class MyLeaveScreen(tk.Frame):
         table_wrapper = tk.Frame(self.right, bg=COLORS["background"])
         table_wrapper.pack(fill="both", expand=True)
         content = build_panel(table_wrapper, "My Leaves", fonts)
-        self.tree = build_table(content, ("id", "room", "from", "to", "reason", "status"),
-                                  ("ID", "Room", "From", "To", "Reason", "Status"),
-                                  (45, 70, 100, 100, 220, 90), height=7)
+        self.tree = build_table(content, ("id", "room", "from", "to", "reason", "status", "note"),
+                                  ("ID", "Room", "From", "To", "Reason", "Status", "Decision note"),
+                                  (45, 70, 100, 100, 180, 90, 160), height=7)
         self.tree.pack(fill="both", expand=True)
         style_treeview_status_tags(self.tree)
 
@@ -51,7 +51,7 @@ class MyLeaveScreen(tk.Frame):
                         "To Date": vals[3],
                         "Status": vals[5],
                     },
-                    full_text=f"Reason: {vals[4]}"
+                    full_text=f"Reason: {vals[4]}" + (f"\nDecision note: {vals[6]}" if vals[6] else "")
                 )
 
         self.tree.bind("<Double-Button-1>", _on_leave_select)
@@ -68,7 +68,7 @@ class MyLeaveScreen(tk.Frame):
             student_portal_service.apply_leave(self.from_var.get(), self.to_var.get(), self.reason_var.get())
             self.reason_var.set("")
             self.refresh()
-            messagebox.showinfo("Success", "Leave recorded.")
+            messagebox.showinfo("Success", "Leave application sent. A warden will approve or reject it.")
         except ValidationError as e:
             messagebox.showerror("Invalid Input", str(e))
         except Exception as e:
@@ -93,5 +93,6 @@ class MyLeaveScreen(tk.Frame):
             self.tree.delete(row)
         for l in student_portal_service.my_leaves():
             self.tree.insert("", "end", values=(
-                l["leave_id"], l["room_number"], l["from_date"], l["to_date"], l["reason"], l["status"]),
+                l["leave_id"], l["room_number"], l["from_date"], l["to_date"], l["reason"], l["status"],
+                l["decision_note"] or ""),
                 tags=(status_tag(l["status"]),))

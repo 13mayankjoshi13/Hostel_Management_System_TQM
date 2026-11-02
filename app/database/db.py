@@ -299,6 +299,29 @@ def _create_schema(conn: sqlite3.Connection) -> None:
     """)
 
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS visitors (
+            visitor_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            visitor_name TEXT NOT NULL,
+            relation TEXT NOT NULL,
+            phone TEXT,
+            purpose TEXT NOT NULL,
+            in_time TEXT NOT NULL,
+            out_time TEXT,
+            logged_by TEXT NOT NULL,
+            FOREIGN KEY (student_id) REFERENCES students(student_id)
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS notice_reads (
+            student_id INTEGER NOT NULL,
+            notice_id INTEGER NOT NULL,
+            PRIMARY KEY (student_id, notice_id)
+        )
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS app_settings (
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
@@ -309,6 +332,9 @@ def _create_schema(conn: sqlite3.Connection) -> None:
         ("students", "gender", "TEXT"),
         ("rooms", "floor", "INTEGER NOT NULL DEFAULT 0"),
         ("rooms", "hostel_type", "TEXT"),
+        ("leaves", "decided_by", "TEXT"),
+        ("leaves", "decided_at", "TEXT"),
+        ("leaves", "decision_note", "TEXT"),
     ):
         existing = {row[1] for row in cur.execute(f"PRAGMA table_info({table})")}
         if column not in existing:

@@ -1,7 +1,7 @@
 """Leave Tracking screen: which student is on leave, from which room."""
 import tkinter as tk
 from datetime import date
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 
 from app.services import allocation_service, leave_service
 from app.utils import session
@@ -16,7 +16,7 @@ class LeaveScreen(tk.Frame):
         self.fonts = fonts
         self._student_options = {}
         section_header(self, "Leave Tracking",
-                        "Record which hosteller is on leave and mark them returned.", fonts)
+                        "Approve student leave requests, record leaves and mark hostellers returned.", fonts)
         self.left, self.right = split_layout(self)
         self._build_form()
         self._build_table()
@@ -71,8 +71,14 @@ class LeaveScreen(tk.Frame):
         self.tree.bind("<Double-Button-1>", _on_leave_select)
         self.tree.bind("<Return>", _on_leave_select)
 
-        ttk.Button(content, text="Mark Returned", style="Primary.TButton",
-                    command=self.on_return).pack(anchor="e", pady=(10, 0))
+        buttons = tk.Frame(content, bg=COLORS["surface"])
+        buttons.pack(anchor="e", pady=(10, 0))
+        if session.get_role() in session.WARDEN_ROLES:
+            ttk.Button(buttons, text="Approve", style="Primary.TButton",
+                       command=lambda: self.on_decide(True)).pack(side="left", padx=(0, 8))
+            ttk.Button(buttons, text="Reject", style="Secondary.TButton",
+                       command=lambda: self.on_decide(False)).pack(side="left", padx=(0, 8))
+        ttk.Button(buttons, text="Mark Returned", style="Primary.TButton", command=self.on_return).pack(side="left")
 
 
     def on_record(self):
@@ -86,6 +92,22 @@ class LeaveScreen(tk.Frame):
             messagebox.showerror("Invalid Input", str(e))
         except Exception as e:
             handle_unexpected_error("Leave", "record_leave_ui", e)
+
+    def on_decide(self, approve: bool):
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showerror("No Selection", "Select a leave first.")
+            return
+        note = "" if approve else simpledialog.askstring("Reject leave", "Reason for rejecting:", parent=self)
+        if note is None:
+            return
+        try:
+            leave_service.decide_leave(self.tree.item(selected[0])["values"][0], approve, note)
+            self.refresh_table()
+        except ValidationError as e:
+            messagebox.showerror("Invalid Input", str(e))
+        except Exception as e:
+            handle_unexpected_error("Leave", "decide_leave_ui", e)
 
     def on_return(self):
         selected = self.tree.selection()

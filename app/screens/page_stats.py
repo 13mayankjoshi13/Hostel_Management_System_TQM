@@ -2,7 +2,7 @@
 import tkinter as tk
 from datetime import date
 
-from app.services import (allocation_service, attendance_service, auth_service, bug_service, complaint_service,
+from app.services import (visitor_service, allocation_service, attendance_service, auth_service, bug_service, complaint_service,
                           emergency_service, event_service, fine_service, home_service, leave_service,
                           notice_service, student_portal_service, student_service, warden_service, worker_service)
 from app.theme import COLORS, Card, icon_circle
@@ -61,9 +61,17 @@ def _complaints():
 
 def _leaves():
     rows = leave_service.get_all_leaves()
-    return [_item("On leave now", _count(rows, "status", "On Leave"), "plane", "orange"),
+    return [_item("Pending", _count(rows, "status", "Pending"), "clipboard", "info"),
+            _item("On leave now", _count(rows, "status", "On Leave"), "plane", "orange"),
             _item("Returned", _count(rows, "status", "Returned"), "key", "success"),
             _item("Total records", len(rows), "grid", "accent")]
+
+
+def _visitors():
+    rows = visitor_service.list_visitors()
+    return [_item("Inside now", sum(1 for r in rows if not r["out_time"]), "users", "info"),
+            _item("Flagged", sum(1 for r in rows if r["flag"]), "bug", "orange"),
+            _item("Total visits", len(rows), "grid", "accent")]
 
 
 def _fines():
@@ -137,7 +145,8 @@ def _my_complaints():
 
 def _my_leave():
     rows = student_portal_service.my_leaves()
-    return [_item("On leave now", _count(rows, "status", "On Leave"), "plane", "orange"),
+    return [_item("Pending", _count(rows, "status", "Pending"), "clipboard", "info"),
+            _item("On leave now", _count(rows, "status", "On Leave"), "plane", "orange"),
             _item("Total", len(rows), "grid", "accent")]
 
 
@@ -155,7 +164,7 @@ def _my_notices():
 
 PROVIDERS = {"Students": _students, "Rooms": _rooms, "Allocation": _allocation, "Complaints": _complaints,
              "Leaves": _leaves, "Fines": _fines, "Workers": _workers, "Bugs": _bugs, "Users": _users,
-             "Notices": _notices, "Attendance": _attendance, "Events": _events, "Contacts": _contacts,
+             "Notices": _notices, "Visitors": _visitors, "Attendance": _attendance, "Events": _events, "Contacts": _contacts,
              "MyComplaints": _my_complaints, "MyLeave": _my_leave, "MyFines": _my_fines, "MyNotices": _my_notices}
 
 

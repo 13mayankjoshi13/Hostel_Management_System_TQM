@@ -1,9 +1,11 @@
 """
 Leave tracking: which student is on leave, from which room.
 
-Status flow: On Leave -> Returned (forward only). A leave can only be
-recorded for a student who currently has an Active room allocation, and
-a student cannot have two open leaves at once.
+Status flow: a student's own application starts as Pending and a warden or
+admin approves it (On Leave) or rejects it (Rejected). Leaves recorded by
+staff start as On Leave. On Leave -> Returned (forward only). A leave can only
+be recorded for a student who currently has an Active room allocation, and a
+student cannot have two open leaves (pending or on leave) at once.
 """
 import sqlite3
 from app.utils.timefmt import utc_now
@@ -28,18 +30,22 @@ def record_leave(student_id: int, from_date: str, to_date: str, reason: str) -> 
         allocation = cur.fetchone()
         if allocation is None:
             raise ValidationError("This student has no active room allocation, so no leave can be recorded.")
-        cur.execute("SELECT leave_id FROM leaves WHERE student_id = ? AND status = 'On Leave'",
+        cur.execute("SELECT status FROM leaves WHERE student_id = ? AND status IN ('On Leave', 'Pending')",
                     (student_id,))
-        if cur.fetchone() is not None:
-            raise ValidationError("This student already has an open leave. Mark it as returned first.")
+        open_leave = cur.fetchone()
+        if open_leave is not None:
+            raise ValidationError("This student already has a pending leave awaiting a decision."
+                                  if open_leave["status"] == "Pending"
+                                  else "This student already has an open leave. Mark it as returned first.")
 
+        status = "Pending" if session.get_role() == "Student" else "On Leave"
         cur.execute(
-            "INSERT INTO leaves (student_id, room_id, from_date, to_date, reason) VALUES (?, ?, ?, ?, ?)",
-            (student_id, allocation["room_id"], start, end, clean_reason))
+            "INSERT INTO leaves (student_id, room_id, from_date, to_date, reason, status) VALUES (?, ?, ?, ?, ?, ?)",
+            (student_id, allocation["room_id"], start, end, clean_reason, status))
         conn.commit()
         leave_id = cur.lastrowid
         log_audit("Leave", "Create", str(leave_id), "Success",
-                   f"Leave recorded for student {student_id} ({start} to {end}).")
+                   f"Leave {status.lower()} for student {student_id} ({start} to {end}).")
         return leave_id
     except ValidationError:
         raise
@@ -77,6 +83,53 @@ def mark_returned(leave_id: int) -> None:
         conn.close()
 
 
+def decide_leave(leave_id: int, approve: bool, note: str = "") -> None:
+    """Warden or admin approves or rejects a pending leave; the student is sent a notice."""
+    session.require_roles(session.WARDEN_ROLES, "decide on leave applications")
+    leave_id = validate_record_id(leave_id, "Select a leave first.")
+    note = (note or "").strip()
+    if len(note) > 200:
+        raise ValidationError("The note must be 200 characters or fewer.")
+    if not approve and not note:
+        raise ValidationError("Give a short reason for rejecting the leave.")
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        leave = cur.execute("SELECT student_id, status, from_date, to_date FROM leaves WHERE leave_id = ?",
+                            (leave_id,)).fetchone()
+        if leave is None:
+            raise ValidationError(f"No leave found with ID {leave_id}.")
+        if leave["status"] != "Pending":
+            raise ValidationError("Only a pending leave can be approved or rejected.")
+        new_status = "On Leave" if approve else "Rejected"
+        cur.execute("UPDATE leaves SET status = ?, decided_by = ?, decided_at = ?, decision_note = ? WHERE leave_id = ?",
+                    (new_status, session.get_user(), utc_now(), note, leave_id))
+        verb = "approved" if approve else "rejected"
+        body = f"Your leave from {leave['from_date']} to {leave['to_date']} was {verb} by {session.get_user()}."
+        if note:
+            body += f" Note: {note}"
+        cur.execute("INSERT INTO notices (title, body, audience, student_id, created_by) VALUES (?, ?, 'Student', ?, ?)",
+                    (f"Leave {verb}", body, leave["student_id"], session.get_user()))
+        conn.commit()
+        log_audit("Leave", "Approve" if approve else "Reject", str(leave_id), "Success", f"Leave {verb}.")
+    except ValidationError:
+        raise
+    except sqlite3.Error as exc:
+        log_error("Leave", "DatabaseError", "High", "decide_leave", status="Open", message_reference=str(exc))
+        raise ValidationError("Could not save the decision due to a database error.")
+    finally:
+        conn.close()
+
+
+def pending_count() -> int:
+    session.require_roles(session.WARDEN_ROLES, "view pending leaves")
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT COUNT(*) FROM leaves WHERE status = 'Pending'").fetchone()[0]
+    finally:
+        conn.close()
+
+
 def get_all_leaves() -> list:
     session.require_roles(session.STAFF_ROLES, "view all leaves")
     conn = get_connection()
@@ -84,7 +137,7 @@ def get_all_leaves() -> list:
         cur = conn.cursor()
         cur.execute("""
             SELECT l.leave_id, s.name AS student_name, r.room_number,
-                   l.from_date, l.to_date, l.reason, l.status
+                   l.from_date, l.to_date, l.reason, l.status, l.decided_by, l.decision_note
             FROM leaves l
             JOIN students s ON s.student_id = l.student_id
             JOIN rooms r ON r.room_id = l.room_id

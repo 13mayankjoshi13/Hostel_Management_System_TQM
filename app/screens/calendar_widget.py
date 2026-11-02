@@ -125,7 +125,7 @@ class CalendarWidget(tk.Frame):
                 for k, kind in enumerate(kinds[:3]):
                     dx = (k - (len(kinds[:3]) - 1) / 2.0) * 7
                     c.create_oval(cx + dx - 2, cy + 14, cx + dx + 2, cy + 18,
-                                  fill=KIND_COLORS[kind], outline="")
+                                  fill=KIND_COLORS.get(kind, COLORS["accent"]), outline="")
 
     def _draw_day_list(self):
         for w in self.day_list.winfo_children():

@@ -1,5 +1,6 @@
-"""Hostel roll call: staff mark Present/Absent; approved leave shows as Leave."""
-from datetime import date, datetime
+"""Hostel roll call: admins mark Present/Absent; approved leave shows as Leave."""
+import csv
+from datetime import date, datetime, timedelta
 
 from app.database.db import get_connection
 from app.utils import session
@@ -47,7 +48,11 @@ def mark_attendance(student_id: int, day: str, status: str) -> None:
 
 def get_roster(day: str) -> list:
     """Every student with an active room and their status for the day."""
-    session.require_roles(session.STAFF_ROLES, "view the attendance roster")
+    session.require_roles(session.ADMIN_ROLES, "view the attendance roster")
+    return _roster(day)
+
+
+def _roster(day: str) -> list:
     day = _clean_date(day)
     conn = get_connection()
     try:
@@ -71,9 +76,10 @@ def get_roster(day: str) -> list:
 
 def attendance_counts(day: str = None) -> dict:
     """Present / Absent / Leave / Unmarked totals across allocated students for the day."""
+    session.require_roles(session.STAFF_ROLES, "view attendance totals")
     day = day or date.today().isoformat()
     counts = {"Present": 0, "Absent": 0, "Leave": 0, "Unmarked": 0}
-    for item in get_roster(day):
+    for item in _roster(day):
         counts[item["status"]] += 1
     return counts
 
@@ -93,7 +99,7 @@ def student_summary(student_id=None, days: int = 30) -> dict:
                 "GROUP BY status", (student_id, start)):
             counts[status] = total
         for row in cur.execute("SELECT from_date, to_date FROM leaves WHERE student_id = ? "
-                               "AND to_date >= ? AND from_date <= ?", (student_id, start, date.today().isoformat())):
+                               "AND status IN ('On Leave', 'Returned') AND to_date >= ? AND from_date <= ?", (student_id, start, date.today().isoformat())):
             lo = max(row["from_date"], start)
             hi = min(row["to_date"], date.today().isoformat())
             counts["Leave"] += (date.fromisoformat(hi) - date.fromisoformat(lo)).days + 1
@@ -101,3 +107,67 @@ def student_summary(student_id=None, days: int = 30) -> dict:
         return counts
     finally:
         conn.close()
+
+
+LOW_ATTENDANCE_PERCENT = 75.0
+
+
+def _month_bounds(month: str):
+    try:
+        first = datetime.strptime(str(month).strip(), "%Y-%m").date()
+    except ValueError:
+        raise ValidationError("Enter the month as YYYY-MM.")
+    if first > date.today():
+        raise ValidationError("That month has not started yet.")
+    nxt = (first.replace(day=28) + timedelta(days=4)).replace(day=1)
+    return first, min(nxt - timedelta(days=1), date.today())
+
+
+def monthly_report(month: str) -> list:
+    """Per-student Present / Absent / Leave days and attendance % (Present of Present + Absent) for a month."""
+    session.require_roles(session.ADMIN_ROLES, "view attendance reports")
+    first, last = _month_bounds(month)
+    lo, hi = first.isoformat(), last.isoformat()
+    conn = get_connection()
+    try:
+        students = conn.execute(
+            "SELECT s.student_id, s.name, s.registration_number, r.room_number FROM allocations al "
+            "JOIN students s ON s.student_id = al.student_id JOIN rooms r ON r.room_id = al.room_id "
+            "WHERE al.status = 'Active' ORDER BY s.name").fetchall()
+        report = []
+        for st in students:
+            marks = {d: status for d, status in conn.execute(
+                "SELECT att_date, status FROM student_attendance WHERE student_id = ? AND att_date BETWEEN ? AND ?",
+                (st["student_id"], lo, hi))}
+            leave_days = set()
+            for row in conn.execute("SELECT from_date, to_date FROM leaves WHERE student_id = ? "
+                                    "AND status IN ('On Leave', 'Returned') AND to_date >= ? AND from_date <= ?",
+                                    (st["student_id"], lo, hi)):
+                day = max(date.fromisoformat(row["from_date"]), first)
+                end = min(date.fromisoformat(row["to_date"]), last)
+                while day <= end:
+                    leave_days.add(day.isoformat())
+                    day += timedelta(days=1)
+            present = sum(1 for v in marks.values() if v == "Present")
+            absent = sum(1 for v in marks.values() if v == "Absent")
+            leave = len([d for d in leave_days if d not in marks])
+            percent = round(present / (present + absent) * 100, 1) if present + absent else None
+            report.append({"student_id": st["student_id"], "name": st["name"],
+                           "registration_number": st["registration_number"], "room_number": st["room_number"],
+                           "present": present, "absent": absent, "leave": leave, "percent": percent,
+                           "low": percent is not None and percent < LOW_ATTENDANCE_PERCENT})
+        return report
+    finally:
+        conn.close()
+
+
+def export_report_csv(month: str, path: str) -> int:
+    rows = monthly_report(month)
+    with open(path, "w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["Student", "Registration No.", "Room", "Present", "Absent", "Leave", "Attendance %"])
+        for r in rows:
+            writer.writerow([r["name"], r["registration_number"], r["room_number"], r["present"], r["absent"],
+                             r["leave"], "" if r["percent"] is None else r["percent"]])
+    log_audit("Attendance", "Export", month, "Success", f"Monthly report exported ({len(rows)} students).")
+    return len(rows)

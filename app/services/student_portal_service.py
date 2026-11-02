@@ -59,7 +59,7 @@ def file_complaint(category: str, description: str) -> int:
 def my_leaves() -> list:
     sid = _current_student_id()
     return _query("""
-        SELECT l.leave_id, r.room_number, l.from_date, l.to_date, l.reason, l.status
+        SELECT l.leave_id, r.room_number, l.from_date, l.to_date, l.reason, l.status, l.decision_note
         FROM leaves l JOIN rooms r ON r.room_id = l.room_id
         WHERE l.student_id = ? ORDER BY l.leave_id DESC
     """, (sid,), "my_leaves")

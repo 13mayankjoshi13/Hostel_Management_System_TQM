@@ -551,6 +551,9 @@ class TestBugFixes(unittest.TestCase):
         with self.assertRaises(ValidationError):
             complaint_service.create_complaint(a, "Maintenance", "Water is leaking from the bathroom tap")
         own = leave_service.record_leave(b, d1, d2, "family function")
+        session.set_session("warden", "Warden")
+        leave_service.decide_leave(own, True)
+        session.set_session("sita", "Student", b)
         leave_service.mark_returned(own)
         complaint_service.create_complaint(b, "Maintenance", "Water is leaking from the bathroom tap")
         session.set_session("warden", "Warden")

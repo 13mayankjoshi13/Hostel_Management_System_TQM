@@ -136,6 +136,7 @@ STATUS_FG = {
     "Closed": "#71717A",
     "On Leave": "#E58A00",
     "Returned": "#16A34A",
+    "Rejected": "#DC2626",
     "Pending": "#E58A00",
     "Unpaid": "#E58A00",
     "Paid": "#16A34A",
@@ -329,8 +330,9 @@ def split_layout(parent, left_width: int = 400):
     body.columnconfigure(0, minsize=left_width, weight=0)
     body.columnconfigure(1, weight=1)
     body.rowconfigure(0, weight=1)
-    left = tk.Frame(body, bg=COLORS["background"])
-    left.grid(row=0, column=0, sticky="new", padx=(0, 16))
+    scroller = ScrollFrame(body, bg=COLORS["background"])
+    scroller.grid(row=0, column=0, sticky="nsew", padx=(0, 16))
+    left = scroller.inner
     right = tk.Frame(body, bg=COLORS["background"])
     right.grid(row=0, column=1, sticky="nsew")
     return left, right
