@@ -8,7 +8,8 @@ from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error
 from app.theme import COLORS, section_header, form_row, build_panel, form_card, split_layout, build_table, style_treeview_status_tags, status_tag
 
-_ALL_ROLES = ["Super Admin", "Administrator", "Warden", "Staff", "Student"]
+_ALL_ROLES = ["Super Admin", "Administrator", "Warden", "Staff", "Mess Staff", "Maintenance Staff",
+              "Security Staff", "Housekeeping Staff", "Student"]
 
 
 def _roles_for(role: str) -> list:

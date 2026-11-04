@@ -81,10 +81,10 @@ class VisitorScreen(tk.Frame):
             handle_unexpected_error("Visitor", "check_out_ui", e)
 
     def refresh(self):
-        if session.get_role() not in session.STAFF_ROLES:
+        if session.get_role() not in session.VISITOR_ROLES:
             return
         self._students = {f"{a['student_name']} — Room {a['room_number']}": a["student_id"]
-                          for a in allocation_service.get_active_allocations()}
+                          for a in visitor_service.visit_targets()}
         self.student_combo["values"] = list(self._students)
         keep_selection(self.tree, self._rebuild)
 

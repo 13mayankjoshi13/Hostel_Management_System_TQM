@@ -58,7 +58,7 @@ class TestRoles(unittest.TestCase):
 
     def test_each_role_gets_its_own_features(self):
         sets = {r: set(_allowed_screens(r)) for r in ROLE_SCREENS}
-        self.assertEqual(len({frozenset(s) for s in sets.values()}), 4)
+        self.assertEqual(len({frozenset(s) for s in sets.values()}), 8)
         for key in ("Rooms", "Bugs", "Quality", "Users"):
             self.assertNotIn(key, sets["Warden"])
             self.assertNotIn(key, sets["Staff"])

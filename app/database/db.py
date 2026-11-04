@@ -322,6 +322,79 @@ def _create_schema(conn: sqlite3.Connection) -> None:
     """)
 
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS meal_menu (
+            menu_date TEXT NOT NULL,
+            meal TEXT NOT NULL,
+            items TEXT NOT NULL,
+            updated_by TEXT NOT NULL,
+            PRIMARY KEY (menu_date, meal)
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS meal_feedback (
+            student_id INTEGER NOT NULL,
+            menu_date TEXT NOT NULL,
+            meal TEXT NOT NULL,
+            rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+            comment TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (student_id, menu_date, meal),
+            FOREIGN KEY (student_id) REFERENCES students(student_id)
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS meal_queue (
+            queue_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            queue_date TEXT NOT NULL,
+            meal TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Waiting' CHECK (status IN ('Waiting', 'Served')),
+            joined_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE (student_id, queue_date, meal),
+            FOREIGN KEY (student_id) REFERENCES students(student_id)
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS staff_log (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            details TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Open' CHECK (status IN ('Open', 'Done')),
+            created_by TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            done_at TEXT
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS gate_log (
+            gate_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            direction TEXT NOT NULL CHECK (direction IN ('In', 'Out')),
+            logged_at TEXT NOT NULL,
+            late INTEGER NOT NULL DEFAULT 0,
+            logged_by TEXT NOT NULL,
+            FOREIGN KEY (student_id) REFERENCES students(student_id)
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS cleaning_checks (
+            check_date TEXT NOT NULL,
+            hostel TEXT NOT NULL,
+            floor INTEGER NOT NULL,
+            area TEXT NOT NULL,
+            done_by TEXT NOT NULL,
+            done_at TEXT NOT NULL,
+            PRIMARY KEY (check_date, hostel, floor, area)
+        )
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS app_settings (
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL

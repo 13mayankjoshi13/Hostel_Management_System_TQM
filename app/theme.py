@@ -344,6 +344,7 @@ _HEADER_ICONS = {
     "Attendance": "clipboard", "Hostel Events": "calendar", "Wardens & Emergency": "users", "Settings": "gear",
     "My Room": "home", "My Complaints": "chat", "My Leave": "plane", "My Fines": "clipboard",
     "My Notices": "chat", "My Details": "user", "Calendar": "calendar",
+    "Visitors": "users", "My Duty": "grid", "Mess": "clipboard", "My Mess": "home", "Gate Log": "key", "Cleaning": "clipboard",
 }
 
 

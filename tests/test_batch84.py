@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from app.database import db as db_module
 from app.database.db import initialize_database, get_connection
 from app.services import (allocation_service, attendance_service, leave_service, notice_service, room_service,
-                           search_service, student_service, visitor_service, complaint_service)
+                           search_service, profile_service, student_service, visitor_service, complaint_service)
 from app.utils import session
 from app.utils.validation import ValidationError
 
@@ -159,6 +159,20 @@ class TestBatch84(unittest.TestCase):
         session.set_session("arjun", "Student", self.boy)
         with self.assertRaises(ValidationError):
             search_service.search("Meera")
+
+    def test_student_profile(self):
+        session.set_session("w", "Warden")
+        hit = search_service.search("Meera")[0]
+        self.assertEqual(hit["student_id"], self.other)
+        data = profile_service.student_profile(hit["student_id"])
+        self.assertEqual(data["student"]["name"], "Meera Nair")
+        self.assertEqual(data["room"]["room_number"], "G101")
+        self.assertEqual(data["attendance"]["Present"], 0)
+        with self.assertRaises(ValidationError):
+            profile_service.student_profile(9999)
+        session.set_session("s", "Staff")
+        with self.assertRaises(ValidationError):
+            profile_service.student_profile(self.other)
 
 
 if __name__ == "__main__":

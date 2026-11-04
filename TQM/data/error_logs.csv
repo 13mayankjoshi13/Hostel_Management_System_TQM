@@ -13,3 +13,4 @@ timestamp,error_id,module,error_type,severity,user_id,action,status,message_refe
 2026-11-01T23:15:02,ERR-0012,Application,TypeError,High,hostel_admin,ui_callback,Open,show_detail_dialog() got an unexpected keyword argument 'full_text'
 2026-11-01T23:17:36,ERR-0013,Application,TypeError,High,student,ui_callback,Open,show_detail_dialog() got an unexpected keyword argument 'full_text'
 2026-11-01T23:17:51,ERR-0014,Application,TypeError,High,student,ui_callback,Open,show_detail_dialog() got an unexpected keyword argument 'full_text'
+2026-11-04T06:26:31,ERR-0015,Mess,DatabaseError,High,s,join_queue,Open,FOREIGN KEY constraint failed

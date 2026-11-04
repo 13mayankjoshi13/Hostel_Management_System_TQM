@@ -8,7 +8,7 @@ from datetime import datetime
 
 from app.config import APP_NAME
 from app.theme import COLORS, ScrollFrame, apply_theme, draw_icon, icon_tile, initials, _round_rect
-from app.services import auth_service, settings_service, search_service, notice_service, leave_service
+from app.services import complaint_service, auth_service, settings_service, search_service, notice_service, leave_service
 from app import theme
 from app.utils.validation import ValidationError
 from app.utils.exception_handler import handle_unexpected_error, report_tk_callback_exception
@@ -36,10 +36,17 @@ from app.screens.notice_screen import NoticeScreen
 from app.screens.my_notices_screen import MyNoticesScreen
 from app.screens.attendance_screen import AttendanceScreen
 from app.screens.visitor_screen import VisitorScreen
+from app.screens.student_profile_dialog import open_student_profile
 from app.screens.contacts_screen import ContactsScreen
 from app.screens.student_home_screen import StudentHomeScreen
 from app.screens.hostel_map_screen import HostelMapScreen
 from app.screens.events_screen import EventsScreen
+from app.screens.duty_screen import DutyScreen
+from app.screens.staff_log_screen import StaffLogScreen
+from app.screens.mess_screen import MessScreen
+from app.screens.my_mess_screen import MyMessScreen
+from app.screens.gate_screen import GateScreen
+from app.screens.cleaning_screen import CleaningScreen
 from app.utils import session
 from app.utils.idle import IdleTracker
 from app.utils.logging_service import log_audit
@@ -49,6 +56,8 @@ from app.config import IDLE_TIMEOUT_MINUTES
 _NAV_ITEMS = [
     ("Dashboard", "Dashboard", "grid"),
     ("StudentHome", "Home", "grid"),
+    ("Duty", "My Duty", "grid"),
+    ("ShiftLog", "Shift Log", "clipboard"),
     ("HostelMap", "Hostel Map", "door"),
     ("Events", "Hostel Events", "calendar"),
     ("Calendar", "Calendar", "calendar"),
@@ -61,12 +70,16 @@ _NAV_ITEMS = [
     ("Notices", "Notices", "chat"),
     ("Attendance", "Attendance", "clipboard"),
     ("Visitors", "Visitors", "users"),
+    ("Gate", "Gate Log", "key"),
+    ("Mess", "Mess", "clipboard"),
+    ("Cleaning", "Cleaning", "clipboard"),
     ("Contacts", "Wardens & Emergency", "users"),
     ("Settings", "Settings", "gear"),
     ("Workers", "Workers", "users"),
     ("Bugs", "Bug Tracker", "bug"),
     ("Users", "User Management", "users"),
     ("MyRoom", "My Room", "home"),
+    ("MyMess", "My Mess", "home"),
     ("MyComplaints", "My Complaints", "chat"),
     ("MyLeave", "My Leave", "plane"),
     ("MyFines", "My Fines", "clipboard"),
@@ -76,12 +89,16 @@ _NAV_ITEMS = [
 
 _COMMON = ["HostelMap", "Events", "Contacts", "Calendar", "Settings"]
 ROLE_SCREENS = {
-    "Student": ["StudentHome", "MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyNotices", "MyDetails"] + _COMMON,
+    "Student": ["StudentHome", "MyRoom", "MyComplaints", "MyLeave", "MyFines", "MyMess", "MyNotices", "MyDetails"] + _COMMON,
     "Staff": ["Dashboard", "Notices", "Complaints", "Visitors", "Workers"] + _COMMON,
-    "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines", "Notices", "Visitors"] + _COMMON,
-    "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Visitors", "Notices",
+    "Mess Staff": ["Duty", "ShiftLog", "Mess"] + _COMMON,
+    "Maintenance Staff": ["Duty", "ShiftLog"] + _COMMON,
+    "Security Staff": ["Duty", "ShiftLog", "Gate", "Visitors"] + _COMMON,
+    "Housekeeping Staff": ["Duty", "ShiftLog", "Cleaning"] + _COMMON,
+    "Warden": ["Dashboard", "Students", "Allocation", "Complaints", "Leaves", "Fines", "Notices", "Visitors", "Gate", "Mess", "Cleaning", "ShiftLog"] + _COMMON,
+    "Administrator": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Visitors", "Gate", "Mess", "Cleaning", "Notices",
                       "Workers", "Bugs", "Users"] + _COMMON,
-    "Super Admin": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Visitors", "Notices",
+    "Super Admin": ["Dashboard", "Students", "Rooms", "Allocation", "Complaints", "Leaves", "Fines", "Attendance", "Visitors", "Gate", "Mess", "Cleaning", "Notices",
                     "Workers", "Bugs", "Users"] + _COMMON,
 }
 
@@ -92,6 +109,8 @@ def _allowed_screens(role: str) -> list:
 
 
 def _home_screen(role: str) -> str:
+    if role in session.SPECIALIST_ROLES:
+        return "Duty"
     return "StudentHome" if role == "Student" else "Dashboard"
 
 
@@ -414,10 +433,13 @@ class MainWindow(tk.Tk):
         sel = self.search_list.curselection()
         if not sel:
             return
-        screen = self._search_hits[sel[0]]["screen"]
+        hit = self._search_hits[sel[0]]
         self._hide_search()
         self.search_var.set("")
-        self.show_screen(screen)
+        if hit.get("student_id"):
+            open_student_profile(self, hit["student_id"])
+        else:
+            self.show_screen(hit["screen"])
 
     def refresh_badges(self):
         user = getattr(self, "_user", None)
@@ -427,6 +449,8 @@ class MainWindow(tk.Tk):
         try:
             if user["role"] == "Student":
                 counts["MyNotices"] = notice_service.unread_count()
+            if user["role"] in session.ROLE_CATEGORIES:
+                counts["Duty"] = complaint_service.queue_open_count()
             if user["role"] in session.WARDEN_ROLES:
                 counts["Leaves"] = leave_service.pending_count()
         except Exception:
@@ -464,7 +488,7 @@ class MainWindow(tk.Tk):
         self._ticks = getattr(self, "_ticks", 0) + 1
         if self._ticks % 30 == 0:
             self.refresh_badges()
-        if self._ticks % 30 == 0 and getattr(self, "_current", None) in ("Dashboard", "StudentHome"):
+        if self._ticks % 30 == 0 and getattr(self, "_current", None) in ("Dashboard", "StudentHome", "Duty"):
             try:
                 self.screens[self._current].refresh()
             except Exception:
@@ -503,6 +527,12 @@ class MainWindow(tk.Tk):
         self.screens["MyNotices"] = MyNoticesScreen(self.content, self.fonts)
         self.screens["Attendance"] = AttendanceScreen(self.content, self.fonts)
         self.screens["Visitors"] = VisitorScreen(self.content, self.fonts)
+        self.screens["Duty"] = DutyScreen(self.content, self.fonts)
+        self.screens["ShiftLog"] = StaffLogScreen(self.content, self.fonts)
+        self.screens["Mess"] = MessScreen(self.content, self.fonts)
+        self.screens["MyMess"] = MyMessScreen(self.content, self.fonts)
+        self.screens["Gate"] = GateScreen(self.content, self.fonts)
+        self.screens["Cleaning"] = CleaningScreen(self.content, self.fonts)
         self.screens["Contacts"] = ContactsScreen(self.content, self.fonts)
         self.screens["MyDetails"] = MyDetailsScreen(self.content, self.fonts)
         for key, screen in self.screens.items():

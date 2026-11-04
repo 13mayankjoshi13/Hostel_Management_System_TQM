@@ -63,3 +63,12 @@ Every list screen (Students, Rooms, Allocation, Complaints, Leaves, Fines, Worke
 - Attendance monthly report and CSV export: Administrator and Super Admin only; below 75% is highlighted.
 - Sidebar badges: unread notices for students, pending leaves for Warden and above.
 - Global search (top bar): Staff sees complaints, Warden adds students, Administrator and Super Admin add rooms.
+
+## Batch 87: specialist staff roles
+Log in on the Staff tab. Each role opens on My Duty and sees only its own screens (plus Hostel Map, Events, Contacts, Calendar, Settings).
+- Mess Staff: Food complaints (take, resolve), daily menu editor, meal feedback summary and comments.
+- Maintenance Staff: Maintenance and Washroom complaints (take, resolve).
+- Security Staff: Visitors, Gate Log (Out/In, entries after 10 PM flagged late), list of students currently out.
+- Housekeeping Staff: Cleanliness complaints, daily floor cleaning checklist (Corridor, Washrooms, Common room, Stairs).
+- Students rate meals on My Mess. Warden, Administrator and Super Admin see Gate Log, Mess and Cleaning; Administrator and Super Admin edit the menu and checklist.
+- Specialists cannot see other complaint categories, attendance, fines, students or leaves. Staff, Warden and admins are unchanged.

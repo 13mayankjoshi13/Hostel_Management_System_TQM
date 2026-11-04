@@ -111,7 +111,7 @@ def create_user(username: str, password: str, role: str, student_id: int = None,
 
 LOGIN_PANELS = {
     "Student": ("Student",),
-    "Staff": ("Warden", "Staff"),
+    "Staff": ("Warden", "Staff", "Mess Staff", "Maintenance Staff", "Security Staff", "Housekeeping Staff"),
     "Admin": ("Administrator",),
     "Super Admin": ("Super Admin",),
 }

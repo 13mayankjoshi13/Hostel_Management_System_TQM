@@ -53,7 +53,25 @@ SUPER_ROLES = ("Super Admin",)
 ADMIN_ROLES = ("Super Admin", "Administrator")
 WARDEN_ROLES = ADMIN_ROLES + ("Warden",)
 STAFF_ROLES = WARDEN_ROLES + ("Staff",)
-ALL_ROLES = STAFF_ROLES + ("Student",)
+SPECIALIST_ROLES = ("Mess Staff", "Maintenance Staff", "Security Staff", "Housekeeping Staff")
+ALL_ROLES = STAFF_ROLES + SPECIALIST_ROLES + ("Student",)
+ROLE_CATEGORIES = {"Mess Staff": ("Food",), "Maintenance Staff": ("Maintenance", "Washroom"),
+                   "Housekeeping Staff": ("Cleanliness",)}
+COMPLAINT_ROLES = STAFF_ROLES + tuple(ROLE_CATEGORIES)
+VISITOR_ROLES = STAFF_ROLES + ("Security Staff",)
+GATE_ROLES = WARDEN_ROLES + ("Security Staff",)
+MESS_MANAGE_ROLES = ADMIN_ROLES + ("Mess Staff",)
+MESS_VIEW_ROLES = WARDEN_ROLES + ("Mess Staff",)
+CLEANING_MANAGE_ROLES = ADMIN_ROLES + ("Housekeeping Staff",)
+CLEANING_VIEW_ROLES = WARDEN_ROLES + ("Housekeeping Staff",)
+
+
+def handles_category(category: str) -> bool:
+    """General staff handle every complaint; specialists only their own categories."""
+    role = get_role()
+    if role in STAFF_ROLES:
+        return True
+    return category in ROLE_CATEGORIES.get(role, ())
 
 
 def require_roles(allowed, action: str) -> None:

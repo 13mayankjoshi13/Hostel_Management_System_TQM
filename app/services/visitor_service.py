@@ -23,7 +23,7 @@ def _clean(value: str, label: str, limit: int) -> str:
 
 
 def log_visitor(student_id: int, visitor_name: str, relation: str, phone: str, purpose: str) -> int:
-    session.require_roles(session.STAFF_ROLES, "log visitors")
+    session.require_roles(session.VISITOR_ROLES, "log visitors")
     student_id = validate_record_id(student_id, "Select the student being visited.")
     name = _clean(visitor_name, "Visitor name", 60)
     purpose = _clean(purpose, "Purpose", 100)
@@ -52,7 +52,7 @@ def log_visitor(student_id: int, visitor_name: str, relation: str, phone: str, p
 
 
 def check_out(visitor_id: int) -> None:
-    session.require_roles(session.STAFF_ROLES, "check visitors out")
+    session.require_roles(session.VISITOR_ROLES, "check visitors out")
     visitor_id = validate_record_id(visitor_id, "Select a visitor first.")
     conn = get_connection()
     try:
@@ -78,7 +78,7 @@ def _flag(row: dict) -> str:
 
 
 def list_visitors(inside_only: bool = False, limit: int = 200) -> list:
-    session.require_roles(session.STAFF_ROLES, "view the visitor log")
+    session.require_roles(session.VISITOR_ROLES, "view the visitor log")
     conn = get_connection()
     try:
         sql = ("SELECT v.visitor_id, s.name AS student_name, r.room_number, v.visitor_name, v.relation, v.phone, "
@@ -98,9 +98,22 @@ def list_visitors(inside_only: bool = False, limit: int = 200) -> list:
 
 
 def inside_count() -> int:
-    session.require_roles(session.STAFF_ROLES, "view the visitor log")
+    session.require_roles(session.VISITOR_ROLES, "view the visitor log")
     conn = get_connection()
     try:
         return conn.execute("SELECT COUNT(*) FROM visitors WHERE out_time IS NULL").fetchone()[0]
+    finally:
+        conn.close()
+
+
+def visit_targets() -> list:
+    """Students with an active room, for the check-in drop-down."""
+    session.require_roles(session.VISITOR_ROLES, "view students with rooms")
+    conn = get_connection()
+    try:
+        return [dict(r) for r in conn.execute(
+            "SELECT s.student_id, s.name AS student_name, r.room_number FROM allocations al "
+            "JOIN students s ON s.student_id = al.student_id JOIN rooms r ON r.room_id = al.room_id "
+            "WHERE al.status = 'Active' ORDER BY s.name")]
     finally:
         conn.close()

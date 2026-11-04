@@ -261,6 +261,10 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
             ("hostel_admin", "admin123", "Administrator", None),
             ("hostel_staff", "staff123", "Staff", None),
             ("warden", "warden123", "Warden", None),
+            ("mess_staff", "mess123", "Mess Staff", None),
+            ("maintenance_staff", "maint123", "Maintenance Staff", None),
+            ("security_staff", "security123", "Security Staff", None),
+            ("housekeeping_staff", "house123", "Housekeeping Staff", None),
             ("student", "student123", "Student", demo_student_id),
             ("student_girl", "student123", "Student", girl_student_id),
             ("mayankjoshi13", "student123", "Student", demo_student_id),
@@ -494,6 +498,27 @@ def seed_test_accounts_and_data(db_path: str = None) -> dict:
                 (demo_student_id,)
             )
             conn.commit()
+
+        # 10b. Specialist staff demo data
+        today_s = today_d.isoformat()
+        cur.execute("SELECT COUNT(*) AS n FROM meal_menu WHERE menu_date = ?", (today_s,))
+        if cur.fetchone()["n"] == 0:
+            for meal, items in (("Breakfast", "Poha, boiled egg, tea"), ("Lunch", "Dal, rice, roti, mixed veg"),
+                                ("Snacks", "Samosa, chutney, tea"), ("Dinner", "Paneer curry, roti, jeera rice")):
+                cur.execute("INSERT INTO meal_menu (menu_date, meal, items, updated_by) VALUES (?, ?, ?, 'mess_staff')",
+                            (today_s, meal, items))
+            cur.execute("INSERT OR IGNORE INTO meal_feedback (student_id, menu_date, meal, rating, comment) "
+                        "VALUES (?, ?, 'Breakfast', 4, 'Fresh and hot')", (demo_student_id, today_s))
+        cur.execute("SELECT COUNT(*) AS n FROM gate_log")
+        if cur.fetchone()["n"] == 0:
+            cur.execute("INSERT INTO gate_log (student_id, direction, logged_at, late, logged_by) "
+                        "VALUES (?, 'Out', datetime('now', '-3 hours'), 0, 'security_staff')", (demo_student_id,))
+            if girl_student_id:
+                cur.execute("INSERT INTO gate_log (student_id, direction, logged_at, late, logged_by) "
+                            "VALUES (?, 'Out', datetime('now', '-26 hours'), 0, 'security_staff')", (girl_student_id,))
+                cur.execute("INSERT INTO gate_log (student_id, direction, logged_at, late, logged_by) "
+                            "VALUES (?, 'In', datetime('now', '-25 hours'), 1, 'security_staff')", (girl_student_id,))
+        conn.commit()
 
         # 11. University Emergency Contacts & Gmail
         from app.services.emergency_service import seed_university_defaults

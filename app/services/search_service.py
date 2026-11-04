@@ -6,7 +6,7 @@ LIMIT = 6
 
 
 def search(query: str) -> list:
-    """Return [{kind, title, detail, screen}] for the text typed in the top bar."""
+    """Return [{kind, title, detail, screen[, student_id]}] for the text typed in the top bar."""
     session.require_roles(session.STAFF_ROLES, "search records")
     text = (query or "").strip()
     if len(text) < 2:
@@ -25,7 +25,8 @@ def search(query: str) -> list:
                     "ORDER BY s.name LIMIT ?", (like, like, like, LIMIT)):
                 room = f"Room {r['room_number']}" if r["room_number"] else "No room"
                 results.append({"kind": "Student", "title": r["name"],
-                                "detail": f"{r['registration_number']} · {room}", "screen": "Students"})
+                                "detail": f"{r['registration_number']} · {room}", "screen": "Students",
+                                "student_id": r["student_id"]})
         if role in session.ADMIN_ROLES:
             for r in conn.execute("SELECT room_number, room_type, capacity FROM rooms WHERE room_number LIKE ? "
                                   "ORDER BY room_number LIMIT ?", (like, LIMIT)):

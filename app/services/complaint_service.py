@@ -41,6 +41,17 @@ def _get_complaint_or_raise(cur, complaint_id: int) -> sqlite3.Row:
     return complaint
 
 
+def _require_category(complaint, action: str) -> None:
+    if not session.handles_category(complaint["category"]):
+        raise ValidationError(f"Your role cannot {action} {complaint['category']} complaints.")
+
+
+def take_complaint(complaint_id: int) -> None:
+    """A specialist picks up an Open complaint in their own categories; it is assigned to them."""
+    name = "".join(ch if ch.isalpha() else " " for ch in session.get_user()).strip()
+    assign_complaint(complaint_id, " ".join(name.split()).title() or session.get_role())
+
+
 def create_complaint(student_id: int, category: str, description: str) -> int:
     """Validate and insert a new complaint with status 'Open'."""
     student_id = validate_record_id(student_id, "Please select a student.")
@@ -79,7 +90,7 @@ def create_complaint(student_id: int, category: str, description: str) -> int:
 
 def assign_complaint(complaint_id: int, assigned_to: str) -> None:
     """Move a complaint from 'Open' to 'Assigned'. Rejects any other status."""
-    session.require_roles(session.STAFF_ROLES, "assign complaints")
+    session.require_roles(session.COMPLAINT_ROLES, "assign complaints")
     complaint_id = validate_record_id(complaint_id, "Please select a valid complaint.")
     clean_assigned_to = validate_assigned_to(assigned_to)
 
@@ -87,6 +98,7 @@ def assign_complaint(complaint_id: int, assigned_to: str) -> None:
     try:
         cur = conn.cursor()
         complaint = _get_complaint_or_raise(cur, complaint_id)
+        _require_category(complaint, "assign")
 
         if complaint["status"] not in _ASSIGNABLE_STATUSES:
             raise ValidationError(
@@ -115,7 +127,7 @@ def assign_complaint(complaint_id: int, assigned_to: str) -> None:
 
 def resolve_complaint(complaint_id: int, resolution_notes: str) -> None:
     """Move a complaint from 'Open' or 'Assigned' to 'Resolved'."""
-    session.require_roles(session.STAFF_ROLES, "resolve complaints")
+    session.require_roles(session.COMPLAINT_ROLES, "resolve complaints")
     complaint_id = validate_record_id(complaint_id, "Please select a valid complaint.")
     clean_notes = validate_resolution_notes(resolution_notes)
 
@@ -123,6 +135,7 @@ def resolve_complaint(complaint_id: int, resolution_notes: str) -> None:
     try:
         cur = conn.cursor()
         complaint = _get_complaint_or_raise(cur, complaint_id)
+        _require_category(complaint, "resolve")
 
         if complaint["status"] not in _RESOLVABLE_STATUSES:
             raise ValidationError(
@@ -150,9 +163,24 @@ def resolve_complaint(complaint_id: int, resolution_notes: str) -> None:
         conn.close()
 
 
+def get_my_queue() -> list:
+    """Complaints this role may handle: everything for general staff, own categories for specialists."""
+    session.require_roles(session.COMPLAINT_ROLES, "view complaints")
+    rows = get_all_complaints_unchecked()
+    return [r for r in rows if session.handles_category(r["category"])]
+
+
+def queue_open_count() -> int:
+    return sum(1 for r in get_my_queue() if r["status"] in ("Open", "Assigned"))
+
+
 def get_all_complaints() -> list:
     """All complaints joined with student name, newest first."""
     session.require_roles(session.STAFF_ROLES, "view all complaints")
+    return get_all_complaints_unchecked()
+
+
+def get_all_complaints_unchecked() -> list:
     conn = get_connection()
     try:
         cur = conn.cursor()

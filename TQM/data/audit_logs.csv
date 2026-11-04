@@ -253,3 +253,30 @@ timestamp,user_id,role,module,action,record_id,result,description
 2026-11-02T15:20:44,student,Student,Auth,Logout,student,Success,'student' logged out.
 2026-11-02T15:20:52,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
 2026-11-02T15:22:19,hostel_admin,Administrator,Auth,Logout,hostel_admin,Success,'hostel_admin' logged out.
+2026-11-02T17:55:48,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-02T17:59:58,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-02T18:00:05,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-02T18:04:44,hostel_admin,Administrator,Auth,Logout,hostel_admin,Success,'hostel_admin' logged out.
+2026-11-04T08:11:44,system_admin,Super Admin,Database,Backup,hostel_20261104_081144.db,Success,Daily database backup created.
+2026-11-04T08:13:33,warden,Warden,Auth,Login,64,Success,'warden' logged in.
+2026-11-04T08:14:07,warden,Warden,Auth,Logout,warden,Success,'warden' logged out.
+2026-11-04T08:14:15,hostel_admin,Administrator,Auth,Login,62,Success,'hostel_admin' logged in.
+2026-11-04T08:14:53,hostel_admin,Administrator,Auth,Logout,hostel_admin,Success,'hostel_admin' logged out.
+2026-11-04T08:15:03,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-04T08:17:09,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-04T11:45:21,mess_staff,Mess Staff,Auth,Login,67,Success,'mess_staff' logged in.
+2026-11-04T11:45:46,mess_staff,Mess Staff,Auth,Logout,mess_staff,Success,'mess_staff' logged out.
+2026-11-04T11:46:19,hostel_staff,Staff,Auth,Login,63,Success,'hostel_staff' logged in.
+2026-11-04T11:46:49,hostel_staff,Staff,Auth,Logout,hostel_staff,Success,'hostel_staff' logged out.
+2026-11-04T11:46:56,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-04T11:50:04,student,Student,Auth,Logout,student,Success,'student' logged out.
+2026-11-04T06:26:31,mess_staff,Mess Staff,Mess,SetMenu,2026-11-04 Lunch,Success,Menu saved.
+2026-11-04T06:26:36,mess_staff,Mess Staff,Mess,SetMenu,2026-11-04 Lunch,Success,Menu saved.
+2026-11-04T06:26:36,s,Student,Mess,JoinQueue,2026-11-04 Lunch,Success,Joined the queue.
+2026-11-04T06:26:36,mess_staff,Mess Staff,Mess,Serve,1,Success,Marked served.
+2026-11-04T06:33:41,u,Mess Staff,ShiftLog,Add,Stock shortage,Success,Entry added.
+2026-11-04T06:33:41,u,Maintenance Staff,ShiftLog,Add,Parts needed,Success,Entry added.
+2026-11-04T06:33:41,u,Security Staff,ShiftLog,Add,Incident,Success,Entry added.
+2026-11-04T06:33:41,u,Housekeeping Staff,ShiftLog,Add,Supplies low,Success,Entry added.
+2026-11-04T14:33:36,student,Student,Auth,Login,65,Success,'student' logged in.
+2026-11-04T14:34:16,student,Student,Auth,Logout,student,Success,'student' logged out.

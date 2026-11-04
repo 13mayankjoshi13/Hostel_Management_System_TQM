@@ -279,7 +279,8 @@ def validate_password(password: str) -> str:
 
 
 def validate_role(role: str) -> str:
-    allowed = ("Super Admin", "Administrator", "Warden", "Staff", "Student")
+    allowed = ("Super Admin", "Administrator", "Warden", "Staff", "Mess Staff", "Maintenance Staff",
+               "Security Staff", "Housekeeping Staff", "Student")
     if role is None or not str(role).strip():
         raise ValidationError("Role cannot be empty.")
     match = {name.lower(): name for name in allowed}.get(" ".join(str(role).split()).lower())
